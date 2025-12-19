@@ -10,11 +10,22 @@ const FormDataPage = () => {
 
   const [selectedSection, setSelectedSection] = useState("sales");
 
+  const [selectedItems, setSelectedItems] = useState({
+    sales: [], // For Sales section
+    purchase: [], // For Purchase section
+    delivery: [], // For Delivery section
+    damage: [], // For Damage section
+  });
+
   // Add this state
   const [dropdownVisible, setDropdownVisible] = useState({
     customer: false,
     supplier: false,
-    item: false,
+
+    salesItem: false, // Changed from 'item'
+    purchaseItem: false, // New
+    deliveryItem: false,
+
     dnCustomer: false,
     damageItem: false,
   });
@@ -56,8 +67,10 @@ const FormDataPage = () => {
   const [searchTerm, setSearchTerm] = useState({
     customer: "",
     supplier: "",
-    item: "",
     dnCustomer: "",
+    salesItem: "", // Separate for each section
+    purchaseItem: "",
+    deliveryItem: "",
     damageItem: "",
   });
 
@@ -192,23 +205,23 @@ const FormDataPage = () => {
           formData.invoiceNumber,
           formData.srCustomerName,
           formData.quantityReceived,
-          formData.itemName,
+          selectedItems.sales.join(", "),
           formData.receivedBy,
           formData.purchaseReturnDate,
           formData.purchaseInvoiceNo,
           formData.purchaseInvoiceDate,
           formData.supplierName,
           formData.quantityReturned,
-          formData.prItemName, // ADD THIS - Column M
+          selectedItems.purchase.join(", "), // ADD THIS - Column M
 
           formData.deliveryNote,
           formData.deliveryNoteDate,
           formData.dnCustomerName,
           formData.quantityDispatched,
-          formData.dnItemName,
+          selectedItems.delivery.join(", "),
 
           formData.damageDate,
-          formData.damageItemName,
+          selectedItems.damage.join(", "),
           formData.quantityDamaged,
           formData.reasonForDamage,
           formData.damageIdentifiedAt,
@@ -222,6 +235,14 @@ const FormDataPage = () => {
       });
 
       setMessage("Form submitted successfully!");
+
+      setSelectedItems({
+        sales: [],
+        purchase: [],
+        delivery: [],
+        damage: [],
+      });
+
       setFormData({
         salesReturnDate: "",
         invoiceNumber: "",
@@ -241,6 +262,11 @@ const FormDataPage = () => {
         dnCustomerName: "",
         quantityDispatched: "",
         dnItemName: "",
+
+        salesItem: "",
+        purchaseItem: "",
+        deliveryItem: "",
+        damageItem: "",
       });
 
       // Immediately fetch new data and close form
@@ -338,9 +364,62 @@ const FormDataPage = () => {
     if (name === "supplierName") {
       setSearchTerm((prev) => ({ ...prev, supplier: value }));
     }
-    if (name === "itemName") {
-      setSearchTerm((prev) => ({ ...prev, item: value }));
+  };
+
+  const handleItemSelect = (section, item) => {
+    if (!item.trim()) return; // Don't add empty items
+
+    // Check if item already exists in the section
+    if (selectedItems[section].includes(item.trim())) {
+      // Optional: Show a message or just return without adding
+      return;
     }
+
+    setSelectedItems((prev) => ({
+      ...prev,
+      [section]: [...prev[section], item.trim()],
+    }));
+
+    // Clear the correct search input based on section
+    setSearchTerm((prev) => ({
+      ...prev,
+      [`${section}Item`]: "",
+    }));
+  };
+
+  const handleRemoveItem = (section, index) => {
+    setSelectedItems((prev) => ({
+      ...prev,
+      [section]: prev[section].filter((_, i) => i !== index),
+    }));
+  };
+
+  const getFilteredSalesItems = () => {
+    const searchValue = searchTerm.salesItem.toLowerCase();
+    return masterData.items.filter((item) =>
+      item.toLowerCase().includes(searchValue)
+    );
+  };
+
+  const getFilteredPurchaseItems = () => {
+    const searchValue = searchTerm.purchaseItem.toLowerCase();
+    return masterData.items.filter((item) =>
+      item.toLowerCase().includes(searchValue)
+    );
+  };
+
+  const getFilteredDeliveryItems = () => {
+    const searchValue = searchTerm.deliveryItem.toLowerCase();
+    return masterData.items.filter((item) =>
+      item.toLowerCase().includes(searchValue)
+    );
+  };
+
+  const getFilteredDamageItems = () => {
+    const searchValue = searchTerm.damageItem.toLowerCase();
+    return masterData.items.filter((item) =>
+      item.toLowerCase().includes(searchValue)
+    );
   };
 
   console.log("masterdata", masterData);
@@ -513,57 +592,75 @@ const FormDataPage = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Item Name
                           </label>
                           <div className="relative">
-                            <input
-                              type="text"
-                              name="itemName"
-                              value={formData.itemName}
-                              onChange={(e) => {
-                                handleChange(e);
-                                setDropdownVisible((prev) => ({
-                                  ...prev,
-                                  item: true,
-                                }));
-                              }}
-                              onFocus={() =>
-                                setDropdownVisible((prev) => ({
-                                  ...prev,
-                                  item: true,
-                                }))
-                              }
-                              onBlur={() => {
-                                setTimeout(() => {
+                            <div className="flex gap-2 mb-2">
+                              <input
+                                type="text"
+                                value={searchTerm.salesItem}
+                                onChange={(e) => {
+                                  setSearchTerm((prev) => ({
+                                    ...prev,
+                                    salesItem: e.target.value,
+                                  }));
                                   setDropdownVisible((prev) => ({
                                     ...prev,
-                                    item: false,
+                                    salesItem: true,
                                   }));
-                                }, 200);
-                              }}
-                              placeholder="Select or type item name"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
+                                }}
+                                onFocus={() =>
+                                  setDropdownVisible((prev) => ({
+                                    ...prev,
+                                    salesItem: true,
+                                  }))
+                                }
+                                onBlur={() =>
+                                  setTimeout(
+                                    () =>
+                                      setDropdownVisible((prev) => ({
+                                        ...prev,
+                                        salesItem: false,
+                                      })),
+                                    200
+                                  )
+                                }
+                                placeholder="Select or type item name"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                              <button
+                                onClick={() =>
+                                  handleItemSelect(
+                                    "sales",
+                                    searchTerm.salesItem
+                                  )
+                                }
+                                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                              >
+                                Add
+                              </button>
+                            </div>
 
-                            {dropdownVisible.item &&
-                              getFilteredItems().length > 0 && (
+                            {/* Dropdown for suggestions */}
+                            {dropdownVisible.salesItem &&
+                              getFilteredSalesItems().length > 0 && (
                                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                  {getFilteredItems().map((item, idx) => (
+                                  {getFilteredSalesItems().map((item, idx) => (
                                     <div
                                       key={idx}
                                       className="px-3 py-2 hover:bg-blue-50 cursor-pointer"
                                       onMouseDown={(e) => {
                                         e.preventDefault();
-                                        setFormData({
-                                          ...formData,
-                                          itemName: item,
-                                        });
-                                        setDropdownVisible((prev) => ({
-                                          ...prev,
-                                          item: false,
-                                        }));
+
+                                        // Check if item is already selected
+                                        if (
+                                          !selectedItems.sales.includes(item)
+                                        ) {
+                                          handleItemSelect("sales", item);
+                                        }
                                       }}
                                     >
                                       {item}
@@ -571,8 +668,31 @@ const FormDataPage = () => {
                                   ))}
                                 </div>
                               )}
+
+                            {/* Selected items display */}
+                            {selectedItems.sales.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {selectedItems.sales.map((item, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                                  >
+                                    {item}
+                                    <button
+                                      onClick={() =>
+                                        handleRemoveItem("sales", idx)
+                                      }
+                                      className="text-blue-600 hover:text-blue-800"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Received By
@@ -713,59 +833,102 @@ const FormDataPage = () => {
                             Item Name
                           </label>
                           <div className="relative">
-                            <input
-                              type="text"
-                              name="prItemName"
-                              value={formData.prItemName}
-                              onChange={(e) => {
-                                handleChange(e);
-                                setDropdownVisible((prev) => ({
-                                  ...prev,
-                                  prItem: true,
-                                }));
-                              }}
-                              onFocus={() =>
-                                setDropdownVisible((prev) => ({
-                                  ...prev,
-                                  prItem: true,
-                                }))
-                              }
-                              onBlur={() => {
-                                setTimeout(() => {
+                            <div className="flex gap-2 mb-2">
+                              <input
+                                type="text"
+                                value={searchTerm.purchaseItem}
+                                onChange={(e) => {
+                                  setSearchTerm((prev) => ({
+                                    ...prev,
+                                    purchaseItem: e.target.value,
+                                  }));
                                   setDropdownVisible((prev) => ({
                                     ...prev,
-                                    prItem: false,
+                                    purchaseItem: true,
                                   }));
-                                }, 200);
-                              }}
-                              placeholder="Select or type item name"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                            />
+                                }}
+                                onFocus={() =>
+                                  setDropdownVisible((prev) => ({
+                                    ...prev,
+                                    purchaseItem: true,
+                                  }))
+                                }
+                                onBlur={() =>
+                                  setTimeout(
+                                    () =>
+                                      setDropdownVisible((prev) => ({
+                                        ...prev,
+                                        purchaseItem: false,
+                                      })),
+                                    200
+                                  )
+                                }
+                                placeholder="Select or type item name"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                              />
+                              <button
+                                onClick={() =>
+                                  handleItemSelect(
+                                    "purchase",
+                                    searchTerm.purchaseItem
+                                  )
+                                }
+                                className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                              >
+                                Add
+                              </button>
+                            </div>
 
-                            {dropdownVisible.prItem &&
-                              getFilteredItems().length > 0 && (
+                            {/* Dropdown for suggestions */}
+                            {dropdownVisible.purchaseItem &&
+                              getFilteredPurchaseItems().length > 0 && (
                                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                  {getFilteredItems().map((item, idx) => (
-                                    <div
-                                      key={idx}
-                                      className="px-3 py-2 hover:bg-green-50 cursor-pointer"
-                                      onMouseDown={(e) => {
-                                        e.preventDefault();
-                                        setFormData({
-                                          ...formData,
-                                          prItemName: item,
-                                        });
-                                        setDropdownVisible((prev) => ({
-                                          ...prev,
-                                          prItem: false,
-                                        }));
-                                      }}
-                                    >
-                                      {item}
-                                    </div>
-                                  ))}
+                                  {getFilteredPurchaseItems().map(
+                                    (item, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="px-3 py-2 hover:bg-green-50 cursor-pointer"
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+
+                                          // Check if item is already selected
+                                          if (
+                                            !selectedItems.purchase.includes(
+                                              item
+                                            )
+                                          ) {
+                                            handleItemSelect("purchase", item);
+                                          }
+                                        }}
+                                      >
+                                        {item}
+                                      </div>
+                                    )
+                                  )}
                                 </div>
                               )}
+
+                            {/* Selected items display */}
+                            {selectedItems.purchase.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {selectedItems.purchase.map((item, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
+                                  >
+                                    {item}
+                                    <button
+                                      onClick={() =>
+                                        handleRemoveItem("purchase", idx)
+                                      }
+                                      className="text-green-600 hover:text-green-800"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -884,59 +1047,102 @@ const FormDataPage = () => {
                             Item Name
                           </label>
                           <div className="relative">
-                            <input
-                              type="text"
-                              name="dnItemName"
-                              value={formData.dnItemName}
-                              onChange={(e) => {
-                                handleChange(e);
-                                setDropdownVisible((prev) => ({
-                                  ...prev,
-                                  dnItem: true,
-                                }));
-                              }}
-                              onFocus={() =>
-                                setDropdownVisible((prev) => ({
-                                  ...prev,
-                                  dnItem: true,
-                                }))
-                              }
-                              onBlur={() => {
-                                setTimeout(() => {
+                            <div className="flex gap-2 mb-2">
+                              <input
+                                type="text"
+                                value={searchTerm.deliveryItem}
+                                onChange={(e) => {
+                                  setSearchTerm((prev) => ({
+                                    ...prev,
+                                    deliveryItem: e.target.value,
+                                  }));
                                   setDropdownVisible((prev) => ({
                                     ...prev,
-                                    dnItem: false,
+                                    deliveryItem: true,
                                   }));
-                                }, 200);
-                              }}
-                              placeholder="Select or type item name"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            />
+                                }}
+                                onFocus={() =>
+                                  setDropdownVisible((prev) => ({
+                                    ...prev,
+                                    deliveryItem: true,
+                                  }))
+                                }
+                                onBlur={() =>
+                                  setTimeout(
+                                    () =>
+                                      setDropdownVisible((prev) => ({
+                                        ...prev,
+                                        deliveryItem: false,
+                                      })),
+                                    200
+                                  )
+                                }
+                                placeholder="Select or type item name"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              />
+                              <button
+                                onClick={() =>
+                                  handleItemSelect(
+                                    "delivery",
+                                    searchTerm.deliveryItem
+                                  )
+                                }
+                                className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600"
+                              >
+                                Add
+                              </button>
+                            </div>
 
-                            {dropdownVisible.dnItem &&
-                              getFilteredItems().length > 0 && (
+                            {/* Dropdown for suggestions */}
+                            {dropdownVisible.deliveryItem &&
+                              getFilteredDeliveryItems().length > 0 && (
                                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                  {getFilteredItems().map((item, idx) => (
-                                    <div
-                                      key={idx}
-                                      className="px-3 py-2 hover:bg-purple-50 cursor-pointer"
-                                      onMouseDown={(e) => {
-                                        e.preventDefault();
-                                        setFormData({
-                                          ...formData,
-                                          dnItemName: item,
-                                        });
-                                        setDropdownVisible((prev) => ({
-                                          ...prev,
-                                          dnItem: false,
-                                        }));
-                                      }}
-                                    >
-                                      {item}
-                                    </div>
-                                  ))}
+                                  {getFilteredDeliveryItems().map(
+                                    (item, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="px-3 py-2 hover:bg-purple-50 cursor-pointer"
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+
+                                          // Check if item is already selected
+                                          if (
+                                            !selectedItems.delivery.includes(
+                                              item
+                                            )
+                                          ) {
+                                            handleItemSelect("delivery", item);
+                                          }
+                                        }}
+                                      >
+                                        {item}
+                                      </div>
+                                    )
+                                  )}
                                 </div>
                               )}
+
+                            {/* Selected items display */}
+                            {selectedItems.delivery.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {selectedItems.delivery.map((item, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center gap-1 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm"
+                                  >
+                                    {item}
+                                    <button
+                                      onClick={() =>
+                                        handleRemoveItem("delivery", idx)
+                                      }
+                                      className="text-purple-600 hover:text-purple-800"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -969,51 +1175,69 @@ const FormDataPage = () => {
                             Item Name
                           </label>
                           <div className="relative">
-                            <input
-                              type="text"
-                              name="damageItemName"
-                              value={formData.damageItemName}
-                              onChange={(e) => {
-                                handleChange(e);
-                                setDropdownVisible((prev) => ({
-                                  ...prev,
-                                  damageItem: true,
-                                }));
-                              }}
-                              onFocus={() =>
-                                setDropdownVisible((prev) => ({
-                                  ...prev,
-                                  damageItem: true,
-                                }))
-                              }
-                              onBlur={() => {
-                                setTimeout(() => {
+                            <div className="flex gap-2 mb-2">
+                              <input
+                                type="text"
+                                value={searchTerm.damageItem}
+                                onChange={(e) => {
+                                  setSearchTerm((prev) => ({
+                                    ...prev,
+                                    damageItem: e.target.value,
+                                  }));
                                   setDropdownVisible((prev) => ({
                                     ...prev,
-                                    damageItem: false,
+                                    damageItem: true,
                                   }));
-                                }, 200);
-                              }}
-                              placeholder="Select or type item name"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                            />
+                                }}
+                                onFocus={() =>
+                                  setDropdownVisible((prev) => ({
+                                    ...prev,
+                                    damageItem: true,
+                                  }))
+                                }
+                                onBlur={() =>
+                                  setTimeout(
+                                    () =>
+                                      setDropdownVisible((prev) => ({
+                                        ...prev,
+                                        damageItem: false,
+                                      })),
+                                    200
+                                  )
+                                }
+                                placeholder="Select or type item name"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                              />
+                              <button
+                                onClick={() =>
+                                  handleItemSelect(
+                                    "damage",
+                                    searchTerm.damageItem
+                                  )
+                                }
+                                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                              >
+                                Add
+                              </button>
+                            </div>
+
+                            {/* Dropdown for suggestions */}
                             {dropdownVisible.damageItem &&
-                              getFilteredItems().length > 0 && (
+                              getFilteredDamageItems().length > 0 && (
                                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                  {getFilteredItems().map((item, idx) => (
+                                  {getFilteredDamageItems().map((item, idx) => (
                                     <div
                                       key={idx}
                                       className="px-3 py-2 hover:bg-red-50 cursor-pointer"
                                       onMouseDown={(e) => {
                                         e.preventDefault();
-                                        setFormData({
-                                          ...formData,
-                                          damageItemName: item,
-                                        });
-                                        setDropdownVisible((prev) => ({
-                                          ...prev,
-                                          damageItem: false,
-                                        }));
+
+                                        // Check if item is already selected
+                                        if (
+                                          !selectedItems.damage.includes(item)
+                                        ) {
+                                          handleItemSelect("damage", item);
+                                        }
                                       }}
                                     >
                                       {item}
@@ -1021,6 +1245,28 @@ const FormDataPage = () => {
                                   ))}
                                 </div>
                               )}
+
+                            {/* Selected items display */}
+                            {selectedItems.damage.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {selectedItems.damage.map((item, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center gap-1 bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm"
+                                  >
+                                    {item}
+                                    <button
+                                      onClick={() =>
+                                        handleRemoveItem("damage", idx)
+                                      }
+                                      className="text-red-600 hover:text-red-800"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -1152,6 +1398,7 @@ const FormDataPage = () => {
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
                         Item Name
                       </th>
+
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
                         Received By
                       </th>
@@ -1237,9 +1484,10 @@ const FormDataPage = () => {
                           <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                             {row.quantityReceived}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-pre-line">
                             {row.itemName}
                           </td>
+
                           <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                             {row.receivedBy}
                           </td>
@@ -1259,7 +1507,7 @@ const FormDataPage = () => {
                             {row.quantityReturned}
                           </td>
 
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-pre-line">
                             {row.prItemName}
                           </td>
 
@@ -1275,14 +1523,14 @@ const FormDataPage = () => {
                           <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                             {row.quantityDispatched}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-pre-line">
                             {row.dnItemName}
                           </td>
 
                           <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                             {row.damageDate}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-pre-line">
                             {row.damageItemName}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
@@ -1340,8 +1588,14 @@ const FormDataPage = () => {
                                   {row.quantityReceived}
                                 </div>
                                 <div>
-                                  <span className="font-medium">Item:</span>{" "}
-                                  {row.itemName}
+                                  <span className="font-medium">Item:</span>
+                                  <div className="text-gray-600 mt-1">
+                                    {row.itemName.split(", ").map((item, i) => (
+                                      <div key={i}>
+                                        {i + 1}. {item}
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
                                 <div>
                                   <span className="font-medium">
@@ -1377,8 +1631,16 @@ const FormDataPage = () => {
                                   {row.quantityReturned}
                                 </div>
                                 <div className="col-span-2">
-                                  <span className="font-medium">Item:</span>{" "}
-                                  {row.prItemName}
+                                  <span className="font-medium">Item:</span>
+                                  <div className="text-gray-600 mt-1">
+                                    {row.prItemName
+                                      .split(", ")
+                                      .map((item, i) => (
+                                        <div key={i}>
+                                          {i + 1}. {item}
+                                        </div>
+                                      ))}
+                                  </div>
                                 </div>
                               </div>
                             </>
@@ -1408,8 +1670,16 @@ const FormDataPage = () => {
                                   {row.quantityDispatched}
                                 </div>
                                 <div>
-                                  <span className="font-medium">Item:</span>{" "}
-                                  {row.dnItemName}
+                                  <span className="font-medium">Item:</span>
+                                  <div className="text-gray-600 mt-1">
+                                    {row.dnItemName
+                                      .split(", ")
+                                      .map((item, i) => (
+                                        <div key={i}>
+                                          {i + 1}. {item}
+                                        </div>
+                                      ))}
+                                  </div>
                                 </div>
                               </div>
                             </>
@@ -1431,8 +1701,16 @@ const FormDataPage = () => {
                                   {row.quantityDamaged}
                                 </div>
                                 <div className="col-span-2">
-                                  <span className="font-medium">Item:</span>{" "}
-                                  {row.damageItemName}
+                                  <span className="font-medium">Item:</span>
+                                  <div className="text-gray-600 mt-1">
+                                    {row.damageItemName
+                                      .split(", ")
+                                      .map((item, i) => (
+                                        <div key={i}>
+                                          {i + 1}. {item}
+                                        </div>
+                                      ))}
+                                  </div>
                                 </div>
                                 <div className="col-span-2">
                                   <span className="font-medium">
