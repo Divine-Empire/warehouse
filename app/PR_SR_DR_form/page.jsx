@@ -10,53 +10,56 @@ const FormDataPage = () => {
 
   const [selectedSection, setSelectedSection] = useState("sales");
 
-  const [selectedItems, setSelectedItems] = useState({
-    sales: [], // For Sales section
-    purchase: [], // For Purchase section
-    delivery: [], // For Delivery section
-    damage: [], // For Damage section
+  // Update state structure for multiple items with quantities
+  const [itemsWithQuantities, setItemsWithQuantities] = useState({
+    sales: [], // [{item: "", quantity: ""}, ...]
+    purchase: [], // [{item: "", quantity: ""}, ...]
+    delivery: [], // [{item: "", quantity: ""}, ...]
+    damage: [], // [{item: "", quantity: "", damageIdentifiedAt: ""}, ...]
   });
 
   // Add this state
   const [dropdownVisible, setDropdownVisible] = useState({
     customer: false,
     supplier: false,
-
-    salesItem: false, // Changed from 'item'
-    purchaseItem: false, // New
-    deliveryItem: false,
-
     dnCustomer: false,
+    
+    salesItem: false,
+    purchaseItem: false,
+    deliveryItem: false,
     damageItem: false,
   });
 
   const [formData, setFormData] = useState({
+    // Sales Return
     salesReturnDate: "",
     invoiceNumber: "",
     srCustomerName: "",
-    quantityReceived: "",
-    itemName: "",
     receivedBy: "",
 
+    // Purchase Return
     purchaseReturnDate: "",
     purchaseInvoiceNo: "",
     purchaseInvoiceDate: "",
     supplierName: "",
-    quantityReturned: "",
-    prItemName: "",
 
+    // Delivery Note
     deliveryNote: "",
     deliveryNoteDate: "",
     dnCustomerName: "",
-    quantityDispatched: "",
-    dnItemName: "",
 
+    // Damage Entry
     damageDate: "",
-    damageItemName: "",
-    quantityDamaged: "",
     reasonForDamage: "",
-    damageIdentifiedAt: "",
     approvedBy: "",
+  });
+
+  // Temporary input for adding new items
+  const [tempItemInput, setTempItemInput] = useState({
+    sales: { item: "", quantity: "" },
+    purchase: { item: "", quantity: "" },
+    delivery: { item: "", quantity: "" },
+    damage: { item: "", quantity: "", damageIdentifiedAt: "" },
   });
 
   const [masterData, setMasterData] = useState({
@@ -68,7 +71,7 @@ const FormDataPage = () => {
     customer: "",
     supplier: "",
     dnCustomer: "",
-    salesItem: "", // Separate for each section
+    salesItem: "",
     purchaseItem: "",
     deliveryItem: "",
     damageItem: "",
@@ -81,14 +84,13 @@ const FormDataPage = () => {
 
   useEffect(() => {
     fetchData();
+    fetchMasterData();
   }, []);
 
   const formatDateTime = (dateValue) => {
     if (!dateValue) return "";
     let d = new Date(dateValue);
-    // Handle Google Sheets serial date format (if needed)
     if (typeof dateValue === "number") {
-      // Convert from Excel/Google Sheets serial date
       const excelEpoch = new Date(1899, 11, 30);
       const msPerDay = 24 * 60 * 60 * 1000;
       d = new Date(excelEpoch.getTime() + dateValue * msPerDay);
@@ -107,19 +109,17 @@ const FormDataPage = () => {
   const formatDate = (date) => {
     if (!date) return "";
 
-    // Check if date is in Date(YYYY,MM,DD) format
     if (typeof date === "string" && date.startsWith("Date(")) {
-      // Parse Date(2025,11,27) format
       try {
         const match = date.match(/Date\((\d+),(\d+),(\d+)\)/);
         if (match) {
           const year = parseInt(match[1]);
-          const month = parseInt(match[2]); // Already 0-indexed in this format
+          const month = parseInt(match[2]);
           const day = parseInt(match[3]);
           const d = new Date(year, month, day);
 
           const formattedDay = String(d.getDate()).padStart(2, "0");
-          const formattedMonth = String(d.getMonth() + 1).padStart(2, "0"); // +1 to make it 1-indexed
+          const formattedMonth = String(d.getMonth() + 1).padStart(2, "0");
           const formattedYear = d.getFullYear();
 
           return `${formattedDay}/${formattedMonth}/${formattedYear}`;
@@ -129,10 +129,8 @@ const FormDataPage = () => {
       }
     }
 
-    // Handle other date formats (numbers, regular dates, etc.)
     let d = new Date(date);
     if (typeof date === "number") {
-      // Convert from Excel/Google Sheets serial date
       const excelEpoch = new Date(1899, 11, 30);
       const msPerDay = 24 * 60 * 60 * 1000;
       d = new Date(excelEpoch.getTime() + date * msPerDay);
@@ -156,30 +154,16 @@ const FormDataPage = () => {
 
       const rows = json.table.rows.slice(0).map((row) => ({
         timestamp: formatDateTime(row.c[0]?.v) || "",
-        salesReturnDate: formatDate(row.c[1]?.v) || "",
-        invoiceNumber: row.c[2]?.v || "",
-        srCustomerName: row.c[3]?.v || "",
-        quantityReceived: row.c[4]?.v || "",
+        status: row.c[1]?.v || "",
+        date: formatDate(row.c[2]?.v) || "",
+        invoiceNumber: row.c[3]?.v || "",
+        customerSupplierName: row.c[4]?.v || "",
         itemName: row.c[5]?.v || "",
-        receivedBy: row.c[6]?.v || "",
-        purchaseReturnDate: formatDate(row.c[7]?.v) || "",
-        purchaseInvoiceNo: row.c[8]?.v || "",
-        purchaseInvoiceDate: formatDate(row.c[9]?.v) || "",
-        supplierName: row.c[10]?.v || "",
-        quantityReturned: row.c[11]?.v || "",
-        prItemName: row.c[12]?.v || "", // ADD THIS - Column M (index 12)
-        deliveryNote: row.c[13]?.v || "", // CHANGE from index 12 to 13
-        deliveryNoteDate: formatDate(row.c[14]?.v) || "", // CHANGE from index 13 to 14
-        dnCustomerName: row.c[15]?.v || "", // CHANGE from index 14 to 15
-        quantityDispatched: row.c[16]?.v || "", // CHANGE from index 15 to 16
-        dnItemName: row.c[17]?.v || "", // ADD THIS - Column R (index 17)
-
-        damageDate: formatDate(row.c[18]?.v) || "",
-        damageItemName: row.c[19]?.v || "",
-        quantityDamaged: row.c[20]?.v || "",
-        reasonForDamage: row.c[21]?.v || "",
-        damageIdentifiedAt: row.c[22]?.v || "",
-        approvedBy: row.c[23]?.v || "",
+        quantity: row.c[6]?.v || "",
+        receivedBy: row.c[7]?.v || "",
+        reasonForDamage: row.c[8]?.v || "",
+        damageIdentifiedAt: row.c[9]?.v || "",
+        approvedBy: row.c[10]?.v || "",
       }));
 
       setTableData(rows);
@@ -196,84 +180,138 @@ const FormDataPage = () => {
     const scriptUrl = `https://script.google.com/macros/s/AKfycbyzW8-RldYx917QpAfO4kY-T8_ntg__T0sbr7Yup2ZTVb1FC5H1g6TYuJgAU6wTquVM/exec`;
 
     try {
-      const dataToSend = new URLSearchParams({
-        action: "insertPRSRDN",
-        sheetName: SHEET_NAME,
-        rowData: JSON.stringify([
-          new Date().toISOString(),
+      // Prepare data for each section
+      const rowsToInsert = [];
+
+      // Helper function to add rows
+      const addRows = (section, status, date, invoiceNumber, customerSupplier, receivedBy, reason, damageAt, approved) => {
+        const items = itemsWithQuantities[section];
+        items.forEach((itemData) => {
+          rowsToInsert.push([
+            new Date().toISOString(),
+            status,
+            date,
+            invoiceNumber,
+            customerSupplier,
+            itemData.item,
+            itemData.quantity,
+            receivedBy,
+            reason,
+            itemData.damageIdentifiedAt || damageAt,
+            approved,
+          ]);
+        });
+      };
+
+      // Add rows for each section
+      if (selectedSection === "sales" && itemsWithQuantities.sales.length > 0) {
+        addRows(
+          "sales",
+          "Sales Return Section",
           formData.salesReturnDate,
           formData.invoiceNumber,
           formData.srCustomerName,
-          formData.quantityReceived,
-          selectedItems.sales.join(", "),
           formData.receivedBy,
+          "",
+          "",
+          ""
+        );
+      }
+
+      if (selectedSection === "purchase" && itemsWithQuantities.purchase.length > 0) {
+        addRows(
+          "purchase",
+          "Purchase Return Section",
           formData.purchaseReturnDate,
           formData.purchaseInvoiceNo,
-          formData.purchaseInvoiceDate,
           formData.supplierName,
-          formData.quantityReturned,
-          selectedItems.purchase.join(", "), // ADD THIS - Column M
+          "",
+          "",
+          "",
+          ""
+        );
+      }
 
-          formData.deliveryNote,
+      if (selectedSection === "delivery" && itemsWithQuantities.delivery.length > 0) {
+        addRows(
+          "delivery",
+          "Delivery Note Section",
           formData.deliveryNoteDate,
+          formData.deliveryNote,
           formData.dnCustomerName,
-          formData.quantityDispatched,
-          selectedItems.delivery.join(", "),
+          "",
+          "",
+          "",
+          ""
+        );
+      }
 
+      if (selectedSection === "damage" && itemsWithQuantities.damage.length > 0) {
+        addRows(
+          "damage",
+          "Damage Entry Section",
           formData.damageDate,
-          selectedItems.damage.join(", "),
-          formData.quantityDamaged,
+          "",
+          "",
+          "",
           formData.reasonForDamage,
-          formData.damageIdentifiedAt,
-          formData.approvedBy,
-        ]),
-      });
+          "", // This will be overwritten by item-specific damageIdentifiedAt
+          formData.approvedBy
+        );
+      }
 
-      await fetch(scriptUrl, {
-        method: "POST",
-        body: dataToSend,
-      });
+      // Send all rows
+      for (const rowData of rowsToInsert) {
+        const dataToSend = new URLSearchParams({
+          action: "insertPRSRDN",
+          sheetName: SHEET_NAME,
+          rowData: JSON.stringify(rowData),
+        });
 
-      setMessage("Form submitted successfully!");
+        await fetch(scriptUrl, {
+          method: "POST",
+          body: dataToSend,
+        });
+      }
 
-      setSelectedItems({
+      setMessage(`${rowsToInsert.length} record(s) submitted successfully!`);
+
+      // Reset form
+      setItemsWithQuantities({
         sales: [],
         purchase: [],
         delivery: [],
         damage: [],
       });
 
+      setTempItemInput({
+        sales: { item: "", quantity: "" },
+        purchase: { item: "", quantity: "" },
+        delivery: { item: "", quantity: "" },
+        damage: { item: "", quantity: "", damageIdentifiedAt: "" },
+      });
+
       setFormData({
         salesReturnDate: "",
         invoiceNumber: "",
         srCustomerName: "",
-        quantityReceived: "",
-        itemName: "",
         receivedBy: "",
         purchaseReturnDate: "",
         purchaseInvoiceNo: "",
         purchaseInvoiceDate: "",
         supplierName: "",
-        quantityReturned: "",
-        prItemName: "",
-
         deliveryNote: "",
         deliveryNoteDate: "",
         dnCustomerName: "",
-        quantityDispatched: "",
-        dnItemName: "",
-
-        salesItem: "",
-        purchaseItem: "",
-        deliveryItem: "",
-        damageItem: "",
+        damageDate: "",
+        reasonForDamage: "",
+        approvedBy: "",
       });
 
-      // Immediately fetch new data and close form
+      // Fetch new data and close form
       await fetchData();
       setIsFormOpen(false);
 
-      // Clear message after 3 seconds
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       setMessage("Error submitting form. Please try again.");
@@ -295,17 +333,12 @@ const FormDataPage = () => {
       const suppliers = [];
       const items = [];
 
-      // Process rows
       json.table.rows.forEach((row) => {
-        // Column A - Customer Name
         if (row.c[0]?.v) customers.push(row.c[0].v);
-        // Column C - Supplier Name
         if (row.c[2]?.v) suppliers.push(row.c[2].v);
-        // Column E - Item Name
         if (row.c[4]?.v) items.push(row.c[4].v);
       });
 
-      // Remove duplicates
       setMasterData({
         customers: [...new Set(customers)],
         suppliers: [...new Set(suppliers)],
@@ -316,23 +349,10 @@ const FormDataPage = () => {
     }
   };
 
-  // Call in useEffect
-  useEffect(() => {
-    fetchData();
-    fetchMasterData();
-  }, []);
-
   const getFilteredCustomers = () => {
     const searchValue = formData.srCustomerName.toLowerCase();
     return masterData.customers.filter((customer) =>
       customer.toLowerCase().includes(searchValue)
-    );
-  };
-
-  const getFilteredItems = () => {
-    const searchValue = formData.itemName.toLowerCase();
-    return masterData.items.filter((item) =>
-      item.toLowerCase().includes(searchValue)
     );
   };
 
@@ -350,6 +370,13 @@ const FormDataPage = () => {
     );
   };
 
+  const getFilteredItems = (section) => {
+    const searchValue = tempItemInput[section].item.toLowerCase();
+    return masterData.items.filter((item) =>
+      item.toLowerCase().includes(searchValue)
+    );
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -357,7 +384,6 @@ const FormDataPage = () => {
       [name]: value,
     });
 
-    // Update search terms for relevant fields
     if (name === "srCustomerName" || name === "dnCustomerName") {
       setSearchTerm((prev) => ({ ...prev, customer: value }));
     }
@@ -366,63 +392,62 @@ const FormDataPage = () => {
     }
   };
 
-  const handleItemSelect = (section, item) => {
-    if (!item.trim()) return; // Don't add empty items
-
-    // Check if item already exists in the section
-    if (selectedItems[section].includes(item.trim())) {
-      // Optional: Show a message or just return without adding
-      return;
-    }
-
-    setSelectedItems((prev) => ({
+  const handleTempItemChange = (section, field, value) => {
+    setTempItemInput((prev) => ({
       ...prev,
-      [section]: [...prev[section], item.trim()],
-    }));
-
-    // Clear the correct search input based on section
-    setSearchTerm((prev) => ({
-      ...prev,
-      [`${section}Item`]: "",
+      [section]: {
+        ...prev[section],
+        [field]: value,
+      },
     }));
   };
 
-  const handleRemoveItem = (section, index) => {
-    setSelectedItems((prev) => ({
+  const addItem = (section) => {
+    const input = tempItemInput[section];
+    if (!input.item.trim()) return;
+
+    // For damage section, require damageIdentifiedAt
+    if (section === "damage" && !input.damageIdentifiedAt) {
+      alert("Please select Damage Identified At for damage items");
+      return;
+    }
+
+    // Check if item already exists
+    const exists = itemsWithQuantities[section].some(
+      (item) => item.item === input.item.trim()
+    );
+    if (exists) {
+      alert("Item already added");
+      return;
+    }
+
+    setItemsWithQuantities((prev) => ({
+      ...prev,
+      [section]: [
+        ...prev[section],
+        {
+          item: input.item.trim(),
+          quantity: input.quantity,
+          damageIdentifiedAt: section === "damage" ? input.damageIdentifiedAt : "",
+        },
+      ],
+    }));
+
+    // Reset temp input
+    setTempItemInput((prev) => ({
+      ...prev,
+      [section]: section === "damage" 
+        ? { item: "", quantity: "", damageIdentifiedAt: "" }
+        : { item: "", quantity: "" }
+    }));
+  };
+
+  const removeItem = (section, index) => {
+    setItemsWithQuantities((prev) => ({
       ...prev,
       [section]: prev[section].filter((_, i) => i !== index),
     }));
   };
-
-  const getFilteredSalesItems = () => {
-    const searchValue = searchTerm.salesItem.toLowerCase();
-    return masterData.items.filter((item) =>
-      item.toLowerCase().includes(searchValue)
-    );
-  };
-
-  const getFilteredPurchaseItems = () => {
-    const searchValue = searchTerm.purchaseItem.toLowerCase();
-    return masterData.items.filter((item) =>
-      item.toLowerCase().includes(searchValue)
-    );
-  };
-
-  const getFilteredDeliveryItems = () => {
-    const searchValue = searchTerm.deliveryItem.toLowerCase();
-    return masterData.items.filter((item) =>
-      item.toLowerCase().includes(searchValue)
-    );
-  };
-
-  const getFilteredDamageItems = () => {
-    const searchValue = searchTerm.damageItem.toLowerCase();
-    return masterData.items.filter((item) =>
-      item.toLowerCase().includes(searchValue)
-    );
-  };
-
-  console.log("masterdata", masterData);
 
   return (
     <MainLayout>
@@ -470,7 +495,7 @@ const FormDataPage = () => {
                   </button>
                 </div>
 
-                {/* Inside the modal form, after the header */}
+                {/* Section selector */}
                 <div className="mb-6">
                   <select
                     value={selectedSection}
@@ -485,12 +510,13 @@ const FormDataPage = () => {
                 </div>
 
                 <div className="p-6">
+                  {/* Sales Return Section */}
                   {selectedSection === "sales" && (
                     <div className="mb-8">
                       <h3 className="text-xl font-semibold text-blue-600 mb-4 border-b-2 border-blue-200 pb-2">
                         Sales Return Section
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Sales Return Date
@@ -538,7 +564,6 @@ const FormDataPage = () => {
                                 }))
                               }
                               onBlur={() => {
-                                // Delay closing so user can click on dropdown items
                                 setTimeout(() => {
                                   setDropdownVisible((prev) => ({
                                     ...prev,
@@ -549,8 +574,6 @@ const FormDataPage = () => {
                               placeholder="Select or type customer name"
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
-
-                            {/* Dropdown show condition change */}
                             {dropdownVisible.customer &&
                               getFilteredCustomers().length > 0 && (
                                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
@@ -560,7 +583,7 @@ const FormDataPage = () => {
                                         key={idx}
                                         className="px-3 py-2 hover:bg-blue-50 cursor-pointer"
                                         onMouseDown={(e) => {
-                                          e.preventDefault(); // Prevent input blur
+                                          e.preventDefault();
                                           setFormData({
                                             ...formData,
                                             srCustomerName: customer,
@@ -579,39 +602,33 @@ const FormDataPage = () => {
                               )}
                           </div>
                         </div>
-
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Quantity Received
+                            Received By
                           </label>
                           <input
-                            type="number"
-                            name="quantityReceived"
-                            value={formData.quantityReceived}
+                            type="text"
+                            name="receivedBy"
+                            value={formData.receivedBy}
                             onChange={handleChange}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
+                      </div>
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Item Name
-                          </label>
-                          <div className="relative">
-                            <div className="flex gap-2 mb-2">
+                      {/* Item and Quantity Input */}
+                      <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-blue-50">
+                        <h4 className="font-medium text-blue-700 mb-3">Add Items</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Item Name
+                            </label>
+                            <div className="relative">
                               <input
                                 type="text"
-                                value={searchTerm.salesItem}
-                                onChange={(e) => {
-                                  setSearchTerm((prev) => ({
-                                    ...prev,
-                                    salesItem: e.target.value,
-                                  }));
-                                  setDropdownVisible((prev) => ({
-                                    ...prev,
-                                    salesItem: true,
-                                  }));
-                                }}
+                                value={tempItemInput.sales.item}
+                                onChange={(e) => handleTempItemChange("sales", "item", e.target.value)}
                                 onFocus={() =>
                                   setDropdownVisible((prev) => ({
                                     ...prev,
@@ -631,90 +648,90 @@ const FormDataPage = () => {
                                 placeholder="Select or type item name"
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                               />
-                              <button
-                                onClick={() =>
-                                  handleItemSelect(
-                                    "sales",
-                                    searchTerm.salesItem
-                                  )
-                                }
-                                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                              >
-                                Add
-                              </button>
-                            </div>
-
-                            {/* Dropdown for suggestions */}
-                            {dropdownVisible.salesItem &&
-                              getFilteredSalesItems().length > 0 && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                  {getFilteredSalesItems().map((item, idx) => (
-                                    <div
-                                      key={idx}
-                                      className="px-3 py-2 hover:bg-blue-50 cursor-pointer"
-                                      onMouseDown={(e) => {
-                                        e.preventDefault();
-
-                                        // Check if item is already selected
-                                        if (
-                                          !selectedItems.sales.includes(item)
-                                        ) {
-                                          handleItemSelect("sales", item);
-                                        }
-                                      }}
-                                    >
-                                      {item}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-
-                            {/* Selected items display */}
-                            {selectedItems.sales.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {selectedItems.sales.map((item, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                                  >
-                                    {item}
-                                    <button
-                                      onClick={() =>
-                                        handleRemoveItem("sales", idx)
-                                      }
-                                      className="text-blue-600 hover:text-blue-800"
-                                    >
-                                      ×
-                                    </button>
+                              {dropdownVisible.salesItem &&
+                                getFilteredItems("sales").length > 0 && (
+                                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                    {getFilteredItems("sales").map((item, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="px-3 py-2 hover:bg-blue-50 cursor-pointer"
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          handleTempItemChange("sales", "item", item);
+                                        }}
+                                      >
+                                        {item}
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
-                            )}
+                                )}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Quantity Received
+                            </label>
+                            <input
+                              type="number"
+                              value={tempItemInput.sales.quantity}
+                              onChange={(e) => handleTempItemChange("sales", "quantity", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div className="flex items-end">
+                            <button
+                              onClick={() => addItem("sales")}
+                              className="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium"
+                            >
+                              Add Item
+                            </button>
                           </div>
                         </div>
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Received By
-                          </label>
-                          <input
-                            type="text"
-                            name="receivedBy"
-                            value={formData.receivedBy}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
+                        {/* Selected Items Table */}
+                        {itemsWithQuantities.sales.length > 0 && (
+                          <div className="mt-4">
+                            <h5 className="font-medium text-gray-700 mb-2">Selected Items:</h5>
+                            <div className="overflow-x-auto">
+                              <table className="min-w-full bg-white border border-gray-300">
+                                <thead>
+                                  <tr className="bg-blue-100">
+                                    <th className="px-3 py-2 border text-left">Item Name</th>
+                                    <th className="px-3 py-2 border text-left">Quantity</th>
+                                    <th className="px-3 py-2 border text-left">Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {itemsWithQuantities.sales.map((item, idx) => (
+                                    <tr key={idx} className="hover:bg-blue-50">
+                                      <td className="px-3 py-2 border">{item.item}</td>
+                                      <td className="px-3 py-2 border">{item.quantity}</td>
+                                      <td className="px-3 py-2 border">
+                                        <button
+                                          onClick={() => removeItem("sales", idx)}
+                                          className="text-red-600 hover:text-red-800"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
 
+                  {/* Purchase Return Section */}
                   {selectedSection === "purchase" && (
                     <div className="mb-8">
                       <h3 className="text-xl font-semibold text-green-600 mb-4 border-b-2 border-green-200 pb-2">
                         Purchase Return Section
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Purchase Return Date
@@ -751,7 +768,6 @@ const FormDataPage = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                           />
                         </div>
-
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Supplier Name
@@ -785,68 +801,47 @@ const FormDataPage = () => {
                               placeholder="Select or type supplier name"
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                             />
-
                             {dropdownVisible.supplier &&
                               getFilteredSuppliers().length > 0 && (
                                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                  {getFilteredSuppliers().map(
-                                    (supplier, idx) => (
-                                      <div
-                                        key={idx}
-                                        className="px-3 py-2 hover:bg-green-50 cursor-pointer"
-                                        onMouseDown={(e) => {
-                                          e.preventDefault();
-                                          setFormData({
-                                            ...formData,
-                                            supplierName: supplier,
-                                          });
-                                          setDropdownVisible((prev) => ({
-                                            ...prev,
-                                            supplier: false,
-                                          }));
-                                        }}
-                                      >
-                                        {supplier}
-                                      </div>
-                                    )
-                                  )}
+                                  {getFilteredSuppliers().map((supplier, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="px-3 py-2 hover:bg-green-50 cursor-pointer"
+                                      onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        setFormData({
+                                          ...formData,
+                                          supplierName: supplier,
+                                        });
+                                        setDropdownVisible((prev) => ({
+                                          ...prev,
+                                          supplier: false,
+                                        }));
+                                      }}
+                                    >
+                                      {supplier}
+                                    </div>
+                                  ))}
                                 </div>
                               )}
                           </div>
                         </div>
+                      </div>
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Quantity Returned
-                          </label>
-                          <input
-                            type="number"
-                            name="quantityReturned"
-                            value={formData.quantityReturned}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Item Name
-                          </label>
-                          <div className="relative">
-                            <div className="flex gap-2 mb-2">
+                      {/* Item and Quantity Input */}
+                      <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-green-50">
+                        <h4 className="font-medium text-green-700 mb-3">Add Items</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Item Name
+                            </label>
+                            <div className="relative">
                               <input
                                 type="text"
-                                value={searchTerm.purchaseItem}
-                                onChange={(e) => {
-                                  setSearchTerm((prev) => ({
-                                    ...prev,
-                                    purchaseItem: e.target.value,
-                                  }));
-                                  setDropdownVisible((prev) => ({
-                                    ...prev,
-                                    purchaseItem: true,
-                                  }));
-                                }}
+                                value={tempItemInput.purchase.item}
+                                onChange={(e) => handleTempItemChange("purchase", "item", e.target.value)}
                                 onFocus={() =>
                                   setDropdownVisible((prev) => ({
                                     ...prev,
@@ -866,81 +861,90 @@ const FormDataPage = () => {
                                 placeholder="Select or type item name"
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                               />
-                              <button
-                                onClick={() =>
-                                  handleItemSelect(
-                                    "purchase",
-                                    searchTerm.purchaseItem
-                                  )
-                                }
-                                className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-                              >
-                                Add
-                              </button>
-                            </div>
-
-                            {/* Dropdown for suggestions */}
-                            {dropdownVisible.purchaseItem &&
-                              getFilteredPurchaseItems().length > 0 && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                  {getFilteredPurchaseItems().map(
-                                    (item, idx) => (
+                              {dropdownVisible.purchaseItem &&
+                                getFilteredItems("purchase").length > 0 && (
+                                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                    {getFilteredItems("purchase").map((item, idx) => (
                                       <div
                                         key={idx}
                                         className="px-3 py-2 hover:bg-green-50 cursor-pointer"
                                         onMouseDown={(e) => {
                                           e.preventDefault();
-
-                                          // Check if item is already selected
-                                          if (
-                                            !selectedItems.purchase.includes(
-                                              item
-                                            )
-                                          ) {
-                                            handleItemSelect("purchase", item);
-                                          }
+                                          handleTempItemChange("purchase", "item", item);
                                         }}
                                       >
                                         {item}
                                       </div>
-                                    )
-                                  )}
-                                </div>
-                              )}
-
-                            {/* Selected items display */}
-                            {selectedItems.purchase.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {selectedItems.purchase.map((item, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
-                                  >
-                                    {item}
-                                    <button
-                                      onClick={() =>
-                                        handleRemoveItem("purchase", idx)
-                                      }
-                                      className="text-green-600 hover:text-green-800"
-                                    >
-                                      ×
-                                    </button>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
-                            )}
+                                )}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Quantity Returned
+                            </label>
+                            <input
+                              type="number"
+                              value={tempItemInput.purchase.quantity}
+                              onChange={(e) => handleTempItemChange("purchase", "quantity", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                            />
+                          </div>
+                          <div className="flex items-end">
+                            <button
+                              onClick={() => addItem("purchase")}
+                              className="w-full px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-medium"
+                            >
+                              Add Item
+                            </button>
                           </div>
                         </div>
+
+                        {/* Selected Items Table */}
+                        {itemsWithQuantities.purchase.length > 0 && (
+                          <div className="mt-4">
+                            <h5 className="font-medium text-gray-700 mb-2">Selected Items:</h5>
+                            <div className="overflow-x-auto">
+                              <table className="min-w-full bg-white border border-gray-300">
+                                <thead>
+                                  <tr className="bg-green-100">
+                                    <th className="px-3 py-2 border text-left">Item Name</th>
+                                    <th className="px-3 py-2 border text-left">Quantity</th>
+                                    <th className="px-3 py-2 border text-left">Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {itemsWithQuantities.purchase.map((item, idx) => (
+                                    <tr key={idx} className="hover:bg-green-50">
+                                      <td className="px-3 py-2 border">{item.item}</td>
+                                      <td className="px-3 py-2 border">{item.quantity}</td>
+                                      <td className="px-3 py-2 border">
+                                        <button
+                                          onClick={() => removeItem("purchase", idx)}
+                                          className="text-red-600 hover:text-red-800"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
 
+                  {/* Delivery Note Section */}
                   {selectedSection === "delivery" && (
-                    <div className="mb-6">
+                    <div className="mb-8">
                       <h3 className="text-xl font-semibold text-purple-600 mb-4 border-b-2 border-purple-200 pb-2">
                         Delivery Note Section
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Delivery Note
@@ -965,7 +969,6 @@ const FormDataPage = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                           />
                         </div>
-
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Customer Name
@@ -999,68 +1002,47 @@ const FormDataPage = () => {
                               placeholder="Select or type customer name"
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
-
                             {dropdownVisible.dnCustomer &&
                               getFilteredDNCustomers().length > 0 && (
                                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                  {getFilteredDNCustomers().map(
-                                    (customer, idx) => (
-                                      <div
-                                        key={idx}
-                                        className="px-3 py-2 hover:bg-purple-50 cursor-pointer"
-                                        onMouseDown={(e) => {
-                                          e.preventDefault();
-                                          setFormData({
-                                            ...formData,
-                                            dnCustomerName: customer,
-                                          });
-                                          setDropdownVisible((prev) => ({
-                                            ...prev,
-                                            dnCustomer: false,
-                                          }));
-                                        }}
-                                      >
-                                        {customer}
-                                      </div>
-                                    )
-                                  )}
+                                  {getFilteredDNCustomers().map((customer, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="px-3 py-2 hover:bg-purple-50 cursor-pointer"
+                                      onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        setFormData({
+                                          ...formData,
+                                          dnCustomerName: customer,
+                                        });
+                                        setDropdownVisible((prev) => ({
+                                          ...prev,
+                                          dnCustomer: false,
+                                        }));
+                                      }}
+                                    >
+                                      {customer}
+                                    </div>
+                                  ))}
                                 </div>
                               )}
                           </div>
                         </div>
+                      </div>
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Quantity Dispatched
-                          </label>
-                          <input
-                            type="number"
-                            name="quantityDispatched"
-                            value={formData.quantityDispatched}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Item Name
-                          </label>
-                          <div className="relative">
-                            <div className="flex gap-2 mb-2">
+                      {/* Item and Quantity Input */}
+                      <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-purple-50">
+                        <h4 className="font-medium text-purple-700 mb-3">Add Items</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Item Name
+                            </label>
+                            <div className="relative">
                               <input
                                 type="text"
-                                value={searchTerm.deliveryItem}
-                                onChange={(e) => {
-                                  setSearchTerm((prev) => ({
-                                    ...prev,
-                                    deliveryItem: e.target.value,
-                                  }));
-                                  setDropdownVisible((prev) => ({
-                                    ...prev,
-                                    deliveryItem: true,
-                                  }));
-                                }}
+                                value={tempItemInput.delivery.item}
+                                onChange={(e) => handleTempItemChange("delivery", "item", e.target.value)}
                                 onFocus={() =>
                                   setDropdownVisible((prev) => ({
                                     ...prev,
@@ -1080,82 +1062,90 @@ const FormDataPage = () => {
                                 placeholder="Select or type item name"
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                               />
-                              <button
-                                onClick={() =>
-                                  handleItemSelect(
-                                    "delivery",
-                                    searchTerm.deliveryItem
-                                  )
-                                }
-                                className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600"
-                              >
-                                Add
-                              </button>
-                            </div>
-
-                            {/* Dropdown for suggestions */}
-                            {dropdownVisible.deliveryItem &&
-                              getFilteredDeliveryItems().length > 0 && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                  {getFilteredDeliveryItems().map(
-                                    (item, idx) => (
+                              {dropdownVisible.deliveryItem &&
+                                getFilteredItems("delivery").length > 0 && (
+                                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                    {getFilteredItems("delivery").map((item, idx) => (
                                       <div
                                         key={idx}
                                         className="px-3 py-2 hover:bg-purple-50 cursor-pointer"
                                         onMouseDown={(e) => {
                                           e.preventDefault();
-
-                                          // Check if item is already selected
-                                          if (
-                                            !selectedItems.delivery.includes(
-                                              item
-                                            )
-                                          ) {
-                                            handleItemSelect("delivery", item);
-                                          }
+                                          handleTempItemChange("delivery", "item", item);
                                         }}
                                       >
                                         {item}
                                       </div>
-                                    )
-                                  )}
-                                </div>
-                              )}
-
-                            {/* Selected items display */}
-                            {selectedItems.delivery.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {selectedItems.delivery.map((item, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center gap-1 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm"
-                                  >
-                                    {item}
-                                    <button
-                                      onClick={() =>
-                                        handleRemoveItem("delivery", idx)
-                                      }
-                                      className="text-purple-600 hover:text-purple-800"
-                                    >
-                                      ×
-                                    </button>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
-                            )}
+                                )}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Quantity Dispatched
+                            </label>
+                            <input
+                              type="number"
+                              value={tempItemInput.delivery.quantity}
+                              onChange={(e) => handleTempItemChange("delivery", "quantity", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
+                          <div className="flex items-end">
+                            <button
+                              onClick={() => addItem("delivery")}
+                              className="w-full px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 font-medium"
+                            >
+                              Add Item
+                            </button>
                           </div>
                         </div>
+
+                        {/* Selected Items Table */}
+                        {itemsWithQuantities.delivery.length > 0 && (
+                          <div className="mt-4">
+                            <h5 className="font-medium text-gray-700 mb-2">Selected Items:</h5>
+                            <div className="overflow-x-auto">
+                              <table className="min-w-full bg-white border border-gray-300">
+                                <thead>
+                                  <tr className="bg-purple-100">
+                                    <th className="px-3 py-2 border text-left">Item Name</th>
+                                    <th className="px-3 py-2 border text-left">Quantity</th>
+                                    <th className="px-3 py-2 border text-left">Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {itemsWithQuantities.delivery.map((item, idx) => (
+                                    <tr key={idx} className="hover:bg-purple-50">
+                                      <td className="px-3 py-2 border">{item.item}</td>
+                                      <td className="px-3 py-2 border">{item.quantity}</td>
+                                      <td className="px-3 py-2 border">
+                                        <button
+                                          onClick={() => removeItem("delivery", idx)}
+                                          className="text-red-600 hover:text-red-800"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
 
+                  {/* Damage Entry Section */}
                   {selectedSection === "damage" && (
-                    <div className="mb-6">
+                    <div className="mb-8">
                       <h3 className="text-xl font-semibold text-red-600 mb-4 border-b-2 border-red-200 pb-2">
                         Damage Entry Section
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* Date Field */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Date
@@ -1168,27 +1158,51 @@ const FormDataPage = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                           />
                         </div>
-
-                        {/* Item Name Dropdown */}
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Reason for Damage
+                          </label>
+                          <textarea
+                            name="reasonForDamage"
+                            value={formData.reasonForDamage}
+                            onChange={handleChange}
+                            rows="3"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                            placeholder="Enter reason for damage..."
+                          />
+                        </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Item Name
+                            Approved By
                           </label>
-                          <div className="relative">
-                            <div className="flex gap-2 mb-2">
+                          <select
+                            name="approvedBy"
+                            value={formData.approvedBy}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                          >
+                            <option value="">Select approver</option>
+                            <option value="Shashank Sir">Shashank Sir</option>
+                            <option value="Subham Sir">Subham Sir</option>
+                            <option value="Kishan Sir">Kishan Sir</option>
+                            <option value="Neeraj Sir">Neeraj Sir</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Item, Quantity, and Damage Identified At Input */}
+                      <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-red-50">
+                        <h4 className="font-medium text-red-700 mb-3">Add Damage Items</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Item Name
+                            </label>
+                            <div className="relative">
                               <input
                                 type="text"
-                                value={searchTerm.damageItem}
-                                onChange={(e) => {
-                                  setSearchTerm((prev) => ({
-                                    ...prev,
-                                    damageItem: e.target.value,
-                                  }));
-                                  setDropdownVisible((prev) => ({
-                                    ...prev,
-                                    damageItem: true,
-                                  }));
-                                }}
+                                value={tempItemInput.damage.item}
+                                onChange={(e) => handleTempItemChange("damage", "item", e.target.value)}
                                 onFocus={() =>
                                   setDropdownVisible((prev) => ({
                                     ...prev,
@@ -1208,133 +1222,96 @@ const FormDataPage = () => {
                                 placeholder="Select or type item name"
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                               />
-                              <button
-                                onClick={() =>
-                                  handleItemSelect(
-                                    "damage",
-                                    searchTerm.damageItem
-                                  )
-                                }
-                                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-                              >
-                                Add
-                              </button>
-                            </div>
-
-                            {/* Dropdown for suggestions */}
-                            {dropdownVisible.damageItem &&
-                              getFilteredDamageItems().length > 0 && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                  {getFilteredDamageItems().map((item, idx) => (
-                                    <div
-                                      key={idx}
-                                      className="px-3 py-2 hover:bg-red-50 cursor-pointer"
-                                      onMouseDown={(e) => {
-                                        e.preventDefault();
-
-                                        // Check if item is already selected
-                                        if (
-                                          !selectedItems.damage.includes(item)
-                                        ) {
-                                          handleItemSelect("damage", item);
-                                        }
-                                      }}
-                                    >
-                                      {item}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-
-                            {/* Selected items display */}
-                            {selectedItems.damage.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {selectedItems.damage.map((item, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center gap-1 bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm"
-                                  >
-                                    {item}
-                                    <button
-                                      onClick={() =>
-                                        handleRemoveItem("damage", idx)
-                                      }
-                                      className="text-red-600 hover:text-red-800"
-                                    >
-                                      ×
-                                    </button>
+                              {dropdownVisible.damageItem &&
+                                getFilteredItems("damage").length > 0 && (
+                                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                    {getFilteredItems("damage").map((item, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="px-3 py-2 hover:bg-red-50 cursor-pointer"
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          handleTempItemChange("damage", "item", item);
+                                        }}
+                                      >
+                                        {item}
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
-                            )}
+                                )}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Quantity Damaged
+                            </label>
+                            <input
+                              type="number"
+                              value={tempItemInput.damage.quantity}
+                              onChange={(e) => handleTempItemChange("damage", "quantity", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Damage Identified At
+                            </label>
+                            <select
+                              value={tempItemInput.damage.damageIdentifiedAt}
+                              onChange={(e) => handleTempItemChange("damage", "damageIdentifiedAt", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                            >
+                              <option value="">Select location</option>
+                              <option value="Warehouse">Warehouse</option>
+                              <option value="Transit">Transit</option>
+                              <option value="Customer Site">Customer Site</option>
+                            </select>
+                          </div>
+                          <div className="flex items-end">
+                            <button
+                              onClick={() => addItem("damage")}
+                              className="w-full px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 font-medium"
+                            >
+                              Add Item
+                            </button>
                           </div>
                         </div>
 
-                        {/* Quantity Damaged */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Quantity Damaged
-                          </label>
-                          <input
-                            type="number"
-                            name="quantityDamaged"
-                            value={formData.quantityDamaged}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                          />
-                        </div>
-
-                        {/* Reason for Damage (Textarea - spans 2 columns on medium+) */}
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Reason for Damage
-                          </label>
-                          <textarea
-                            name="reasonForDamage"
-                            value={formData.reasonForDamage}
-                            onChange={handleChange}
-                            rows="3"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                            placeholder="Enter reason for damage..."
-                          />
-                        </div>
-
-                        {/* Damage Identified At Dropdown */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Damage Identified At
-                          </label>
-                          <select
-                            name="damageIdentifiedAt"
-                            value={formData.damageIdentifiedAt}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                          >
-                            <option value="">Select location</option>
-                            <option value="Warehouse">Warehouse</option>
-                            <option value="Transit">Transit</option>
-                            <option value="Customer Site">Customer Site</option>
-                          </select>
-                        </div>
-
-                        {/* Approved By Dropdown */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Approved By
-                          </label>
-                          <select
-                            name="approvedBy"
-                            value={formData.approvedBy}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                          >
-                            <option value="">Select approver</option>
-                            <option value="Shashank Sir">Shashank Sir</option>
-                            <option value="Subham Sir">Subham Sir</option>
-                            <option value="Kishan Sir">Kishan Sir</option>
-                            <option value="Neeraj Sir">Neeraj Sir</option>
-                          </select>
-                        </div>
+                        {/* Selected Items Table */}
+                        {itemsWithQuantities.damage.length > 0 && (
+                          <div className="mt-4">
+                            <h5 className="font-medium text-gray-700 mb-2">Selected Damage Items:</h5>
+                            <div className="overflow-x-auto">
+                              <table className="min-w-full bg-white border border-gray-300">
+                                <thead>
+                                  <tr className="bg-red-100">
+                                    <th className="px-3 py-2 border text-left">Item Name</th>
+                                    <th className="px-3 py-2 border text-left">Quantity</th>
+                                    <th className="px-3 py-2 border text-left">Damage Identified At</th>
+                                    <th className="px-3 py-2 border text-left">Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {itemsWithQuantities.damage.map((item, idx) => (
+                                    <tr key={idx} className="hover:bg-red-50">
+                                      <td className="px-3 py-2 border">{item.item}</td>
+                                      <td className="px-3 py-2 border">{item.quantity}</td>
+                                      <td className="px-3 py-2 border">{item.damageIdentifiedAt}</td>
+                                      <td className="px-3 py-2 border">
+                                        <button
+                                          onClick={() => removeItem("damage", idx)}
+                                          className="text-red-600 hover:text-red-800"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1348,7 +1325,7 @@ const FormDataPage = () => {
                     </button>
                     <button
                       onClick={handleSubmit}
-                      disabled={loading}
+                      disabled={loading || itemsWithQuantities[selectedSection].length === 0}
                       className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                     >
                       <Send size={20} />
@@ -1384,66 +1361,25 @@ const FormDataPage = () => {
                         Timestamp
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Sales Return Date
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
+                        Date
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
                         Invoice Number
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Customer Name
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Qty Received
+                        Customer/Supplier Name
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
                         Item Name
                       </th>
-
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
+                        Quantity
+                      </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
                         Received By
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Purchase Return Date
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Purchase Invoice No.
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Purchase Invoice Date
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Supplier Name
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Qty Returned
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        PR Item Name
-                      </th>
-
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Delivery Note
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Delivery Note Date
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Customer Name (DN)
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Qty Dispatched
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        DN Item Name
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Damage Date
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Damage Item Name
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
-                        Qty Damaged
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
                         Reason for Damage
@@ -1460,7 +1396,7 @@ const FormDataPage = () => {
                     {tableData.length === 0 ? (
                       <tr>
                         <td
-                          colSpan="16"
+                          colSpan="11"
                           className="px-4 py-8 text-center text-gray-500"
                         >
                           No data available
@@ -1473,70 +1409,27 @@ const FormDataPage = () => {
                             {row.timestamp}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {row.salesReturnDate}
+                            {row.status}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                            {row.date}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                             {row.invoiceNumber}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {row.srCustomerName}
+                            {row.customerSupplierName}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {row.quantityReceived}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-pre-line">
                             {row.itemName}
                           </td>
-
+                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                            {row.quantity}
+                          </td>
                           <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                             {row.receivedBy}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {row.purchaseReturnDate}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {row.purchaseInvoiceNo}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {row.purchaseInvoiceDate}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {row.supplierName}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {row.quantityReturned}
-                          </td>
-
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-pre-line">
-                            {row.prItemName}
-                          </td>
-
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {row.deliveryNote}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {row.deliveryNoteDate}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {row.dnCustomerName}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {row.quantityDispatched}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-pre-line">
-                            {row.dnItemName}
-                          </td>
-
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {row.damageDate}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-pre-line">
-                            {row.damageItemName}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {row.quantityDamaged}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap max-w-xs truncate">
                             {row.reasonForDamage}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
@@ -1551,7 +1444,7 @@ const FormDataPage = () => {
                   </tbody>
                 </table>
 
-                {/* Mobile Card View - Shows only on small screens */}
+                {/* Mobile Card View */}
                 <div className="sm:hidden space-y-4">
                   {tableData.length === 0 ? (
                     <div className="text-center text-gray-500 p-8">
@@ -1564,180 +1457,67 @@ const FormDataPage = () => {
                         className="bg-white rounded-lg shadow-md p-4 border border-gray-200"
                       >
                         <div className="space-y-3">
-                          {/* Sales Return Info */}
-                          {row.salesReturnDate && (
-                            <>
-                              <h3 className="font-semibold text-blue-600 border-b pb-1">
-                                Sales Return
-                              </h3>
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div>
-                                  <span className="font-medium">Date:</span>{" "}
-                                  {row.salesReturnDate}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Invoice:</span>{" "}
-                                  {row.invoiceNumber}
-                                </div>
-                                <div className="col-span-2">
-                                  <span className="font-medium">Customer:</span>{" "}
-                                  {row.srCustomerName}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Qty:</span>{" "}
-                                  {row.quantityReceived}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Item:</span>
-                                  <div className="text-gray-600 mt-1">
-                                    {row.itemName.split(", ").map((item, i) => (
-                                      <div key={i}>
-                                        {i + 1}. {item}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div>
-                                  <span className="font-medium">
-                                    Received By:
-                                  </span>{" "}
-                                  {row.receivedBy}
-                                </div>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="font-medium text-sm text-gray-600">Status:</span>
+                              <div className="font-medium">
+                                {row.status}
                               </div>
-                            </>
-                          )}
-
-                          {/* Purchase Return Info */}
-                          {row.purchaseReturnDate && (
-                            <>
-                              <h3 className="font-semibold text-green-600 border-b pb-1 mt-4">
-                                Purchase Return
-                              </h3>
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div>
-                                  <span className="font-medium">Date:</span>{" "}
-                                  {row.purchaseReturnDate}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Invoice:</span>{" "}
-                                  {row.purchaseInvoiceNo}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Supplier:</span>{" "}
-                                  {row.supplierName}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Qty:</span>{" "}
-                                  {row.quantityReturned}
-                                </div>
-                                <div className="col-span-2">
-                                  <span className="font-medium">Item:</span>
-                                  <div className="text-gray-600 mt-1">
-                                    {row.prItemName
-                                      .split(", ")
-                                      .map((item, i) => (
-                                        <div key={i}>
-                                          {i + 1}. {item}
-                                        </div>
-                                      ))}
-                                  </div>
-                                </div>
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {row.timestamp}
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <span className="text-sm text-gray-600">Date:</span>
+                              <div>{row.date}</div>
+                            </div>
+                            {row.invoiceNumber && (
+                              <div>
+                                <span className="text-sm text-gray-600">Invoice:</span>
+                                <div>{row.invoiceNumber}</div>
                               </div>
-                            </>
-                          )}
-
-                          {/* Delivery Note Info */}
-                          {row.deliveryNote && (
-                            <>
-                              <h3 className="font-semibold text-purple-600 border-b pb-1 mt-4">
-                                Delivery Note
-                              </h3>
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div>
-                                  <span className="font-medium">Note:</span>{" "}
-                                  {row.deliveryNote}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Date:</span>{" "}
-                                  {row.deliveryNoteDate}
-                                </div>
-                                <div className="col-span-2">
-                                  <span className="font-medium">Customer:</span>{" "}
-                                  {row.dnCustomerName}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Qty:</span>{" "}
-                                  {row.quantityDispatched}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Item:</span>
-                                  <div className="text-gray-600 mt-1">
-                                    {row.dnItemName
-                                      .split(", ")
-                                      .map((item, i) => (
-                                        <div key={i}>
-                                          {i + 1}. {item}
-                                        </div>
-                                      ))}
-                                  </div>
-                                </div>
+                            )}
+                            {row.customerSupplierName && (
+                              <div className="col-span-2">
+                                <span className="text-sm text-gray-600">Customer/Supplier:</span>
+                                <div>{row.customerSupplierName}</div>
                               </div>
-                            </>
-                          )}
-
-                          {/* Damage Entry Info */}
-                          {row.damageDate && (
-                            <>
-                              <h3 className="font-semibold text-red-600 border-b pb-1 mt-4">
-                                Damage Entry
-                              </h3>
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div>
-                                  <span className="font-medium">Date:</span>{" "}
-                                  {row.damageDate}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Qty:</span>{" "}
-                                  {row.quantityDamaged}
-                                </div>
-                                <div className="col-span-2">
-                                  <span className="font-medium">Item:</span>
-                                  <div className="text-gray-600 mt-1">
-                                    {row.damageItemName
-                                      .split(", ")
-                                      .map((item, i) => (
-                                        <div key={i}>
-                                          {i + 1}. {item}
-                                        </div>
-                                      ))}
-                                  </div>
-                                </div>
-                                <div className="col-span-2">
-                                  <span className="font-medium">
-                                    Identified At:
-                                  </span>{" "}
-                                  {row.damageIdentifiedAt}
-                                </div>
-                                <div>
-                                  <span className="font-medium">
-                                    Approved By:
-                                  </span>{" "}
-                                  {row.approvedBy}
-                                </div>
-                                <div className="col-span-2">
-                                  <span className="font-medium">Reason:</span>
-                                  <div className="text-gray-600 mt-1">
-                                    {row.reasonForDamage}
-                                  </div>
-                                </div>
+                            )}
+                            <div className="col-span-2">
+                              <span className="text-sm text-gray-600">Item:</span>
+                              <div className="font-medium">{row.itemName}</div>
+                            </div>
+                            <div>
+                              <span className="text-sm text-gray-600">Quantity:</span>
+                              <div>{row.quantity}</div>
+                            </div>
+                            {row.receivedBy && (
+                              <div>
+                                <span className="text-sm text-gray-600">Received By:</span>
+                                <div>{row.receivedBy}</div>
                               </div>
-                            </>
-                          )}
-
-                          {/* Timestamp - shows at bottom for all */}
-                          <div className="pt-3 border-t text-xs text-gray-500">
-                            <span className="font-medium">Added:</span>{" "}
-                            {row.timestamp}
+                            )}
+                            {row.reasonForDamage && (
+                              <div className="col-span-2">
+                                <span className="text-sm text-gray-600">Reason for Damage:</span>
+                                <div>{row.reasonForDamage}</div>
+                              </div>
+                            )}
+                            {row.damageIdentifiedAt && (
+                              <div>
+                                <span className="text-sm text-gray-600">Identified At:</span>
+                                <div>{row.damageIdentifiedAt}</div>
+                              </div>
+                            )}
+                            {row.approvedBy && (
+                              <div>
+                                <span className="text-sm text-gray-600">Approved By:</span>
+                                <div>{row.approvedBy}</div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
