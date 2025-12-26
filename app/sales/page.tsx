@@ -246,6 +246,7 @@ export default function WarehousePage() {
               const order = {
                 rowIndex: actualRowIndex,
                 id: row.c[105] ? row.c[105].v : `ORDER-${actualRowIndex}`,
+                timeStamp: row.c[0] ? row.c[0].v : "",
                 orderNo: row.c[1] ? row.c[1].v : "", // Column B - Order No
                 quotationNo: row.c[2] ? row.c[2].v : "", // Column C
                 companyName: row.c[3] ? row.c[3].v : "",
@@ -1168,6 +1169,22 @@ export default function WarehousePage() {
         return actualValue || "";
     }
   };
+
+
+  function convertTimestampToDDMMYYYY(timestampString) {
+  // Extract the date parts
+  const parts = timestampString.match(/\d+/g).map(Number);
+  
+  // Create Date object (month is 0-indexed in Date constructor too)
+  const date = new Date(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]);
+  
+  // Format to dd/mm/yyyy
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // +1 because getMonth() returns 0-11
+  const year = date.getFullYear();
+  
+  return `${day}/${month}/${year}`;
+}
 
   return (
     <MainLayout>
@@ -2429,6 +2446,15 @@ export default function WarehousePage() {
                   <Input
                     className="font-bold"
                     value={selectedOrder?.quotationNo || ""}
+                    disabled
+                  />
+                </div>
+                
+               <div className="space-y-2">
+                  <Label>Date</Label>
+                  <Input
+                    className="font-bold"
+                    value={convertTimestampToDDMMYYYY(selectedOrder?.timeStamp) || ""}
                     disabled
                   />
                 </div>
