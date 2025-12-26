@@ -2454,7 +2454,7 @@ export default function WarehousePage() {
                   <Label>Date</Label>
                   <Input
                     className="font-bold"
-                    value={convertTimestampToDDMMYYYY(selectedOrder?.timeStamp) || ""}
+                    value={selectedOrder?.timeStamp ? convertTimestampToDDMMYYYY(selectedOrder.timeStamp) : ""}
                     disabled
                   />
                 </div>
