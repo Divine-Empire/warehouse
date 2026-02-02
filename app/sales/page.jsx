@@ -39,12 +39,233 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Eye, RefreshCw, Search, Settings, Edit, Save, X } from "lucide-react";
+import { Eye, RefreshCw, Search, Settings, Edit, Save, X, FileText, CloudUpload, Trash2 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
+import ProcessDialog from "@/components/process-dialog";
+
+// Column definitions for Pending tab (B to BJ) - Defined before component to avoid temporal dead zone
+const pendingColumns = [
+  { key: "actions", label: "Actions", searchable: false },
+  { key: "orderNo", label: "Order No.", searchable: true },
+  { key: "quotationNo", label: "Quotation No.", searchable: true },
+  { key: "companyName", label: "Company Name", searchable: true },
+  {
+    key: "contactPersonName",
+    label: "Contact Person Name",
+    searchable: true,
+  },
+  { key: "contactNumber", label: "Contact Number", searchable: true },
+  { key: "billingAddress", label: "Billing Address", searchable: true },
+  { key: "shippingAddress", label: "Shipping Address", searchable: true },
+  { key: "paymentMode", label: "Payment Mode", searchable: true },
+  { key: "quotationCopy", label: "Quotation Copy", searchable: true },
+  { key: "paymentTerms", label: "Payment Terms(In Days)", searchable: true },
+  { key: "transportMode", label: "Transport Mode", searchable: true },
+  { key: "transportid", label: "Transport ID", searchable: true },
+  { key: "freightType", label: "Freight Type", searchable: true },
+  { key: "destination", label: "Destination", searchable: true },
+  { key: "poNumber", label: "Po Number", searchable: true },
+  { key: "quotationCopy2", label: "Quotation Copy", searchable: true },
+  {
+    key: "acceptanceCopy",
+    label: "Acceptance Copy (Purchase Order Only)",
+    searchable: true,
+  },
+  { key: "offer", label: "Offer", searchable: true },
+  {
+    key: "conveyedForRegistration",
+    label: "Conveyed For Registration Form",
+    searchable: true,
+  },
+  { key: "qty", label: "Qty", searchable: true },
+  { key: "amount", label: "Amount", searchable: true },
+  { key: "approvedName", label: "Approved Name", searchable: true },
+  {
+    key: "calibrationCertRequired",
+    label: "Calibration Certificate Required",
+    searchable: true,
+  },
+  {
+    key: "certificateCategory",
+    label: "Certificate Category",
+    searchable: true,
+  },
+  {
+    key: "installationRequired",
+    label: "Installation Required",
+    searchable: true,
+  },
+  { key: "ewayBillDetails", label: "Eway Bill Details", searchable: true },
+  {
+    key: "ewayBillAttachment",
+    label: "Eway Bill Attachment",
+    searchable: true,
+  },
+  { key: "srnNumber", label: "Srn Number", searchable: true },
+  {
+    key: "srnNumberAttachment",
+    label: "Srn Number Attachment",
+    searchable: true,
+  },
+  { key: "attachment", label: "Attachment", searchable: true },
+  { key: "vehicleNo", label: "Vehicle No.", searchable: true },
+
+  { key: "itemName1", label: "Item Name 1", searchable: true },
+  { key: "quantity1", label: "Quantity 1", searchable: true },
+  { key: "itemName2", label: "Item Name 2", searchable: true },
+  { key: "quantity2", label: "Quantity 2", searchable: true },
+  { key: "itemName3", label: "Item Name 3", searchable: true },
+  { key: "quantity3", label: "Quantity 3", searchable: true },
+  { key: "itemName4", label: "Item Name 4", searchable: true },
+  { key: "quantity4", label: "Quantity 4", searchable: true },
+  { key: "itemName5", label: "Item Name 5", searchable: true },
+  { key: "quantity5", label: "Quantity 5", searchable: true },
+  { key: "itemName6", label: "Item Name 6", searchable: true },
+  { key: "quantity6", label: "Quantity 6", searchable: true },
+  { key: "itemName7", label: "Item Name 7", searchable: true },
+  { key: "quantity7", label: "Quantity 7", searchable: true },
+  { key: "itemName8", label: "Item Name 8", searchable: true },
+  { key: "quantity8", label: "Quantity 8", searchable: true },
+  { key: "itemName9", label: "Item Name 9", searchable: true },
+  { key: "quantity9", label: "Quantity 9", searchable: true },
+  { key: "itemName10", label: "Item Name 10", searchable: true },
+  { key: "quantity10", label: "Quantity 10", searchable: true },
+  { key: "itemName11", label: "Item Name 11", searchable: true },
+  { key: "quantity11", label: "Quantity 11", searchable: true },
+  { key: "itemName12", label: "Item Name 12", searchable: true },
+  { key: "quantity12", label: "Quantity 12", searchable: true },
+  { key: "itemName13", label: "Item Name 13", searchable: true },
+  { key: "quantity13", label: "Quantity 13", searchable: true },
+  { key: "itemName14", label: "Item Name 14", searchable: true },
+  { key: "quantity14", label: "Quantity 14", searchable: true },
+  { key: "totalQty", label: "Total Qty", searchable: true },
+  { key: "remarks", label: "Remarks", searchable: true },
+  { key: "invoiceNumber", label: "Invoice Number", searchable: true },
+  { key: "invoiceUpload", label: "Invoice Upload", searchable: true },
+  { key: "ewayBillUpload", label: "Eway Bill Upload", searchable: true },
+  { key: "totalQtyHistory", label: "Total Qty", searchable: true },
+  { key: "totalBillAmount", label: "Total Bill Amount", searchable: true },
+  { key: "dSrNumber", label: "D-Sr Number", searchable: true },
+];
+
+// Column definitions for History tab (includes BN to BR and BV to CC) - Defined before component to avoid temporal dead zone
+const historyColumns = [
+  { key: "editActions", label: "Actions", searchable: false },
+  { key: "orderNo", label: "Order No.", searchable: true },
+  { key: "quotationNo", label: "Quotation No.", searchable: true },
+  { key: "companyName", label: "Company Name", searchable: true },
+  {
+    key: "contactPersonName",
+    label: "Contact Person Name",
+    searchable: true,
+  },
+  { key: "contactNumber", label: "Contact Number", searchable: true },
+  { key: "billingAddress", label: "Billing Address", searchable: true },
+  { key: "shippingAddress", label: "Shipping Address", searchable: true },
+  { key: "paymentMode", label: "Payment Mode", searchable: true },
+  { key: "quotationCopy", label: "Quotation Copy", searchable: true },
+  { key: "paymentTerms", label: "Payment Terms(In Days)", searchable: true },
+  { key: "transportMode", label: "Transport Mode", searchable: true },
+  { key: "transportid", label: "Transport ID", searchable: true },
+  { key: "freightType", label: "Freight Type", searchable: true },
+  { key: "destination", label: "Destination", searchable: true },
+  { key: "poNumber", label: "Po Number", searchable: true },
+  { key: "quotationCopy2", label: "Quotation Copy", searchable: true },
+  {
+    key: "acceptanceCopy",
+    label: "Acceptance Copy (Purchase Order Only)",
+    searchable: true,
+  },
+  { key: "offer", label: "Offer", searchable: true },
+  {
+    key: "conveyedForRegistration",
+    label: "Conveyed For Registration Form",
+    searchable: true,
+  },
+  { key: "qty", label: "Qty", searchable: true },
+  { key: "amount", label: "Amount", searchable: true },
+  { key: "approvedName", label: "Approved Name", searchable: true },
+  {
+    key: "calibrationCertRequired",
+    label: "Calibration Certificate Required",
+    searchable: true,
+  },
+  {
+    key: "certificateCategory",
+    label: "Certificate Category",
+    searchable: true,
+  },
+  {
+    key: "installationRequired",
+    label: "Installation Required",
+    searchable: true,
+  },
+  { key: "transporterId", label: "Transporter ID", searchable: true },
+
+  { key: "srnNumber", label: "Srn Number", searchable: true },
+  {
+    key: "srnNumberAttachment",
+    label: "Srn Number Attachment",
+    searchable: true,
+  },
+  { key: "attachment", label: "Attachment", searchable: true },
+  { key: "vehicleNo", label: "Vehicle No.", searchable: true },
+
+  { key: "itemName1", label: "Item Name 1", searchable: true },
+  { key: "quantity1", label: "Quantity 1", searchable: true },
+  { key: "itemName2", label: "Item Name 2", searchable: true },
+  { key: "quantity2", label: "Quantity 2", searchable: true },
+  { key: "itemName3", label: "Item Name 3", searchable: true },
+  { key: "quantity3", label: "Quantity 3", searchable: true },
+  { key: "itemName4", label: "Item Name 4", searchable: true },
+  { key: "quantity4", label: "Quantity 4", searchable: true },
+  { key: "itemName5", label: "Item Name 5", searchable: true },
+  { key: "quantity5", label: "Quantity 5", searchable: true },
+  { key: "itemName6", label: "Item Name 6", searchable: true },
+  { key: "quantity6", label: "Quantity 6", searchable: true },
+  { key: "itemName7", label: "Item Name 7", searchable: true },
+  { key: "quantity7", label: "Quantity 7", searchable: true },
+  { key: "itemName8", label: "Item Name 8", searchable: true },
+  { key: "quantity8", label: "Quantity 8", searchable: true },
+  { key: "itemName9", label: "Item Name 9", searchable: true },
+  { key: "quantity9", label: "Quantity 9", searchable: true },
+  { key: "itemName10", label: "Item Name 10", searchable: true },
+  { key: "quantity10", label: "Quantity 10", searchable: true },
+  { key: "itemName11", label: "Item Name 11", searchable: true },
+  { key: "quantity11", label: "Quantity 11", searchable: true },
+  { key: "itemName12", label: "Item Name 12", searchable: true },
+  { key: "quantity12", label: "Quantity 12", searchable: true },
+  { key: "itemName13", label: "Item Name 13", searchable: true },
+  { key: "quantity13", label: "Quantity 13", searchable: true },
+  { key: "itemName14", label: "Item Name 14", searchable: true },
+  { key: "quantity14", label: "Quantity 14", searchable: true },
+  { key: "totalQty", label: "Total Qty", searchable: true },
+  { key: "remarks", label: "Remarks", searchable: true },
+  { key: "invoiceNumber", label: "Invoice Number", searchable: true },
+  { key: "invoiceUpload", label: "Invoice Upload", searchable: true },
+  { key: "ewayBillUpload", label: "Eway Bill Upload", searchable: true },
+  { key: "totalQtyHistory", label: "Total Qty", searchable: true },
+  { key: "totalBillAmount", label: "Total Bill Amount", searchable: true },
+  { key: "dSrNumber", label: "D-Sr Number", searchable: true },
+  // BV to CC columns
+  { key: "transporterName", label: "Transporter Name", searchable: true },
+  {
+    key: "transporterContact",
+    label: "Transporter Contact",
+    searchable: true,
+  },
+  { key: "biltyNumber", label: "Bilty Number", searchable: true },
+  { key: "totalCharges", label: "Total Charges", searchable: true },
+  { key: "warehouseRemarks", label: "Warehouse Remarks", searchable: true },
+  { key: "beforePhoto", label: "Before Photo", searchable: false },
+  { key: "afterPhoto", label: "After Photo", searchable: false },
+  { key: "biltyUpload", label: "Bilty Upload", searchable: false },
+  { key: "dispatchStatus", label: "Dispatch Status", searchable: true },
+  { key: "notOkReason", label: "Reason for Not Okay", searchable: true },
+];
 
 export default function WarehousePage() {
   const { orders, updateOrder } = useData();
-  // const [selectedOrder, setSelectedOrder] = useState<string>("")
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -58,8 +279,22 @@ export default function WarehousePage() {
   const [isSaving, setIsSaving] = useState(false);
 
   const [companyNameFilter, setCompanyNameFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedColumn, setSelectedColumn] = useState("all");
 
-  const [itemQuantities, setItemQuantities] = useState({});
+  const [visiblePendingColumns, setVisiblePendingColumns] = useState(
+    pendingColumns.reduce((acc, col) => ({ ...acc, [col.key]: true }), {})
+  );
+  const [visibleHistoryColumns, setVisibleHistoryColumns] = useState(
+    historyColumns.reduce((acc, col) => ({ ...acc, [col.key]: true }), {})
+  );
+
+  // Separate loading states to prevent race conditions
+  const [loadingPending, setLoadingPending] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const loading = loadingPending || loadingHistory;
+  const [error, setError] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const { user: currentUser } = useAuth();
 
@@ -68,250 +303,48 @@ export default function WarehousePage() {
   const SHEET_ID = "1yEsh4yzyvglPXHxo-5PT70VpwVJbxV7wwH8rpU1RFJA";
   const SHEET_NAME = "DISPATCH-DELIVERY";
 
-  // Column definitions for Pending tab (B to BJ)
-  const pendingColumns = [
-    { key: "actions", label: "Actions", searchable: false },
-    { key: "orderNo", label: "Order No.", searchable: true },
-    { key: "quotationNo", label: "Quotation No.", searchable: true },
-    { key: "companyName", label: "Company Name", searchable: true },
-    {
-      key: "contactPersonName",
-      label: "Contact Person Name",
-      searchable: true,
-    },
-    { key: "contactNumber", label: "Contact Number", searchable: true },
-    { key: "billingAddress", label: "Billing Address", searchable: true },
-    { key: "shippingAddress", label: "Shipping Address", searchable: true },
-    { key: "paymentMode", label: "Payment Mode", searchable: true },
-    { key: "quotationCopy", label: "Quotation Copy", searchable: true },
-    { key: "paymentTerms", label: "Payment Terms(In Days)", searchable: true },
-    { key: "transportMode", label: "Transport Mode", searchable: true },
-    { key: "transportid", label: "Transport ID", searchable: true },
-    { key: "freightType", label: "Freight Type", searchable: true },
-    { key: "destination", label: "Destination", searchable: true },
-    { key: "poNumber", label: "Po Number", searchable: true },
-    { key: "quotationCopy2", label: "Quotation Copy", searchable: true },
-    {
-      key: "acceptanceCopy",
-      label: "Acceptance Copy (Purchase Order Only)",
-      searchable: true,
-    },
-    { key: "offer", label: "Offer", searchable: true },
-    {
-      key: "conveyedForRegistration",
-      label: "Conveyed For Registration Form",
-      searchable: true,
-    },
-    { key: "qty", label: "Qty", searchable: true },
-    { key: "amount", label: "Amount", searchable: true },
-    { key: "approvedName", label: "Approved Name", searchable: true },
-    {
-      key: "calibrationCertRequired",
-      label: "Calibration Certificate Required",
-      searchable: true,
-    },
-    {
-      key: "certificateCategory",
-      label: "Certificate Category",
-      searchable: true,
-    },
-    {
-      key: "installationRequired",
-      label: "Installation Required",
-      searchable: true,
-    },
-    { key: "ewayBillDetails", label: "Eway Bill Details", searchable: true },
-    {
-      key: "ewayBillAttachment",
-      label: "Eway Bill Attachment",
-      searchable: true,
-    },
-    { key: "srnNumber", label: "Srn Number", searchable: true },
-    {
-      key: "srnNumberAttachment",
-      label: "Srn Number Attachment",
-      searchable: true,
-    },
-    { key: "attachment", label: "Attachment", searchable: true },
-    { key: "vehicleNo", label: "Vehicle No.", searchable: true },
+  // Robust date parser for sorting that handles various formats including GVIZ Date() and DD/MM/YYYY
+  const parseFlexibleDate = (dateVal) => {
+    if (!dateVal) return 0;
+    const s = String(dateVal);
 
-    { key: "itemName1", label: "Item Name 1", searchable: true },
-    { key: "quantity1", label: "Quantity 1", searchable: true },
-    { key: "itemName2", label: "Item Name 2", searchable: true },
-    { key: "quantity2", label: "Quantity 2", searchable: true },
-    { key: "itemName3", label: "Item Name 3", searchable: true },
-    { key: "quantity3", label: "Quantity 3", searchable: true },
-    { key: "itemName4", label: "Item Name 4", searchable: true },
-    { key: "quantity4", label: "Quantity 4", searchable: true },
-    { key: "itemName5", label: "Item Name 5", searchable: true },
-    { key: "quantity5", label: "Quantity 5", searchable: true },
-    { key: "itemName6", label: "Item Name 6", searchable: true },
-    { key: "quantity6", label: "Quantity 6", searchable: true },
-    { key: "itemName7", label: "Item Name 7", searchable: true },
-    { key: "quantity7", label: "Quantity 7", searchable: true },
-    { key: "itemName8", label: "Item Name 8", searchable: true },
-    { key: "quantity8", label: "Quantity 8", searchable: true },
-    { key: "itemName9", label: "Item Name 9", searchable: true },
-    { key: "quantity9", label: "Quantity 9", searchable: true },
-    { key: "itemName10", label: "Item Name 10", searchable: true },
-    { key: "quantity10", label: "Quantity 10", searchable: true },
-    { key: "itemName11", label: "Item Name 11", searchable: true },
-    { key: "quantity11", label: "Quantity 11", searchable: true },
-    { key: "itemName12", label: "Item Name 12", searchable: true },
-    { key: "quantity12", label: "Quantity 12", searchable: true },
-    { key: "itemName13", label: "Item Name 13", searchable: true },
-    { key: "quantity13", label: "Quantity 13", searchable: true },
-    { key: "itemName14", label: "Item Name 14", searchable: true },
-    { key: "quantity14", label: "Quantity 14", searchable: true },
-    { key: "totalQty", label: "Total Qty", searchable: true },
-    { key: "remarks", label: "Remarks", searchable: true },
-    { key: "invoiceNumber", label: "Invoice Number", searchable: true },
-    { key: "invoiceUpload", label: "Invoice Upload", searchable: true },
-    { key: "ewayBillUpload", label: "Eway Bill Upload", searchable: true },
-    { key: "totalQtyHistory", label: "Total Qty", searchable: true },
-    { key: "totalBillAmount", label: "Total Bill Amount", searchable: true },
-    { key: "dSrNumber", label: "D-Sr Number", searchable: true },
-  ];
+    // 1. Handle Google Sheets GVIZ Date format: "Date(2026,0,31)"
+    if (s.startsWith("Date(")) {
+      const match = s.match(/Date\((\d+),(\d+),(\d+)(?:,(\d+),(\d+),(\d+))?\)/);
+      if (match) {
+        return new Date(
+          parseInt(match[1]),
+          parseInt(match[2]),
+          parseInt(match[3]),
+          parseInt(match[4] || 0),
+          parseInt(match[5] || 0),
+          parseInt(match[6] || 0)
+        ).getTime();
+      }
+    }
 
-  // Column definitions for History tab (includes BN to BR and BV to CC)
-  const historyColumns = [
-    { key: "editActions", label: "Actions", searchable: false },
-    { key: "orderNo", label: "Order No.", searchable: true },
-    { key: "quotationNo", label: "Quotation No.", searchable: true },
-    { key: "companyName", label: "Company Name", searchable: true },
-    {
-      key: "contactPersonName",
-      label: "Contact Person Name",
-      searchable: true,
-    },
-    { key: "contactNumber", label: "Contact Number", searchable: true },
-    { key: "billingAddress", label: "Billing Address", searchable: true },
-    { key: "shippingAddress", label: "Shipping Address", searchable: true },
-    { key: "paymentMode", label: "Payment Mode", searchable: true },
-    { key: "quotationCopy", label: "Quotation Copy", searchable: true },
-    { key: "paymentTerms", label: "Payment Terms(In Days)", searchable: true },
-    { key: "transportMode", label: "Transport Mode", searchable: true },
-    { key: "transportid", label: "Transport ID", searchable: true },
-    { key: "freightType", label: "Freight Type", searchable: true },
-    { key: "destination", label: "Destination", searchable: true },
-    { key: "poNumber", label: "Po Number", searchable: true },
-    { key: "quotationCopy2", label: "Quotation Copy", searchable: true },
-    {
-      key: "acceptanceCopy",
-      label: "Acceptance Copy (Purchase Order Only)",
-      searchable: true,
-    },
-    { key: "offer", label: "Offer", searchable: true },
-    {
-      key: "conveyedForRegistration",
-      label: "Conveyed For Registration Form",
-      searchable: true,
-    },
-    { key: "qty", label: "Qty", searchable: true },
-    { key: "amount", label: "Amount", searchable: true },
-    { key: "approvedName", label: "Approved Name", searchable: true },
-    {
-      key: "calibrationCertRequired",
-      label: "Calibration Certificate Required",
-      searchable: true,
-    },
-    {
-      key: "certificateCategory",
-      label: "Certificate Category",
-      searchable: true,
-    },
-    {
-      key: "installationRequired",
-      label: "Installation Required",
-      searchable: true,
-    },
-    { key: "transporterId", label: "Transporter ID", searchable: true },
+    // 2. Handle DD/MM/YYYY or DD-MM-YYYY
+    const parts = s.split(/[/-]/);
+    if (parts.length >= 3 && parts[0].length <= 2 && parts[2].length === 4) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const year = parseInt(parts[2], 10);
+      const timeMatch = s.match(/\s+(\d+):(\d+):?(\d+)?/);
+      if (timeMatch) {
+        const d = new Date(year, month, day, parseInt(timeMatch[1]), parseInt(timeMatch[2]), parseInt(timeMatch[3] || 0));
+        if (!isNaN(d.getTime())) return d.getTime();
+      }
+      const d = new Date(year, month, day);
+      if (!isNaN(d.getTime())) return d.getTime();
+    }
 
-    { key: "srnNumber", label: "Srn Number", searchable: true },
-    {
-      key: "srnNumberAttachment",
-      label: "Srn Number Attachment",
-      searchable: true,
-    },
-    { key: "attachment", label: "Attachment", searchable: true },
-    { key: "vehicleNo", label: "Vehicle No.", searchable: true },
-
-    { key: "itemName1", label: "Item Name 1", searchable: true },
-    { key: "quantity1", label: "Quantity 1", searchable: true },
-    { key: "itemName2", label: "Item Name 2", searchable: true },
-    { key: "quantity2", label: "Quantity 2", searchable: true },
-    { key: "itemName3", label: "Item Name 3", searchable: true },
-    { key: "quantity3", label: "Quantity 3", searchable: true },
-    { key: "itemName4", label: "Item Name 4", searchable: true },
-    { key: "quantity4", label: "Quantity 4", searchable: true },
-    { key: "itemName5", label: "Item Name 5", searchable: true },
-    { key: "quantity5", label: "Quantity 5", searchable: true },
-    { key: "itemName6", label: "Item Name 6", searchable: true },
-    { key: "quantity6", label: "Quantity 6", searchable: true },
-    { key: "itemName7", label: "Item Name 7", searchable: true },
-    { key: "quantity7", label: "Quantity 7", searchable: true },
-    { key: "itemName8", label: "Item Name 8", searchable: true },
-    { key: "quantity8", label: "Quantity 8", searchable: true },
-    { key: "itemName9", label: "Item Name 9", searchable: true },
-    { key: "quantity9", label: "Quantity 9", searchable: true },
-    { key: "itemName10", label: "Item Name 10", searchable: true },
-    { key: "quantity10", label: "Quantity 10", searchable: true },
-    { key: "itemName11", label: "Item Name 11", searchable: true },
-    { key: "quantity11", label: "Quantity 11", searchable: true },
-    { key: "itemName12", label: "Item Name 12", searchable: true },
-    { key: "quantity12", label: "Quantity 12", searchable: true },
-    { key: "itemName13", label: "Item Name 13", searchable: true },
-    { key: "quantity13", label: "Quantity 13", searchable: true },
-    { key: "itemName14", label: "Item Name 14", searchable: true },
-    { key: "quantity14", label: "Quantity 14", searchable: true },
-    { key: "totalQty", label: "Total Qty", searchable: true },
-    { key: "remarks", label: "Remarks", searchable: true },
-    { key: "invoiceNumber", label: "Invoice Number", searchable: true },
-    { key: "invoiceUpload", label: "Invoice Upload", searchable: true },
-    { key: "ewayBillUpload", label: "Eway Bill Upload", searchable: true },
-    { key: "totalQtyHistory", label: "Total Qty", searchable: true },
-    { key: "totalBillAmount", label: "Total Bill Amount", searchable: true },
-    { key: "dSrNumber", label: "D-Sr Number", searchable: true },
-    // BV to CC columns
-    { key: "transporterName", label: "Transporter Name", searchable: true },
-    {
-      key: "transporterContact",
-      label: "Transporter Contact",
-      searchable: true,
-    },
-    { key: "biltyNumber", label: "Bilty Number", searchable: true },
-    { key: "totalCharges", label: "Total Charges", searchable: true },
-    { key: "warehouseRemarks", label: "Warehouse Remarks", searchable: true },
-    { key: "beforePhoto", label: "Before Photo", searchable: false },
-    { key: "afterPhoto", label: "After Photo", searchable: false },
-    { key: "biltyUpload", label: "Bilty Upload", searchable: false },
-  ];
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedColumn, setSelectedColumn] = useState("all");
-  const [visiblePendingColumns, setVisiblePendingColumns] = useState(
-    pendingColumns.reduce((acc, col) => ({ ...acc, [col.key]: true }), {})
-  );
-  const [visibleHistoryColumns, setVisibleHistoryColumns] = useState(
-    historyColumns.reduce((acc, col) => ({ ...acc, [col.key]: true }), {})
-  );
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [beforePhoto, setBeforePhoto] = useState(null);
-  const [afterPhoto, setAfterPhoto] = useState(null);
-  const [biltyUpload, setBiltyUpload] = useState(null);
-  const [uploading, setUploading] = useState(false);
-
-  // New form fields
-  const [transporterName, setTransporterName] = useState("");
-  const [transporterContact, setTransporterContact] = useState("");
-  const [biltyNumber, setBiltyNumber] = useState("");
-  const [totalCharges, setTotalCharges] = useState("");
-  const [warehouseRemarks, setWarehouseRemarks] = useState("");
+    // 3. Default browser parsing
+    const d = new Date(dateVal);
+    return isNaN(d.getTime()) ? 0 : d.getTime();
+  };
 
   const fetchPendingOrders = async () => {
-    setLoading(true);
+    setLoadingPending(true);
     setError(null);
 
     try {
@@ -436,6 +469,11 @@ export default function WarehousePage() {
           }
         };
 
+        // Sort pending orders by Column BK date (planned5) - most recent first
+        pendingOrders.sort((a, b) => {
+          return parseFlexibleDate(b.planned5) - parseFlexibleDate(a.planned5);
+        });
+
         setPendingOrders(pendingOrders);
       }
     } catch (err) {
@@ -443,24 +481,48 @@ export default function WarehousePage() {
       setError(err.message);
       setPendingOrders([]);
     } finally {
-      setLoading(false);
+      setLoadingPending(false);
     }
   };
 
   const fetchHistoryOrders = async () => {
-    setLoading(true);
+    setLoadingHistory(true);
     setError(null);
 
     try {
+      // 1. Fetch main history data from DISPATCH-DELIVERY
       const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
       const response = await fetch(sheetUrl);
       const text = await response.text();
 
-      const jsonStart = text.indexOf("{");
-      const jsonEnd = text.lastIndexOf("}") + 1;
-      const jsonData = text.substring(jsonStart, jsonEnd);
+      // 2. Fetch Dispatch Status data from Warehouse sheet
+      const warehouseSheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Warehouse`;
+      const whResponse = await fetch(warehouseSheetUrl);
+      const whText = await whResponse.text();
 
-      const data = JSON.parse(jsonData);
+      const parseSheetJson = (txt) => {
+        const jsonStart = txt.indexOf("{");
+        const jsonEnd = txt.lastIndexOf("}") + 1;
+        const jsonData = txt.substring(jsonStart, jsonEnd);
+        return JSON.parse(jsonData);
+      };
+
+      const data = parseSheetJson(text);
+      const whData = parseSheetJson(whText);
+
+      // Create lookup map for Warehouse data (orderNo -> { status, reason })
+      const warehouseStatusMap = {};
+      if (whData && whData.table && whData.table.rows) {
+        whData.table.rows.forEach((row) => {
+          if (row.c && row.c[1] && row.c[1].v) {
+            const orderNo = String(row.c[1].v).trim();
+            warehouseStatusMap[orderNo] = {
+              status: row.c[131] ? row.c[131].v : "",
+              reason: row.c[132] ? row.c[132].v : "",
+            };
+          }
+        });
+      }
 
       if (data && data.table && data.table.rows) {
         const historyOrders = [];
@@ -468,19 +530,20 @@ export default function WarehousePage() {
         data.table.rows.slice(6).forEach((row, index) => {
           if (row.c) {
             const actualRowIndex = index + 2;
-            const btColumn = row.c[70] ? row.c[70].v : null; // Column BT (index 71)
-            const buColumn = row.c[71] ? row.c[71].v : null; // Column BU (index 72)
-
             const planned5 = row.c[62] ? row.c[62].v : null;
             const actual6 = row.c[71] ? row.c[71].v : null;
+
             if (planned5 && actual6) {
+              const orderNo = row.c[1] ? String(row.c[1].v).trim() : "";
+              const whEntry = warehouseStatusMap[orderNo] || {};
+
               const order = {
                 rowIndex: actualRowIndex,
                 id: row.c[105] ? row.c[105].v : `ORDER-${actualRowIndex}`,
-                orderNo: row.c[1] ? row.c[1].v : "", // Column B - Order No
+                orderNo: orderNo, // Column B - Order No
                 quotationNo: row.c[2] ? row.c[2].v : "", // Column C
                 companyName: row.c[3] ? row.c[3].v : "",
-                contactPersonName: row.c[4] ? row.c[4].v : "", // Fix field name to match column definition
+                contactPersonName: row.c[4] ? row.c[4].v : "",
                 contactNumber: row.c[5] ? row.c[5].v : "",
                 billingAddress: row.c[6] ? row.c[6].v : "",
                 shippingAddress: row.c[7] ? row.c[7].v : "",
@@ -495,7 +558,7 @@ export default function WarehousePage() {
                 acceptanceCopy: row.c[16] ? row.c[16].v : "",
                 offer: row.c[17] ? row.c[17].v : "",
                 conveyedForRegistration: row.c[18] ? row.c[18].v : "",
-                qty: row.c[19] ? row.c[19].v : "", // Map to qty field for column definition
+                qty: row.c[19] ? row.c[19].v : "",
                 amount: row.c[20] ? Number.parseFloat(row.c[20].v) || 0 : 0,
                 approvedName: row.c[21] ? row.c[21].v : "",
                 calibrationCertRequired: row.c[22] ? row.c[22].v : "",
@@ -538,33 +601,40 @@ export default function WarehousePage() {
                 totalQty: row.c[59] ? row.c[59].v : "",
                 remarks: row.c[60] ? row.c[60].v : "",
                 gstNumber: row.c[61] ? row.c[61].v : "",
-                invoiceNumber: row.c[65] ? row.c[65].v : "", // Column BO (invoice number)
-                invoiceUpload: row.c[66] ? row.c[66].v : "", // Column BO (invoice number)
-                ewayBillUpload: row.c[67] ? row.c[67].v : "", // Column BO (invoice number)
-                totalQtyHistory: row.c[68] ? row.c[68].v : "", // Column BO (invoice number)
-                totalBillAmount: row.c[69] ? row.c[69].v : "", // Column BO (invoice number)
-                beforePhoto: row.c[73] ? row.c[73].v : "", // Column CE
-                afterPhoto: row.c[74] ? row.c[74].v : "", // Column CF
-                biltyUpload: row.c[75] ? row.c[75].v : "", // Column CG
-
-                transporterName: row.c[76] ? row.c[76].v : "", // Column BZ
-                transporterContact: row.c[77] ? row.c[77].v : "", // Column CA
-                biltyNumber: row.c[78] ? row.c[78].v : "", // Column CB
-                totalCharges: row.c[79] ? row.c[79].v : "", // Column CC
-                warehouseRemarks: row.c[80] ? row.c[80].v : "", // Column CD
-
+                invoiceNumber: row.c[65] ? row.c[65].v : "",
+                invoiceUpload: row.c[66] ? row.c[66].v : "",
+                ewayBillUpload: row.c[67] ? row.c[67].v : "",
+                totalQtyHistory: row.c[68] ? row.c[68].v : "",
+                totalBillAmount: row.c[69] ? row.c[69].v : "",
+                beforePhoto: row.c[73] ? row.c[73].v : "",
+                afterPhoto: row.c[74] ? row.c[74].v : "",
+                biltyUpload: row.c[75] ? row.c[75].v : "",
+                transporterName: row.c[76] ? row.c[76].v : "",
+                transporterContact: row.c[77] ? row.c[77].v : "",
+                biltyNumber: row.c[78] ? row.c[78].v : "",
+                totalCharges: row.c[79] ? row.c[79].v : "",
+                warehouseRemarks: row.c[80] ? row.c[80].v : "",
+                planned5: row.c[62] ? row.c[62].v : "",
                 dSrNumber: row.c[105] ? row.c[105].v : "",
+                creName: row.c[106] ? row.c[106].v : "",
+
+                // Fetch Dispatch Status specifically from Warehouse lookup map
+                dispatchStatus: whEntry.status || "okay",
+                notOkReason: whEntry.reason || "",
 
                 warehouseData: {
-                  processedAt: buColumn,
+                  processedAt: actual6,
                   processedBy: "Current User",
                 },
-
-                creName: row.c[106] ? row.c[106].v : "", // Column CD (index 81) - CRE Name
               };
               historyOrders.push(order);
             }
           }
+        });
+
+        // Sort history orders by Column BK date (planned5) - most recent first
+        historyOrders.sort((a, b) => {
+          return parseFlexibleDate(b.planned5) - parseFlexibleDate(a.planned5);
         });
 
         setHistoryOrders(historyOrders);
@@ -574,7 +644,7 @@ export default function WarehousePage() {
       setError(err.message);
       setHistoryOrders([]);
     } finally {
-      setLoading(false);
+      setLoadingHistory(false);
     }
   };
 
@@ -734,66 +804,106 @@ export default function WarehousePage() {
     });
   };
 
-  const updateOrderStatus = async (order) => {
+  const processWarehouseOrder = async (dialogData) => {
     try {
       setUploading(true);
+
+      const {
+        order,
+        beforePhotos,
+        afterPhotos,
+        biltyUploads,
+        transporterName,
+        transporterContact,
+        biltyNumber,
+        totalCharges,
+        warehouseRemarks,
+        dispatchStatus,
+        notOkReason,
+        itemQuantities,
+        fileUrls, // Pre-uploaded file URLs from the dialog
+      } = dialogData;
 
       const formData = new FormData();
       formData.append("sheetName", SHEET_NAME);
       formData.append("action", "updateByDSrNumber");
       formData.append("dSrNumber", order.dSrNumber);
 
-      // Handle file uploads
-      if (beforePhoto) {
-        try {
-          const base64Data = await convertFileToBase64(beforePhoto);
-          formData.append("beforePhotoFile", base64Data);
-          formData.append("beforePhotoFileName", beforePhoto.name);
-          formData.append("beforePhotoMimeType", beforePhoto.type);
-        } catch (error) {
-          console.error("Error converting before photo:", error);
+      // Check if we have pre-uploaded file URLs from the dialog
+      const hasPreUploadedUrls = fileUrls && (fileUrls.beforePhotoUrl || fileUrls.afterPhotoUrl || fileUrls.biltyUrl);
+
+      if (hasPreUploadedUrls) {
+        // Use pre-uploaded URLs directly (files already uploaded by dialog)
+        if (fileUrls.beforePhotoUrl) {
+          formData.append("beforePhotoUrl", fileUrls.beforePhotoUrl);
         }
+        if (fileUrls.afterPhotoUrl) {
+          formData.append("afterPhotoUrl", fileUrls.afterPhotoUrl);
+        }
+        if (fileUrls.biltyUrl) {
+          formData.append("biltyUrl", fileUrls.biltyUrl);
+        }
+      } else {
+        // Fallback: Handle file uploads the old way (supporting multiple files)
+        const uploadFileArray = async (files, prefix) => {
+          if (!files || files.length === 0) return;
+
+          formData.append(`${prefix}Count`, files.length.toString());
+
+          for (let i = 0; i < files.length; i++) {
+            try {
+              const file = files[i];
+              const base64Data = await convertFileToBase64(file);
+              formData.append(`${prefix}File_${i}`, base64Data);
+              formData.append(`${prefix}FileName_${i}`, file.name);
+              formData.append(`${prefix}MimeType_${i}`, file.type);
+            } catch (error) {
+              console.error(`Error converting ${prefix} file ${i}:`, error);
+            }
+          }
+
+          // Also keep legacy single file parameter for backend compatibility
+          try {
+            const firstFile = files[0];
+            const base64Data = await convertFileToBase64(firstFile);
+            formData.append(`${prefix}File`, base64Data);
+            formData.append(`${prefix}FileName`, firstFile.name);
+            formData.append(`${prefix}MimeType`, firstFile.type);
+          } catch (e) { }
+        };
+
+        await uploadFileArray(beforePhotos, "beforePhoto");
+        await uploadFileArray(afterPhotos, "afterPhoto");
+        await uploadFileArray(biltyUploads, "bilty");
       }
 
-      if (afterPhoto) {
-        try {
-          const base64Data = await convertFileToBase64(afterPhoto);
-          formData.append("afterPhotoFile", base64Data);
-          formData.append("afterPhotoFileName", afterPhoto.name);
-          formData.append("afterPhotoMimeType", afterPhoto.type);
-        } catch (error) {
-          console.error("Error converting after photo:", error);
-        }
-      }
+      // Create rowData with all 140 columns (expanded for data safety)
+      const rowData = new Array(140).fill("");
 
-      if (biltyUpload) {
-        try {
-          const base64Data = await convertFileToBase64(biltyUpload);
-          formData.append("biltyFile", base64Data);
-          formData.append("biltyFileName", biltyUpload.name);
-          formData.append("biltyMimeType", biltyUpload.type);
-        } catch (error) {
-          console.error("Error converting bilty file:", error);
-        }
-      }
-
-      // Create rowData with all 110 columns
-      const rowData = new Array(110).fill("");
-
-      // Add today's date to BU column (index 71)
+      // Add today's date to BT column (index 71, Column 72)
       const today = new Date();
       const formattedDate =
         `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()} ` +
         `${today.getHours()}:${today.getMinutes()}:${today.getSeconds()}`;
 
-      rowData[71] = formattedDate;
+      rowData[71] = formattedDate; // BT (Column 72)
 
-      // Add warehouse data to columns BZ to CD (indexes 76-80)
-      rowData[76] = transporterName; // Column BZ
-      rowData[77] = transporterContact; // Column CA
-      rowData[78] = biltyNumber; // Column CB
-      rowData[79] = totalCharges; // Column CC
-      rowData[80] = warehouseRemarks; // Column CD
+      // Add pre-uploaded file URLs to the row data columns
+      // BV(73) = Before Photo, BW(74) = After Photo, BX(75) = Bilty
+      if (hasPreUploadedUrls) {
+        rowData[73] = fileUrls.beforePhotoUrl || ""; // Column BV - Before Photo URLs
+        rowData[74] = fileUrls.afterPhotoUrl || "";  // Column BW - After Photo URLs
+        rowData[75] = fileUrls.biltyUrl || "";       // Column BX - Bilty URLs
+      }
+
+      // Add warehouse data to columns BY to CC (indexes 76-80)
+      rowData[76] = transporterName;    // Column BY
+      rowData[77] = transporterContact; // Column BZ
+      rowData[78] = biltyNumber;        // Column CA
+      rowData[79] = totalCharges;       // Column CB
+      rowData[80] = warehouseRemarks;   // Column CC
+
+      // Note: Columns EB (131) and EC (132) are intentionally NOT written to on DISPATCH-DELIVERY sheet
 
       // Process ALL items: First column items (1-14), then JSON items continue from 15 onwards
       let allItems = [];
@@ -802,7 +912,13 @@ export default function WarehousePage() {
       // 1. Collect column items (1-14)
       for (let i = 1; i <= 14; i++) {
         const itemName = order[`itemName${i}`];
-        const quantity = order[`quantity${i}`];
+        let quantity = order[`quantity${i}`];
+
+        // Check if we have updated quantity in itemQuantities
+        const itemKey = `column-${i}`;
+        if (itemQuantities[itemKey] !== undefined) {
+          quantity = itemQuantities[itemKey];
+        }
 
         if (itemName || quantity) {
           allItems.push({
@@ -826,14 +942,21 @@ export default function WarehousePage() {
             jsonItems = order.itemQtyJson;
           }
 
-          jsonItems.forEach((item) => {
-            if (item.name || item.quantity) {
+          jsonItems.forEach((item, idx) => {
+            const itemKey = `json-${idx}`;
+            let quantity = item.quantity;
+
+            if (itemQuantities[itemKey] !== undefined) {
+              quantity = itemQuantities[itemKey];
+            }
+
+            if (item.name || quantity) {
               allItems.push({
                 name: item.name || "",
-                quantity: item.quantity || "",
+                quantity: quantity || "",
               });
 
-              const qtyNum = parseInt(item.quantity) || 0;
+              const qtyNum = parseInt(quantity) || 0;
               totalQty += qtyNum;
             }
           });
@@ -862,25 +985,39 @@ export default function WarehousePage() {
 
       formData2.append("totalItems", allItems.length.toString());
 
-      const warehouseRowData = [
-        formattedDate, // 1. Time Stamp
-        order.orderNo, // 2. Order No.
-        order.quotationNo, // 3. Quotation No.
-        "", // 4. Before Photo (will be filled by backend)
-        "", // 5. After Photo (will be filled by backend)
-        "", // 6. Bilty Upload (will be filled by backend)
-        transporterName || "", // 7. Transporter Name
-        transporterContact || "", // 8. Transporter Contact
-        biltyNumber || "", // 9. Bilty No.
-        totalCharges || "", // 10. Total Charges
-        warehouseRemarks || "", // 11. Warehouse Remarks
-      ];
+      // Prepare Warehouse sheet data with fixed columns EB (index 131) and EC (index 132)
+      const warehouseRowData = new Array(133).fill("");
+      warehouseRowData[0] = formattedDate; // 1. Time Stamp
+      warehouseRowData[1] = order.orderNo; // 2. Order No.
+      warehouseRowData[2] = order.quotationNo; // 3. Quotation No.
 
-      // Add ALL items to warehouse sheet
+      // Use pre-uploaded file URLs if available
+      if (hasPreUploadedUrls) {
+        warehouseRowData[3] = fileUrls.beforePhotoUrl || ""; // 4. Before Photo URLs
+        warehouseRowData[4] = fileUrls.afterPhotoUrl || "";  // 5. After Photo URLs
+        warehouseRowData[5] = fileUrls.biltyUrl || "";       // 6. Bilty Upload URLs
+      }
+
+      warehouseRowData[6] = transporterName || ""; // 7. Transporter Name
+      warehouseRowData[7] = transporterContact || ""; // 8. Transporter Contact
+      warehouseRowData[8] = biltyNumber || ""; // 9. Bilty No.
+      warehouseRowData[9] = totalCharges || ""; // 10. Total Charges
+      warehouseRowData[10] = warehouseRemarks || ""; // 11. Warehouse Remarks
+
+      // Add ALL items to warehouse sheet starting from index 11
+      // Items: Column L onwards (index 11 = Item Name 1, index 12 = Qty 1, etc.)
+      let itemIndex = 11;
       allItems.forEach((item) => {
-        warehouseRowData.push(item.name || "");
-        warehouseRowData.push(item.quantity || "");
+        warehouseRowData[itemIndex] = item.name || "";
+        warehouseRowData[itemIndex + 1] = item.quantity || "";
+        itemIndex += 2;
       });
+
+      // Explicitly submit to Column EB (Index 131) and Column EC (Index 132)
+      // Note: Column EE (Index 134) is intentionally left empty
+      warehouseRowData[131] = dispatchStatus || "okay";
+      warehouseRowData[132] = dispatchStatus === "notokay" ? notOkReason : "";
+      // Index 133 (ED) and 134 (EE) are left empty
 
       formData2.append("rowData", JSON.stringify(warehouseRowData));
 
@@ -936,147 +1073,21 @@ export default function WarehousePage() {
     }
 
     setSelectedOrder(order);
-    setBeforePhoto(null);
-    setAfterPhoto(null);
-    setBiltyUpload(null);
-    setTransporterName("");
-    setTransporterContact("");
-    setBiltyNumber("");
-    setTotalCharges("");
-    setWarehouseRemarks("");
-
-    // Initialize item quantities
-    const initialQuantities = {};
-
-    // Process column items (1 to 14)
-    for (let i = 1; i <= 14; i++) {
-      if (order[`itemName${i}`] || order[`quantity${i}`]) {
-        initialQuantities[`column-${i}`] = order[`quantity${i}`] || "0";
-      }
-    }
-
-    // Process JSON items
-    try {
-      if (order.itemQtyJson) {
-        let jsonItems = [];
-
-        if (typeof order.itemQtyJson === "string") {
-          jsonItems = JSON.parse(order.itemQtyJson);
-        } else if (Array.isArray(order.itemQtyJson)) {
-          jsonItems = order.itemQtyJson;
-        }
-
-        jsonItems.forEach((item, idx) => {
-          if (item.name || item.quantity) {
-            initialQuantities[`json-${idx}`] = item.quantity || "0";
-          }
-        });
-      }
-    } catch (error) {
-      console.error("Error parsing JSON items:", error);
-    }
-
-    setItemQuantities(initialQuantities);
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = async () => {
-    if (!selectedOrder) return;
-
-    const order = pendingOrders.find((o) => o.id === selectedOrder.id);
-    if (!order) {
-      // Fallback to legacy orders
-      const warehouseData = {
-        processedAt: new Date().toISOString(),
-        processedBy: "Current User",
-      };
-
-      updateOrder(selectedOrder, {
-        status: "warehouse-processed",
-        warehouseData,
-      });
-
-      setIsDialogOpen(false);
-      setSelectedOrder(null);
-      setItemQuantities({});
-      return;
-    }
-
-    // Create updated order
-    const updatedOrder = { ...order };
-
-    // Collect ALL items in proper order
-    const allItems = [];
-
-    // 1. First add column items (1-14)
-    for (let i = 1; i <= 14; i++) {
-      const itemName = order[`itemName${i}`];
-      let quantity = order[`quantity${i}`];
-
-      // Check if we have updated quantity in itemQuantities
-      const itemKey = `column-${i}`;
-      if (itemQuantities[itemKey] !== undefined) {
-        quantity = itemQuantities[itemKey];
-      }
-
-      if (itemName || quantity) {
-        allItems.push({
-          name: itemName || "",
-          quantity: quantity || "",
-        });
-
-        // Update the order object with new quantity
-        updatedOrder[`quantity${i}`] = quantity || "";
-      }
-    }
-
-    // 2. Then add JSON items
-    let jsonItems = [];
-    if (order.itemQtyJson) {
-      try {
-        if (typeof order.itemQtyJson === "string") {
-          jsonItems = JSON.parse(order.itemQtyJson);
-        } else if (Array.isArray(order.itemQtyJson)) {
-          jsonItems = order.itemQtyJson;
-        }
-
-        // Update JSON items with new quantities
-        jsonItems.forEach((item, idx) => {
-          const itemKey = `json-${idx}`;
-          if (itemQuantities[itemKey] !== undefined) {
-            item.quantity = itemQuantities[itemKey] || "";
-          }
-
-          if (item.name || item.quantity) {
-            allItems.push({
-              name: item.name || "",
-              quantity: item.quantity || "",
-            });
-          }
-        });
-
-        // Update the JSON in order object
-        updatedOrder.itemQtyJson = JSON.stringify(jsonItems);
-      } catch (error) {
-        console.error("Error processing JSON items:", error);
-        // Keep original JSON if error
-        updatedOrder.itemQtyJson = order.itemQtyJson;
-      }
-    }
-
-    const result = await updateOrderStatus(updatedOrder);
+  const handleProcessSubmit = async (dialogData) => {
+    const result = await processWarehouseOrder(dialogData);
 
     if (result.success) {
       setIsDialogOpen(false);
-      setSelectedOrder("");
-      setItemQuantities({});
+      setSelectedOrder(null);
 
       let message = `✅ Warehouse processing COMPLETED!\n\n`;
 
-      if (allItems.length > 14) {
-        message += `- Remaining ${
-          allItems.length - 14
-        } items saved in JSON format\n`;
+      if (result.totalItems > 14) {
+        message += `- Remaining ${result.totalItems - 14
+          } items saved in JSON format\n`;
       }
 
       if (result.fileUrls) {
@@ -1639,15 +1650,45 @@ export default function WarehousePage() {
       case "beforePhoto":
       case "afterPhoto":
       case "biltyUpload":
-        return actualValue &&
-          (actualValue.startsWith("http") ||
-            actualValue.startsWith("https")) ? (
-          <a href={actualValue} target="_blank" rel="noopener noreferrer">
-            <Badge variant="default">View Attachment</Badge>
-          </a>
-        ) : (
-          <Badge variant="secondary">{actualValue || "N/A"}</Badge>
-        );
+        // Handle multiple URLs (comma-separated)
+        if (actualValue && typeof actualValue === "string" &&
+          (actualValue.startsWith("http") || actualValue.startsWith("https"))) {
+          const urls = actualValue.split(",").map(url => url.trim()).filter(url => url.startsWith("http"));
+          if (urls.length === 0) {
+            return <Badge variant="secondary">N/A</Badge>;
+          }
+          if (urls.length === 1) {
+            return (
+              <a href={urls[0]} target="_blank" rel="noopener noreferrer">
+                <Badge variant="default" className="cursor-pointer hover:bg-blue-700">
+                  View Attachment
+                </Badge>
+              </a>
+            );
+          }
+          // Multiple URLs - show each as a numbered link
+          return (
+            <div className="flex flex-wrap gap-1">
+              {urls.map((url, index) => (
+                <a
+                  key={index}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Open file ${index + 1} in new tab`}
+                >
+                  <Badge
+                    variant="default"
+                    className="cursor-pointer hover:bg-blue-700 text-xs"
+                  >
+                    {index + 1}
+                  </Badge>
+                </a>
+              ))}
+            </div>
+          );
+        }
+        return <Badge variant="secondary">{actualValue || "N/A"}</Badge>;
       case "calibrationCertRequired":
       case "installationRequired":
         return (
@@ -1671,6 +1712,23 @@ export default function WarehousePage() {
             {actualValue === "Advance" && (
               <Badge variant="secondary">Required</Badge>
             )}
+          </div>
+        );
+      case "dispatchStatus":
+        if (!actualValue) return <Badge variant="secondary">N/A</Badge>;
+        return (
+          <Badge
+            variant={actualValue.toLowerCase() === "okay" ? "default" : "destructive"}
+            className={actualValue.toLowerCase() === "okay" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}
+          >
+            {actualValue.toLowerCase() === "okay" ? "✓ Okay" : "✗ Not Okay"}
+          </Badge>
+        );
+      case "notOkReason":
+        if (!actualValue) return "";
+        return (
+          <div className="max-w-[200px] whitespace-normal break-words text-red-600 font-medium">
+            {actualValue}
           </div>
         );
       case "amount":
@@ -1710,15 +1768,45 @@ export default function WarehousePage() {
       case "beforePhoto":
       case "afterPhoto":
       case "biltyUpload":
-        return actualValue &&
-          (actualValue.startsWith("http") ||
-            actualValue.startsWith("https")) ? (
-          <a href={actualValue} target="_blank" rel="noopener noreferrer">
-            <Badge variant="default">View Attachment</Badge>
-          </a>
-        ) : (
-          <Badge variant="secondary">{actualValue || "N/A"}</Badge>
-        );
+        // Handle multiple URLs (comma-separated)
+        if (actualValue && typeof actualValue === "string" &&
+          (actualValue.startsWith("http") || actualValue.startsWith("https"))) {
+          const urls = actualValue.split(",").map(url => url.trim()).filter(url => url.startsWith("http"));
+          if (urls.length === 0) {
+            return <Badge variant="secondary">N/A</Badge>;
+          }
+          if (urls.length === 1) {
+            return (
+              <a href={urls[0]} target="_blank" rel="noopener noreferrer">
+                <Badge variant="default" className="cursor-pointer hover:bg-blue-700">
+                  View Attachment
+                </Badge>
+              </a>
+            );
+          }
+          // Multiple URLs - show each as a numbered link
+          return (
+            <div className="flex flex-wrap gap-1">
+              {urls.map((url, index) => (
+                <a
+                  key={index}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Open file ${index + 1} in new tab`}
+                >
+                  <Badge
+                    variant="default"
+                    className="cursor-pointer hover:bg-blue-700 text-xs"
+                  >
+                    {index + 1}
+                  </Badge>
+                </a>
+              ))}
+            </div>
+          );
+        }
+        return <Badge variant="secondary">{actualValue || "N/A"}</Badge>;
       case "calibrationCertRequired":
       case "installationRequired":
         return (
@@ -1794,37 +1882,15 @@ export default function WarehousePage() {
   }
 
   const handleRefresh = async () => {
-    setLoading(true);
+    setLoadingPending(true);
+    setLoadingHistory(true);
     try {
       await Promise.all([fetchPendingOrders(), fetchHistoryOrders()]);
     } catch (err) {
       setError(err.message);
-    } finally {
-      setLoading(false);
     }
+    // Note: Loading states are reset in the individual fetch functions
   };
-
-  function convertTimestampToDDMMYYYY(timestampString) {
-    // Extract the date parts
-    const parts = timestampString.match(/\d+/g).map(Number);
-
-    // Create Date object (month is 0-indexed in Date constructor too)
-    const date = new Date(
-      parts[0],
-      parts[1],
-      parts[2],
-      parts[3],
-      parts[4],
-      parts[5]
-    );
-
-    // Format to dd/mm/yyyy
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = (date.getMonth() + 1).toString().padStart(2, "0"); // +1 because getMonth() returns 0-11
-    const year = date.getFullYear();
-
-    return `${day}/${month}/${year}`;
-  }
 
   return (
     <MainLayout>
@@ -1963,77 +2029,77 @@ export default function WarehousePage() {
                                       column.key === "actions"
                                         ? "120px"
                                         : column.key === "orderNo"
-                                        ? "120px"
-                                        : column.key === "quotationNo"
-                                        ? "150px"
-                                        : column.key === "companyName"
-                                        ? "250px"
-                                        : column.key === "contactPersonName"
-                                        ? "180px"
-                                        : column.key === "contactNumber"
-                                        ? "140px"
-                                        : column.key === "billingAddress"
-                                        ? "200px"
-                                        : column.key === "shippingAddress"
-                                        ? "200px"
-                                        : column.key === "isOrderAcceptable"
-                                        ? "150px"
-                                        : column.key ===
-                                          "orderAcceptanceChecklist"
-                                        ? "250px"
-                                        : column.key === "remarks"
-                                        ? "200px"
-                                        : "160px",
+                                          ? "120px"
+                                          : column.key === "quotationNo"
+                                            ? "150px"
+                                            : column.key === "companyName"
+                                              ? "250px"
+                                              : column.key === "contactPersonName"
+                                                ? "180px"
+                                                : column.key === "contactNumber"
+                                                  ? "140px"
+                                                  : column.key === "billingAddress"
+                                                    ? "200px"
+                                                    : column.key === "shippingAddress"
+                                                      ? "200px"
+                                                      : column.key === "isOrderAcceptable"
+                                                        ? "150px"
+                                                        : column.key ===
+                                                          "orderAcceptanceChecklist"
+                                                          ? "250px"
+                                                          : column.key === "remarks"
+                                                            ? "200px"
+                                                            : "160px",
                                     minWidth:
                                       column.key === "actions"
                                         ? "120px"
                                         : column.key === "orderNo"
-                                        ? "120px"
-                                        : column.key === "quotationNo"
-                                        ? "150px"
-                                        : column.key === "companyName"
-                                        ? "250px"
-                                        : column.key === "contactPersonName"
-                                        ? "180px"
-                                        : column.key === "contactNumber"
-                                        ? "140px"
-                                        : column.key === "billingAddress"
-                                        ? "200px"
-                                        : column.key === "shippingAddress"
-                                        ? "200px"
-                                        : column.key === "isOrderAcceptable"
-                                        ? "150px"
-                                        : column.key ===
-                                          "orderAcceptanceChecklist"
-                                        ? "250px"
-                                        : column.key === "remarks"
-                                        ? "200px"
-                                        : "160px",
+                                          ? "120px"
+                                          : column.key === "quotationNo"
+                                            ? "150px"
+                                            : column.key === "companyName"
+                                              ? "250px"
+                                              : column.key === "contactPersonName"
+                                                ? "180px"
+                                                : column.key === "contactNumber"
+                                                  ? "140px"
+                                                  : column.key === "billingAddress"
+                                                    ? "200px"
+                                                    : column.key === "shippingAddress"
+                                                      ? "200px"
+                                                      : column.key === "isOrderAcceptable"
+                                                        ? "150px"
+                                                        : column.key ===
+                                                          "orderAcceptanceChecklist"
+                                                          ? "250px"
+                                                          : column.key === "remarks"
+                                                            ? "200px"
+                                                            : "160px",
                                     maxWidth:
                                       column.key === "actions"
                                         ? "120px"
                                         : column.key === "orderNo"
-                                        ? "120px"
-                                        : column.key === "quotationNo"
-                                        ? "150px"
-                                        : column.key === "companyName"
-                                        ? "250px"
-                                        : column.key === "contactPersonName"
-                                        ? "180px"
-                                        : column.key === "contactNumber"
-                                        ? "140px"
-                                        : column.key === "billingAddress"
-                                        ? "200px"
-                                        : column.key === "shippingAddress"
-                                        ? "200px"
-                                        : column.key === "isOrderAcceptable"
-                                        ? "150px"
-                                        : column.key ===
-                                          "orderAcceptanceChecklist"
-                                        ? "250px"
-                                        : column.key === "remarks"
-                                        ? "200px"
-                                        : "160px",
+                                          ? "120px"
+                                          : column.key === "quotationNo"
+                                            ? "150px"
+                                            : column.key === "companyName"
+                                              ? "250px"
+                                              : column.key === "contactPersonName"
+                                                ? "180px"
+                                                : column.key === "contactNumber"
+                                                  ? "140px"
+                                                  : column.key === "billingAddress"
+                                                    ? "200px"
+                                                    : column.key === "shippingAddress"
+                                                      ? "200px"
+                                                      : column.key === "isOrderAcceptable"
+                                                        ? "150px"
+                                                        : column.key ===
+                                                          "orderAcceptanceChecklist"
+                                                          ? "250px"
+                                                          : column.key === "remarks"
+                                                            ? "200px"
+                                                            : "160px",
                                   }}
                                 >
                                   <div className="break-words">
@@ -2069,77 +2135,77 @@ export default function WarehousePage() {
                                           column.key === "actions"
                                             ? "120px"
                                             : column.key === "orderNo"
-                                            ? "120px"
-                                            : column.key === "quotationNo"
-                                            ? "150px"
-                                            : column.key === "companyName"
-                                            ? "250px"
-                                            : column.key === "contactPersonName"
-                                            ? "180px"
-                                            : column.key === "contactNumber"
-                                            ? "140px"
-                                            : column.key === "billingAddress"
-                                            ? "200px"
-                                            : column.key === "shippingAddress"
-                                            ? "200px"
-                                            : column.key === "isOrderAcceptable"
-                                            ? "150px"
-                                            : column.key ===
-                                              "orderAcceptanceChecklist"
-                                            ? "250px"
-                                            : column.key === "remarks"
-                                            ? "200px"
-                                            : "160px",
+                                              ? "120px"
+                                              : column.key === "quotationNo"
+                                                ? "150px"
+                                                : column.key === "companyName"
+                                                  ? "250px"
+                                                  : column.key === "contactPersonName"
+                                                    ? "180px"
+                                                    : column.key === "contactNumber"
+                                                      ? "140px"
+                                                      : column.key === "billingAddress"
+                                                        ? "200px"
+                                                        : column.key === "shippingAddress"
+                                                          ? "200px"
+                                                          : column.key === "isOrderAcceptable"
+                                                            ? "150px"
+                                                            : column.key ===
+                                                              "orderAcceptanceChecklist"
+                                                              ? "250px"
+                                                              : column.key === "remarks"
+                                                                ? "200px"
+                                                                : "160px",
                                         minWidth:
                                           column.key === "actions"
                                             ? "120px"
                                             : column.key === "orderNo"
-                                            ? "120px"
-                                            : column.key === "quotationNo"
-                                            ? "150px"
-                                            : column.key === "companyName"
-                                            ? "250px"
-                                            : column.key === "contactPersonName"
-                                            ? "180px"
-                                            : column.key === "contactNumber"
-                                            ? "140px"
-                                            : column.key === "billingAddress"
-                                            ? "200px"
-                                            : column.key === "shippingAddress"
-                                            ? "200px"
-                                            : column.key === "isOrderAcceptable"
-                                            ? "150px"
-                                            : column.key ===
-                                              "orderAcceptanceChecklist"
-                                            ? "250px"
-                                            : column.key === "remarks"
-                                            ? "200px"
-                                            : "160px",
+                                              ? "120px"
+                                              : column.key === "quotationNo"
+                                                ? "150px"
+                                                : column.key === "companyName"
+                                                  ? "250px"
+                                                  : column.key === "contactPersonName"
+                                                    ? "180px"
+                                                    : column.key === "contactNumber"
+                                                      ? "140px"
+                                                      : column.key === "billingAddress"
+                                                        ? "200px"
+                                                        : column.key === "shippingAddress"
+                                                          ? "200px"
+                                                          : column.key === "isOrderAcceptable"
+                                                            ? "150px"
+                                                            : column.key ===
+                                                              "orderAcceptanceChecklist"
+                                                              ? "250px"
+                                                              : column.key === "remarks"
+                                                                ? "200px"
+                                                                : "160px",
                                         maxWidth:
                                           column.key === "actions"
                                             ? "120px"
                                             : column.key === "orderNo"
-                                            ? "120px"
-                                            : column.key === "quotationNo"
-                                            ? "150px"
-                                            : column.key === "companyName"
-                                            ? "250px"
-                                            : column.key === "contactPersonName"
-                                            ? "180px"
-                                            : column.key === "contactNumber"
-                                            ? "140px"
-                                            : column.key === "billingAddress"
-                                            ? "200px"
-                                            : column.key === "shippingAddress"
-                                            ? "200px"
-                                            : column.key === "isOrderAcceptable"
-                                            ? "150px"
-                                            : column.key ===
-                                              "orderAcceptanceChecklist"
-                                            ? "250px"
-                                            : column.key === "remarks"
-                                            ? "200px"
-                                            : "160px",
+                                              ? "120px"
+                                              : column.key === "quotationNo"
+                                                ? "150px"
+                                                : column.key === "companyName"
+                                                  ? "250px"
+                                                  : column.key === "contactPersonName"
+                                                    ? "180px"
+                                                    : column.key === "contactNumber"
+                                                      ? "140px"
+                                                      : column.key === "billingAddress"
+                                                        ? "200px"
+                                                        : column.key === "shippingAddress"
+                                                          ? "200px"
+                                                          : column.key === "isOrderAcceptable"
+                                                            ? "150px"
+                                                            : column.key ===
+                                                              "orderAcceptanceChecklist"
+                                                              ? "250px"
+                                                              : column.key === "remarks"
+                                                                ? "200px"
+                                                                : "160px",
                                       }}
                                     >
                                       <div className="break-words whitespace-normal leading-relaxed">
@@ -2256,89 +2322,89 @@ export default function WarehousePage() {
                                       column.key === "editActions"
                                         ? "120px"
                                         : column.key === "orderNo"
-                                        ? "120px"
-                                        : column.key === "quotationNo"
-                                        ? "150px"
-                                        : column.key === "companyName"
-                                        ? "250px"
-                                        : column.key === "contactPersonName"
-                                        ? "180px"
-                                        : column.key === "contactNumber"
-                                        ? "140px"
-                                        : column.key === "billingAddress"
-                                        ? "200px"
-                                        : column.key === "shippingAddress"
-                                        ? "200px"
-                                        : column.key === "isOrderAcceptable"
-                                        ? "150px"
-                                        : column.key ===
-                                          "orderAcceptanceChecklist"
-                                        ? "250px"
-                                        : column.key === "remarks"
-                                        ? "200px"
-                                        : column.key === "availabilityStatus"
-                                        ? "150px"
-                                        : column.key === "inventoryRemarks"
-                                        ? "200px"
-                                        : "160px",
+                                          ? "120px"
+                                          : column.key === "quotationNo"
+                                            ? "150px"
+                                            : column.key === "companyName"
+                                              ? "250px"
+                                              : column.key === "contactPersonName"
+                                                ? "180px"
+                                                : column.key === "contactNumber"
+                                                  ? "140px"
+                                                  : column.key === "billingAddress"
+                                                    ? "200px"
+                                                    : column.key === "shippingAddress"
+                                                      ? "200px"
+                                                      : column.key === "isOrderAcceptable"
+                                                        ? "150px"
+                                                        : column.key ===
+                                                          "orderAcceptanceChecklist"
+                                                          ? "250px"
+                                                          : column.key === "remarks"
+                                                            ? "200px"
+                                                            : column.key === "availabilityStatus"
+                                                              ? "150px"
+                                                              : column.key === "inventoryRemarks"
+                                                                ? "200px"
+                                                                : "160px",
                                     minWidth:
                                       column.key === "editActions"
                                         ? "120px"
                                         : column.key === "orderNo"
-                                        ? "120px"
-                                        : column.key === "quotationNo"
-                                        ? "150px"
-                                        : column.key === "companyName"
-                                        ? "250px"
-                                        : column.key === "contactPersonName"
-                                        ? "180px"
-                                        : column.key === "contactNumber"
-                                        ? "140px"
-                                        : column.key === "billingAddress"
-                                        ? "200px"
-                                        : column.key === "shippingAddress"
-                                        ? "200px"
-                                        : column.key === "isOrderAcceptable"
-                                        ? "150px"
-                                        : column.key ===
-                                          "orderAcceptanceChecklist"
-                                        ? "250px"
-                                        : column.key === "remarks"
-                                        ? "200px"
-                                        : column.key === "availabilityStatus"
-                                        ? "150px"
-                                        : column.key === "inventoryRemarks"
-                                        ? "200px"
-                                        : "160px",
+                                          ? "120px"
+                                          : column.key === "quotationNo"
+                                            ? "150px"
+                                            : column.key === "companyName"
+                                              ? "250px"
+                                              : column.key === "contactPersonName"
+                                                ? "180px"
+                                                : column.key === "contactNumber"
+                                                  ? "140px"
+                                                  : column.key === "billingAddress"
+                                                    ? "200px"
+                                                    : column.key === "shippingAddress"
+                                                      ? "200px"
+                                                      : column.key === "isOrderAcceptable"
+                                                        ? "150px"
+                                                        : column.key ===
+                                                          "orderAcceptanceChecklist"
+                                                          ? "250px"
+                                                          : column.key === "remarks"
+                                                            ? "200px"
+                                                            : column.key === "availabilityStatus"
+                                                              ? "150px"
+                                                              : column.key === "inventoryRemarks"
+                                                                ? "200px"
+                                                                : "160px",
                                     maxWidth:
                                       column.key === "editActions"
                                         ? "120px"
                                         : column.key === "orderNo"
-                                        ? "120px"
-                                        : column.key === "quotationNo"
-                                        ? "150px"
-                                        : column.key === "companyName"
-                                        ? "250px"
-                                        : column.key === "contactPersonName"
-                                        ? "180px"
-                                        : column.key === "contactNumber"
-                                        ? "140px"
-                                        : column.key === "billingAddress"
-                                        ? "200px"
-                                        : column.key === "shippingAddress"
-                                        ? "200px"
-                                        : column.key === "isOrderAcceptable"
-                                        ? "150px"
-                                        : column.key ===
-                                          "orderAcceptanceChecklist"
-                                        ? "250px"
-                                        : column.key === "remarks"
-                                        ? "200px"
-                                        : column.key === "availabilityStatus"
-                                        ? "150px"
-                                        : column.key === "inventoryRemarks"
-                                        ? "200px"
-                                        : "160px",
+                                          ? "120px"
+                                          : column.key === "quotationNo"
+                                            ? "150px"
+                                            : column.key === "companyName"
+                                              ? "250px"
+                                              : column.key === "contactPersonName"
+                                                ? "180px"
+                                                : column.key === "contactNumber"
+                                                  ? "140px"
+                                                  : column.key === "billingAddress"
+                                                    ? "200px"
+                                                    : column.key === "shippingAddress"
+                                                      ? "200px"
+                                                      : column.key === "isOrderAcceptable"
+                                                        ? "150px"
+                                                        : column.key ===
+                                                          "orderAcceptanceChecklist"
+                                                          ? "250px"
+                                                          : column.key === "remarks"
+                                                            ? "200px"
+                                                            : column.key === "availabilityStatus"
+                                                              ? "150px"
+                                                              : column.key === "inventoryRemarks"
+                                                                ? "200px"
+                                                                : "160px",
                                   }}
                                 >
                                   <div className="break-words">
@@ -2359,7 +2425,12 @@ export default function WarehousePage() {
                             {filteredHistoryOrders.map((order) => (
                               <TableRow
                                 key={order.id}
-                                className="hover:bg-gray-50"
+                                className={
+                                  order.dispatchStatus?.toLowerCase() === "not okay" ||
+                                    order.dispatchStatus?.toLowerCase() === "notokay"
+                                    ? "bg-orange-100 hover:bg-orange-200 border-orange-200"
+                                    : "hover:bg-gray-50"
+                                }
                               >
                                 {historyColumns
                                   .filter(
@@ -2374,92 +2445,92 @@ export default function WarehousePage() {
                                           column.key === "editActions"
                                             ? "120px"
                                             : column.key === "orderNo"
-                                            ? "120px"
-                                            : column.key === "quotationNo"
-                                            ? "150px"
-                                            : column.key === "companyName"
-                                            ? "250px"
-                                            : column.key === "contactPersonName"
-                                            ? "180px"
-                                            : column.key === "contactNumber"
-                                            ? "140px"
-                                            : column.key === "billingAddress"
-                                            ? "200px"
-                                            : column.key === "shippingAddress"
-                                            ? "200px"
-                                            : column.key === "isOrderAcceptable"
-                                            ? "150px"
-                                            : column.key ===
-                                              "orderAcceptanceChecklist"
-                                            ? "250px"
-                                            : column.key === "remarks"
-                                            ? "200px"
-                                            : column.key ===
-                                              "availabilityStatus"
-                                            ? "150px"
-                                            : column.key === "inventoryRemarks"
-                                            ? "200px"
-                                            : "160px",
+                                              ? "120px"
+                                              : column.key === "quotationNo"
+                                                ? "150px"
+                                                : column.key === "companyName"
+                                                  ? "250px"
+                                                  : column.key === "contactPersonName"
+                                                    ? "180px"
+                                                    : column.key === "contactNumber"
+                                                      ? "140px"
+                                                      : column.key === "billingAddress"
+                                                        ? "200px"
+                                                        : column.key === "shippingAddress"
+                                                          ? "200px"
+                                                          : column.key === "isOrderAcceptable"
+                                                            ? "150px"
+                                                            : column.key ===
+                                                              "orderAcceptanceChecklist"
+                                                              ? "250px"
+                                                              : column.key === "remarks"
+                                                                ? "200px"
+                                                                : column.key ===
+                                                                  "availabilityStatus"
+                                                                  ? "150px"
+                                                                  : column.key === "inventoryRemarks"
+                                                                    ? "200px"
+                                                                    : "160px",
                                         minWidth:
                                           column.key === "editActions"
                                             ? "120px"
                                             : column.key === "orderNo"
-                                            ? "120px"
-                                            : column.key === "quotationNo"
-                                            ? "150px"
-                                            : column.key === "companyName"
-                                            ? "250px"
-                                            : column.key === "contactPersonName"
-                                            ? "180px"
-                                            : column.key === "contactNumber"
-                                            ? "140px"
-                                            : column.key === "billingAddress"
-                                            ? "200px"
-                                            : column.key === "shippingAddress"
-                                            ? "200px"
-                                            : column.key === "isOrderAcceptable"
-                                            ? "150px"
-                                            : column.key ===
-                                              "orderAcceptanceChecklist"
-                                            ? "250px"
-                                            : column.key === "remarks"
-                                            ? "200px"
-                                            : column.key ===
-                                              "availabilityStatus"
-                                            ? "150px"
-                                            : column.key === "inventoryRemarks"
-                                            ? "200px"
-                                            : "160px",
+                                              ? "120px"
+                                              : column.key === "quotationNo"
+                                                ? "150px"
+                                                : column.key === "companyName"
+                                                  ? "250px"
+                                                  : column.key === "contactPersonName"
+                                                    ? "180px"
+                                                    : column.key === "contactNumber"
+                                                      ? "140px"
+                                                      : column.key === "billingAddress"
+                                                        ? "200px"
+                                                        : column.key === "shippingAddress"
+                                                          ? "200px"
+                                                          : column.key === "isOrderAcceptable"
+                                                            ? "150px"
+                                                            : column.key ===
+                                                              "orderAcceptanceChecklist"
+                                                              ? "250px"
+                                                              : column.key === "remarks"
+                                                                ? "200px"
+                                                                : column.key ===
+                                                                  "availabilityStatus"
+                                                                  ? "150px"
+                                                                  : column.key === "inventoryRemarks"
+                                                                    ? "200px"
+                                                                    : "160px",
                                         maxWidth:
                                           column.key === "editActions"
                                             ? "120px"
                                             : column.key === "orderNo"
-                                            ? "120px"
-                                            : column.key === "quotationNo"
-                                            ? "150px"
-                                            : column.key === "companyName"
-                                            ? "250px"
-                                            : column.key === "contactPersonName"
-                                            ? "180px"
-                                            : column.key === "contactNumber"
-                                            ? "140px"
-                                            : column.key === "billingAddress"
-                                            ? "200px"
-                                            : column.key === "shippingAddress"
-                                            ? "200px"
-                                            : column.key === "isOrderAcceptable"
-                                            ? "150px"
-                                            : column.key ===
-                                              "orderAcceptanceChecklist"
-                                            ? "250px"
-                                            : column.key === "remarks"
-                                            ? "200px"
-                                            : column.key ===
-                                              "availabilityStatus"
-                                            ? "150px"
-                                            : column.key === "inventoryRemarks"
-                                            ? "200px"
-                                            : "160px",
+                                              ? "120px"
+                                              : column.key === "quotationNo"
+                                                ? "150px"
+                                                : column.key === "companyName"
+                                                  ? "250px"
+                                                  : column.key === "contactPersonName"
+                                                    ? "180px"
+                                                    : column.key === "contactNumber"
+                                                      ? "140px"
+                                                      : column.key === "billingAddress"
+                                                        ? "200px"
+                                                        : column.key === "shippingAddress"
+                                                          ? "200px"
+                                                          : column.key === "isOrderAcceptable"
+                                                            ? "150px"
+                                                            : column.key ===
+                                                              "orderAcceptanceChecklist"
+                                                              ? "250px"
+                                                              : column.key === "remarks"
+                                                                ? "200px"
+                                                                : column.key ===
+                                                                  "availabilityStatus"
+                                                                  ? "150px"
+                                                                  : column.key === "inventoryRemarks"
+                                                                    ? "200px"
+                                                                    : "160px",
                                       }}
                                     >
                                       <div className="break-words whitespace-normal leading-relaxed">
@@ -2708,8 +2779,8 @@ export default function WarehousePage() {
                             <p className="text-lg font-bold text-violet-600">
                               {order.amount
                                 ? `₹${Number(order.amount).toLocaleString(
-                                    "en-IN"
-                                  )}`
+                                  "en-IN"
+                                )}`
                                 : "₹0"}
                             </p>
                           </div>
@@ -2750,11 +2821,10 @@ export default function WarehousePage() {
                               Calibration Cert:
                             </span>
                             <span
-                              className={`inline-block mt-1 px-2 py-1 text-xs rounded ${
-                                order.calibrationCertRequired === "Yes"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-gray-100 text-gray-600"
-                              }`}
+                              className={`inline-block mt-1 px-2 py-1 text-xs rounded ${order.calibrationCertRequired === "Yes"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-600"
+                                }`}
                             >
                               {order.calibrationCertRequired || "N/A"}
                             </span>
@@ -2764,11 +2834,10 @@ export default function WarehousePage() {
                               Installation:
                             </span>
                             <span
-                              className={`inline-block mt-1 px-2 py-1 text-xs rounded ${
-                                order.installationRequired === "Yes"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-gray-100 text-gray-600"
-                              }`}
+                              className={`inline-block mt-1 px-2 py-1 text-xs rounded ${order.installationRequired === "Yes"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-600"
+                                }`}
                             >
                               {order.installationRequired || "N/A"}
                             </span>
@@ -2809,7 +2878,11 @@ export default function WarehousePage() {
                     return (
                       <div
                         key={order.id}
-                        className="bg-white border rounded-lg shadow-sm overflow-hidden"
+                        className={`border rounded-lg shadow-sm overflow-hidden ${order.dispatchStatus?.toLowerCase() === "not okay" ||
+                            order.dispatchStatus?.toLowerCase() === "notokay"
+                            ? "bg-orange-50 border-orange-200"
+                            : "bg-white border-gray-200"
+                          }`}
                       >
                         {/* Card Header with Edit Button */}
                         <div className="bg-green-50 px-4 py-3 border-b">
@@ -2910,384 +2983,15 @@ export default function WarehousePage() {
           </Tabs>
         </div>
 
-        {/* Process Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Warehouse Processing</DialogTitle>
-              <DialogDescription>
-                Upload warehouse documentation and enter processing details
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="orderNumber">Order Number</Label>
-                  <Input
-                    id="orderNumber"
-                    className="font-bold"
-                    value={selectedOrder?.orderNo}
-                    disabled
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Quotation No.</Label>
-                  <Input
-                    className="font-bold"
-                    value={selectedOrder?.quotationNo || ""}
-                    disabled
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Date</Label>
-                  <Input
-                    className="font-bold"
-                    value={
-                      selectedOrder?.timeStamp
-                        ? convertTimestampToDDMMYYYY(selectedOrder.timeStamp)
-                        : ""
-                    }
-                    disabled
-                  />
-                </div>
-              </div>
-
-              {/* Items Section - Combined (Columns + JSON) */}
-              <div className="mt-4">
-                <h5 className="font-medium mb-2">Items</h5>
-                <div className="space-y-3 max-h-80 overflow-y-auto p-1">
-                  {(() => {
-                    if (!selectedOrder) {
-                      return (
-                        <div className="text-center py-4 text-gray-500">
-                          No order selected
-                        </div>
-                      );
-                    }
-
-                    const allItems = [];
-                    let itemCounter = 0;
-
-                    // 1. Process Column Items (1 to 14)
-                    for (let i = 1; i <= 14; i++) {
-                      const itemName = selectedOrder[`itemName${i}`];
-                      const quantity = selectedOrder[`quantity${i}`];
-
-                      if (itemName || quantity) {
-                        itemCounter++;
-                        allItems.push({
-                          id: `column-${i}`,
-                          index: itemCounter,
-                          name: itemName || "",
-                          quantity: quantity || "", // Empty if no quantity
-                          type: "column",
-                          rowNum: i,
-                        });
-                      }
-                    }
-
-                    // 2. Process JSON Items from "Item/Qty" column
-                    try {
-                      if (selectedOrder.itemQtyJson) {
-                        let jsonItems = [];
-
-                        if (typeof selectedOrder.itemQtyJson === "string") {
-                          jsonItems = JSON.parse(selectedOrder.itemQtyJson);
-                        } else if (Array.isArray(selectedOrder.itemQtyJson)) {
-                          jsonItems = selectedOrder.itemQtyJson;
-                        }
-
-                        jsonItems.forEach((item, idx) => {
-                          if (item.name || item.quantity) {
-                            itemCounter++;
-                            allItems.push({
-                              id: `json-${idx}`,
-                              index: itemCounter,
-                              name: item.name || "",
-                              quantity: item.quantity || "", // Empty if no quantity
-                              type: "json",
-                              jsonIndex: idx,
-                            });
-                          }
-                        });
-                      }
-                    } catch (error) {
-                      console.error("Error parsing JSON items:", error);
-                    }
-
-                    if (allItems.length === 0) {
-                      return (
-                        <div className="text-center py-4 text-gray-500">
-                          No items found in this order
-                        </div>
-                      );
-                    }
-
-                    return allItems.map((item) => {
-                      // Get current quantity from state or use empty string
-                      const currentQuantity =
-                        itemQuantities[item.id] !== undefined
-                          ? itemQuantities[item.id]
-                          : item.quantity || ""; // Use empty string if no initial quantity
-
-                      return (
-                        <div
-                          key={item.id}
-                          className="grid grid-cols-2 gap-3 border p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
-                        >
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <Label className="text-sm font-medium">
-                                Item {item.index}
-                              </Label>
-                              <div className="flex items-center gap-2">
-                                {item.type === "json" && (
-                                  <span className="text-xs text-blue-500 bg-blue-100 px-2 py-0.5 rounded">
-                                    JSON
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <Input
-                              value={item.name}
-                              disabled
-                              className="bg-white font-medium"
-                              placeholder="Item name"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-sm font-medium">
-                              Quantity
-                            </Label>
-                            <div className="flex items-center space-x-2">
-                              <Input
-                                type="number"
-                                min="0"
-                                value={currentQuantity}
-                                className="bg-white font-medium text-right"
-                                placeholder="Enter quantity"
-                                onChange={(e) => {
-                                  const newValue = e.target.value;
-                                  setItemQuantities((prev) => ({
-                                    ...prev,
-                                    [item.id]: newValue,
-                                  }));
-                                }}
-                              />
-                            </div>
-                            <div className="flex justify-between">
-                              <div className="text-xs text-gray-500">
-                                Initial: {item.quantity || "Empty"}
-                              </div>
-                              {currentQuantity !== item.quantity && (
-                                <div className="text-xs text-green-600 font-medium">
-                                  Updated
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-
-                {/* Total Quantity */}
-                <div className="mt-4 pt-3 border-t">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">
-                      Total Quantity:
-                    </span>
-                    <span className="text-lg font-bold text-violet-600">
-                      {(() => {
-                        let total = 0;
-                        Object.values(itemQuantities).forEach((qty) => {
-                          // Safely check if qty is not empty
-                          if (qty !== null && qty !== undefined && qty !== "") {
-                            // Convert to string and then check if it's not empty
-                            const qtyStr = String(qty);
-                            if (qtyStr.trim() !== "") {
-                              total += parseInt(qtyStr) || 0;
-                            }
-                          }
-                        });
-                        return total;
-                      })()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Attachments Section */}
-              <div className="mt-4">
-                <h5 className="font-medium mb-2">Attachments</h5>
-                <div className="grid grid-cols-2 gap-4">
-                  {selectedOrder?.invoiceUpload && (
-                    <div className="space-y-2">
-                      <Label>Invoice Upload</Label>
-                      <div>
-                        <a
-                          href={selectedOrder.invoiceUpload}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline text-sm"
-                        >
-                          View Document
-                        </a>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* New Input Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="transporterName">
-                    Transporter/Courier/Flight-Person Name
-                  </Label>
-                  <Input
-                    id="transporterName"
-                    value={transporterName}
-                    onChange={(e) => setTransporterName(e.target.value)}
-                    placeholder="Enter transporter name"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="transporterContact">
-                    Transporter/Courier/Flight-Person Contact No.
-                  </Label>
-                  <Input
-                    id="transporterContact"
-                    value={transporterContact}
-                    onChange={(e) => setTransporterContact(e.target.value)}
-                    placeholder="Enter contact number"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="biltyNumber">
-                    Transporter/Courier/Flight-Bilty No./Docket No.
-                  </Label>
-                  <Input
-                    id="biltyNumber"
-                    value={biltyNumber}
-                    onChange={(e) => setBiltyNumber(e.target.value)}
-                    placeholder="Enter bilty/docket number"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="totalCharges">Total Charges</Label>
-                  <Input
-                    id="totalCharges"
-                    value={totalCharges}
-                    onChange={(e) => setTotalCharges(e.target.value)}
-                    placeholder="Enter total charges"
-                    type="number"
-                    step="0.01"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="warehouseRemarks">Warehouse Remarks</Label>
-                <Textarea
-                  id="warehouseRemarks"
-                  value={warehouseRemarks}
-                  onChange={(e) => setWarehouseRemarks(e.target.value)}
-                  placeholder="Enter warehouse remarks"
-                  rows={3}
-                />
-              </div>
-
-              {/* File Upload Section */}
-              <div className="border-t pt-4">
-                <h4 className="font-medium mb-3">File Uploads</h4>
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="beforePhoto">Before Photo Upload</Label>
-                    <Input
-                      id="beforePhoto"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) =>
-                        setBeforePhoto(e.target.files?.[0] || null)
-                      }
-                    />
-                    {beforePhoto && (
-                      <p className="text-sm text-muted-foreground">
-                        Selected: {beforePhoto.name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="afterPhoto">After Photo Upload</Label>
-                    <Input
-                      id="afterPhoto"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) =>
-                        setAfterPhoto(e.target.files?.[0] || null)
-                      }
-                    />
-                    {afterPhoto && (
-                      <p className="text-sm text-muted-foreground">
-                        Selected: {afterPhoto.name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="biltyUpload">Bilty Upload</Label>
-                    <Input
-                      id="biltyUpload"
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) =>
-                        setBiltyUpload(e.target.files?.[0] || null)
-                      }
-                    />
-                    {biltyUpload && (
-                      <p className="text-sm text-muted-foreground">
-                        Selected: {biltyUpload.name}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={uploading || currentUser?.role === "user"}
-                >
-                  {uploading ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    "Submit"
-                  )}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Process Dialog Component */}
+        <ProcessDialog
+          isOpen={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          selectedOrder={selectedOrder}
+          onSubmit={handleProcessSubmit}
+          uploading={uploading}
+          currentUser={currentUser}
+        />
 
         {/* View Dialog */}
         <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
