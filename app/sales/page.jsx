@@ -47,6 +47,7 @@ import ProcessDialog from "@/components/process-dialog";
 const pendingColumns = [
   { key: "actions", label: "Actions", searchable: false },
   { key: "orderNo", label: "Order No.", searchable: true },
+  { key: "planned5", label: "Date", searchable: true },
   { key: "quotationNo", label: "Quotation No.", searchable: true },
   { key: "companyName", label: "Company Name", searchable: true },
   {
@@ -152,6 +153,7 @@ const pendingColumns = [
 const historyColumns = [
   { key: "editActions", label: "Actions", searchable: false },
   { key: "orderNo", label: "Order No.", searchable: true },
+  { key: "planned5", label: "Date", searchable: true },
   { key: "quotationNo", label: "Quotation No.", searchable: true },
   { key: "companyName", label: "Company Name", searchable: true },
   {
@@ -1735,6 +1737,39 @@ export default function WarehousePage() {
       case "totalBillAmount":
       case "totalCharges":
         return actualValue ? `₹${Number(actualValue).toLocaleString()}` : "";
+      case "planned5":
+        // Format the date for display
+        if (!actualValue) return "";
+        const historyDateStr = String(actualValue);
+        // Handle Google Sheets GVIZ Date format: "Date(2026,0,31)"
+        if (historyDateStr.startsWith("Date(")) {
+          const match = historyDateStr.match(/Date\((\d+),(\d+),(\d+)(?:,(\d+),(\d+),(\d+))?\)/);
+          if (match) {
+            const date = new Date(
+              parseInt(match[1]),
+              parseInt(match[2]),
+              parseInt(match[3])
+            );
+            return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+          }
+        }
+        // Handle DD/MM/YYYY or DD-MM-YYYY
+        const historyParts = historyDateStr.split(/[/-]/);
+        if (historyParts.length >= 3 && historyParts[0].length <= 2 && historyParts[2].length === 4) {
+          const day = parseInt(historyParts[0], 10);
+          const month = parseInt(historyParts[1], 10) - 1;
+          const year = parseInt(historyParts[2], 10);
+          const date = new Date(year, month, day);
+          if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+          }
+        }
+        // Default browser parsing
+        const historyParsedDate = new Date(actualValue);
+        if (!isNaN(historyParsedDate.getTime())) {
+          return historyParsedDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+        return actualValue || "";
       default:
         return actualValue || "";
     }
@@ -1835,6 +1870,39 @@ export default function WarehousePage() {
       case "totalBillAmount":
       case "totalCharges":
         return actualValue ? `₹${Number(actualValue).toLocaleString()}` : "";
+      case "planned5":
+        // Format the date for display
+        if (!actualValue) return "";
+        const dateStr = String(actualValue);
+        // Handle Google Sheets GVIZ Date format: "Date(2026,0,31)"
+        if (dateStr.startsWith("Date(")) {
+          const match = dateStr.match(/Date\((\d+),(\d+),(\d+)(?:,(\d+),(\d+),(\d+))?\)/);
+          if (match) {
+            const date = new Date(
+              parseInt(match[1]),
+              parseInt(match[2]),
+              parseInt(match[3])
+            );
+            return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+          }
+        }
+        // Handle DD/MM/YYYY or DD-MM-YYYY
+        const parts = dateStr.split(/[/-]/);
+        if (parts.length >= 3 && parts[0].length <= 2 && parts[2].length === 4) {
+          const day = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const year = parseInt(parts[2], 10);
+          const date = new Date(year, month, day);
+          if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+          }
+        }
+        // Default browser parsing
+        const parsedDate = new Date(actualValue);
+        if (!isNaN(parsedDate.getTime())) {
+          return parsedDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+        return actualValue || "";
       default:
         return actualValue || "";
     }
@@ -2879,9 +2947,9 @@ export default function WarehousePage() {
                       <div
                         key={order.id}
                         className={`border rounded-lg shadow-sm overflow-hidden ${order.dispatchStatus?.toLowerCase() === "not okay" ||
-                            order.dispatchStatus?.toLowerCase() === "notokay"
-                            ? "bg-orange-50 border-orange-200"
-                            : "bg-white border-gray-200"
+                          order.dispatchStatus?.toLowerCase() === "notokay"
+                          ? "bg-orange-50 border-orange-200"
+                          : "bg-white border-gray-200"
                           }`}
                       >
                         {/* Card Header with Edit Button */}
