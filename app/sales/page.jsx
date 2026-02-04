@@ -1519,7 +1519,7 @@ export default function WarehousePage() {
     }
 
     const isEditable =
-      isEditing && columnKey !== "orderNo" && columnKey !== "quotationNo";
+      isEditing && columnKey !== "orderNo" && columnKey !== "quotationNo" && columnKey !== "planned5";
 
     if (isEditable) {
       // Render editable inputs for editable columns
