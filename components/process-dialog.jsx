@@ -221,6 +221,20 @@ export default function ProcessDialog({
             return;
         }
 
+        // Validation for required image uploads
+        if (beforePhotos.length === 0) {
+            alert("⚠️ Before Photo (Packing) is required.\n\nPlease upload at least 1 before photo.");
+            return;
+        }
+        if (afterPhotos.length === 0) {
+            alert("⚠️ After Photo (Final Package) is required.\n\nPlease upload at least 1 after photo.");
+            return;
+        }
+        if (biltyUploads.length === 0) {
+            alert("⚠️ Bilty / Docket Upload is required.\n\nPlease upload at least 1 bilty/docket document.");
+            return;
+        }
+
         setIsUploading(true);
         setUploadProgress(0);
         setUploadStatus("Preparing files...");
@@ -707,9 +721,15 @@ export default function ProcessDialog({
                                         className="text-emerald-700 font-semibold flex items-center gap-2"
                                     >
                                         Before Photo (Packing)
+                                        <span className="text-red-500 font-bold">*</span>
                                         <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">
                                             MULTIPLE
                                         </span>
+                                        {beforePhotos.length === 0 && (
+                                            <span className="text-[10px] font-medium text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full border border-red-200">
+                                                REQUIRED
+                                            </span>
+                                        )}
                                     </Label>
                                     <div className="relative group">
                                         <Input
@@ -783,9 +803,15 @@ export default function ProcessDialog({
                                         className="text-emerald-700 font-semibold flex items-center gap-2"
                                     >
                                         After Photo (Final Package)
+                                        <span className="text-red-500 font-bold">*</span>
                                         <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">
                                             MULTIPLE
                                         </span>
+                                        {afterPhotos.length === 0 && (
+                                            <span className="text-[10px] font-medium text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full border border-red-200">
+                                                REQUIRED
+                                            </span>
+                                        )}
                                     </Label>
                                     <div className="relative group">
                                         <Input
@@ -859,9 +885,15 @@ export default function ProcessDialog({
                                         className="text-emerald-700 font-semibold flex items-center gap-2"
                                     >
                                         Bilty / Docket Upload
+                                        <span className="text-red-500 font-bold">*</span>
                                         <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">
                                             MULTIPLE
                                         </span>
+                                        {biltyUploads.length === 0 && (
+                                            <span className="text-[10px] font-medium text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full border border-red-200">
+                                                REQUIRED
+                                            </span>
+                                        )}
                                     </Label>
                                     <div className="relative group">
                                         <Input
