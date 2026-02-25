@@ -109,7 +109,8 @@ const pendingColumns = [
     searchable: true,
   },
   { key: "attachment", label: "Attachment", searchable: true },
-
+  { key: "invoiceNumber", label: "Invoice Number", searchable: true },
+  { key: "invoiceUpload", label: "Invoice Upload", searchable: true },
 ];
 
 // Column definitions for History tab (includes BN to BR and BV to CC) - Defined before component to avoid temporal dead zone
@@ -413,7 +414,7 @@ export default function WarehousePage() {
                 quotationCopy2: row.c[15] ? row.c[15].v : "",
                 acceptanceCopy: row.c[16] ? row.c[16].v : "",
                 vehicleNo: row.c[26] ? row.c[26].v : "",
-                // invoiceNumber: row.c[65] ? row.c[65].v : "",
+                invoiceNumber: row.c[65] ? row.c[65].v : "",
                 invoiceUpload: row.c[66] ? row.c[66].v : "",
                 ewayBillUpload: row.c[67] ? row.c[67].v : "",
                 totalQtyHistory: row.c[68] ? row.c[68].v : "",

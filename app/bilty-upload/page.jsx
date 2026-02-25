@@ -43,6 +43,8 @@ const sharedColumns = [
     { key: "orderNo", label: "Order No." },
     { key: "quotationNo", label: "Quotation No." },
     { key: "companyName", label: "Company Name" },
+    { key: "invoiceNumber", label: "Invoice Number" },
+    { key: "invoiceUpload", label: "Invoice Upload" },
     { key: "transporterName", label: "Transporter Name" },
     { key: "transporterContact", label: "Transporter Contact" },
     { key: "biltyNumber", label: "Bilty/Docket No." },
@@ -146,6 +148,8 @@ export default function BiltyUploadPage() {
                         biltyNumber: whInfo.biltyNumber || "",
                         totalCharges: whInfo.totalCharges || "",
                         warehouseRemarks: whInfo.warehouseRemarks || "",
+                        invoiceNumber: row.c[65]?.v || "",
+                        invoiceUpload: row.c[66]?.v || "",
                         attachment: row.c[29]?.v || "",
                         beforePhoto: whInfo.beforePhoto || "",
                         afterPhoto: whInfo.afterPhoto || "",
@@ -364,6 +368,14 @@ export default function BiltyUploadPage() {
                                                     <TableCell className="font-bold text-slate-900">{order.orderNo}</TableCell>
                                                     <TableCell className="text-slate-600 font-medium">{order.quotationNo}</TableCell>
                                                     <TableCell className="font-medium text-slate-800">{order.companyName}</TableCell>
+                                                    <TableCell className="font-medium text-slate-600">{order.invoiceNumber || "-"}</TableCell>
+                                                    <TableCell>
+                                                        {order.invoiceUpload ? (
+                                                            <a href={order.invoiceUpload} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-2 py-1 rounded text-[10px] font-bold border border-green-100">
+                                                                <FileText className="h-2.5 w-2.5" /> View Invoice
+                                                            </a>
+                                                        ) : <span className="text-slate-300">-</span>}
+                                                    </TableCell>
                                                     <TableCell className="text-slate-600">{order.transporterName}</TableCell>
                                                     <TableCell className="text-slate-600">{order.transporterContact || "-"}</TableCell>
                                                     <TableCell className="font-bold text-slate-900">{order.biltyNumber || "-"}</TableCell>

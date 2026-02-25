@@ -115,6 +115,7 @@ export default function TransportingPage() {
                         attachment: row.c[29]?.v || "", // BN (Index 29)
                         remarks: row.c[60]?.v || "",
                         planned5: row.c[62]?.v || "",
+                        invoiceNumber: row.c[65]?.v || "",
                         invoiceUpload: row.c[66]?.v || "",
 
                         bsColumn: row.c[70]?.v || null,
@@ -385,6 +386,8 @@ export default function TransportingPage() {
                                 <TableHead className="font-bold text-slate-700 h-10 min-w-[120px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Order No.</TableHead>
                                 <TableHead className="font-bold text-slate-700 h-10 min-w-[130px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Quotation No.</TableHead>
                                 <TableHead className="font-bold text-slate-700 h-10 min-w-[200px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Company Name</TableHead>
+                                <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Invoice Number</TableHead>
+                                <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Invoice Upload</TableHead>
                                 {itemHeaderCols}
                                 <TableHead className="font-bold text-slate-700 h-10 min-w-[120px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Total Qty</TableHead>
                                 <TableHead className="font-bold text-slate-700 h-10 min-w-[200px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Remarks</TableHead>
@@ -454,6 +457,14 @@ export default function TransportingPage() {
                                             <TableCell className="font-bold text-blue-600 border-b border-r border-slate-100">{order.orderNo}</TableCell>
                                             <TableCell className="font-medium text-slate-600 border-b border-r border-slate-100">{order.quotationNo}</TableCell>
                                             <TableCell className="font-medium text-slate-800 border-b border-r border-slate-100">{order.companyName}</TableCell>
+                                            <TableCell className="font-medium text-slate-600 border-b border-r border-slate-100">{order.invoiceNumber || "-"}</TableCell>
+                                            <TableCell className="border-b border-r border-slate-100">
+                                                {order.invoiceUpload ? (
+                                                    <a href={order.invoiceUpload} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-2 py-1 rounded text-[10px] font-bold border border-green-100">
+                                                        <FileText className="h-2.5 w-2.5" /> View Invoice
+                                                    </a>
+                                                ) : <span className="text-slate-300">-</span>}
+                                            </TableCell>
                                             {itemCells}
                                             <TableCell className="font-bold text-slate-700 border-b border-r border-slate-100">{order.totalQty}</TableCell>
                                             <TableCell className="text-slate-600 max-w-[200px] truncate border-b border-r border-slate-100" title={order.remarks}>
