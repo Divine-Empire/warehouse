@@ -44,6 +44,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (savedUser && savedAuth === "true") {
           const userData = JSON.parse(savedUser)
+          // Ensure pageAccess exists for backward compatibility
+          if (!userData.pageAccess) {
+            userData.pageAccess = ["all"]
+          }
           setUser(userData)
           setIsAuthenticated(true)
         }
