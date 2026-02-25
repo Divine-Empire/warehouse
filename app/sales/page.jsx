@@ -109,44 +109,7 @@ const pendingColumns = [
     searchable: true,
   },
   { key: "attachment", label: "Attachment", searchable: true },
-  { key: "vehicleNo", label: "Vehicle No.", searchable: true },
 
-  { key: "itemName1", label: "Item Name 1", searchable: true },
-  { key: "quantity1", label: "Quantity 1", searchable: true },
-  { key: "itemName2", label: "Item Name 2", searchable: true },
-  { key: "quantity2", label: "Quantity 2", searchable: true },
-  { key: "itemName3", label: "Item Name 3", searchable: true },
-  { key: "quantity3", label: "Quantity 3", searchable: true },
-  { key: "itemName4", label: "Item Name 4", searchable: true },
-  { key: "quantity4", label: "Quantity 4", searchable: true },
-  { key: "itemName5", label: "Item Name 5", searchable: true },
-  { key: "quantity5", label: "Quantity 5", searchable: true },
-  { key: "itemName6", label: "Item Name 6", searchable: true },
-  { key: "quantity6", label: "Quantity 6", searchable: true },
-  { key: "itemName7", label: "Item Name 7", searchable: true },
-  { key: "quantity7", label: "Quantity 7", searchable: true },
-  { key: "itemName8", label: "Item Name 8", searchable: true },
-  { key: "quantity8", label: "Quantity 8", searchable: true },
-  { key: "itemName9", label: "Item Name 9", searchable: true },
-  { key: "quantity9", label: "Quantity 9", searchable: true },
-  { key: "itemName10", label: "Item Name 10", searchable: true },
-  { key: "quantity10", label: "Quantity 10", searchable: true },
-  { key: "itemName11", label: "Item Name 11", searchable: true },
-  { key: "quantity11", label: "Quantity 11", searchable: true },
-  { key: "itemName12", label: "Item Name 12", searchable: true },
-  { key: "quantity12", label: "Quantity 12", searchable: true },
-  { key: "itemName13", label: "Item Name 13", searchable: true },
-  { key: "quantity13", label: "Quantity 13", searchable: true },
-  { key: "itemName14", label: "Item Name 14", searchable: true },
-  { key: "quantity14", label: "Quantity 14", searchable: true },
-  { key: "totalQty", label: "Total Qty", searchable: true },
-  { key: "remarks", label: "Remarks", searchable: true },
-  { key: "invoiceNumber", label: "Invoice Number", searchable: true },
-  { key: "invoiceUpload", label: "Invoice Upload", searchable: true },
-  { key: "ewayBillUpload", label: "Eway Bill Upload", searchable: true },
-  { key: "totalQtyHistory", label: "Total Qty", searchable: true },
-  { key: "totalBillAmount", label: "Total Bill Amount", searchable: true },
-  { key: "dSrNumber", label: "D-Sr Number", searchable: true },
 ];
 
 // Column definitions for History tab (includes BN to BR and BV to CC) - Defined before component to avoid temporal dead zone
@@ -244,26 +207,7 @@ const historyColumns = [
   { key: "totalQty", label: "Total Qty", searchable: true },
   { key: "remarks", label: "Remarks", searchable: true },
   { key: "invoiceNumber", label: "Invoice Number", searchable: true },
-  { key: "invoiceUpload", label: "Invoice Upload", searchable: true },
-  { key: "ewayBillUpload", label: "Eway Bill Upload", searchable: true },
-  { key: "totalQtyHistory", label: "Total Qty", searchable: true },
-  { key: "totalBillAmount", label: "Total Bill Amount", searchable: true },
-  { key: "dSrNumber", label: "D-Sr Number", searchable: true },
-  // BV to CC columns
-  { key: "transporterName", label: "Transporter Name", searchable: true },
-  {
-    key: "transporterContact",
-    label: "Transporter Contact",
-    searchable: true,
-  },
-  { key: "biltyNumber", label: "Bilty Number", searchable: true },
-  { key: "totalCharges", label: "Total Charges", searchable: true },
-  { key: "warehouseRemarks", label: "Warehouse Remarks", searchable: true },
-  { key: "beforePhoto", label: "Before Photo", searchable: false },
-  { key: "afterPhoto", label: "After Photo", searchable: false },
-  { key: "biltyUpload", label: "Bilty Upload", searchable: false },
-  { key: "dispatchStatus", label: "Dispatch Status", searchable: true },
-  { key: "notOkReason", label: "Reason for Not Okay", searchable: true },
+
 ];
 
 // Memoized column width lookup to avoid recalculating on every render
@@ -383,20 +327,22 @@ export default function WarehousePage() {
       const data = JSON.parse(jsonData);
 
       if (data && data.table && data.table.rows) {
-        const pendingOrders = [];
+        const ordersMap = new Map();
 
         data.table.rows.slice(6).forEach((row, index) => {
-          if (row.c) {
-            const actualRowIndex = index + 2;
-            const btColumn = row.c[70] ? row.c[70].v : null; // Column BT (index 71)
-            const buColumn = row.c[71] ? row.c[71].v : null; // Column BU (index 72)
+          if (row.c && row.c[105] && row.c[105].v) {
+            const dSrNumber = String(row.c[105].v).trim();
+            if (!dSrNumber) return;
 
+            const actualRowIndex = index + 2;
             const planned5 = row.c[62] ? row.c[62].v : null;
             const actual6 = row.c[71] ? row.c[71].v : null;
+
             if (planned5 && !actual6) {
               const order = {
                 rowIndex: actualRowIndex,
-                id: row.c[105] ? row.c[105].v : `ORDER-${actualRowIndex}`,
+                id: dSrNumber,
+                dSrNumber: dSrNumber,
                 timeStamp: row.c[0] ? row.c[0].v : "",
                 orderNo: row.c[1] ? row.c[1].v : "", // Column B - Order No
                 quotationNo: row.c[2] ? row.c[2].v : "", // Column C
@@ -477,11 +423,23 @@ export default function WarehousePage() {
                 planned5: row.c[62] ? row.c[62].v : "",
                 actual5: row.c[63] ? row.c[63].v : "",
                 actual6: row.c[71] ? row.c[71] : "",
+
+                // Additional Warehouse columns from DISPATCH-DELIVERY to preserve state
+                beforePhoto: row.c[73] ? row.c[73].v : "",      // BV
+                afterPhoto: row.c[74] ? row.c[74].v : "",       // BW
+                biltyUpload: row.c[75] ? row.c[75].v : "",      // BX
+                transporterName: row.c[76] ? row.c[76].v : "",   // BY
+                transporterContact: row.c[77] ? row.c[77].v : "",// BZ
+                biltyNumber: row.c[78] ? row.c[78].v : "",       // CA
+                totalCharges: row.c[79] ? row.c[79].v : "",      // CB
+                warehouseRemarks: row.c[80] ? row.c[80].v : "",  // CC
               };
-              pendingOrders.push(order);
+              ordersMap.set(dSrNumber, order);
             }
           }
         });
+
+        const pendingOrders = Array.from(ordersMap.values());
 
         const parseItemQtyJson = (jsonString) => {
           if (!jsonString) return null;
@@ -530,15 +488,17 @@ export default function WarehousePage() {
       const whData = parseSheetJson(whText);
 
       if (whData && whData.table && whData.table.rows) {
-        const historyOrders = [];
+        const ordersMap = new Map();
 
         whData.table.rows.forEach((row, index) => {
           if (row.c && row.c[1] && row.c[1].v) {
+            const dSrNumber = row.c[105] && row.c[105].v ? String(row.c[105].v).trim() : "";
             const actualRowIndex = index + 1;
 
             const order = {
               rowIndex: actualRowIndex,
-              id: `WH-${index}`,
+              id: dSrNumber || `WH-${index}`,
+              dSrNumber: dSrNumber,
               orderNo: row.c[1] ? String(row.c[1].v).trim() : "", // Column B (index 1)
               quotationNo: row.c[2] ? row.c[2].v : "",           // Column C (index 2)
 
@@ -581,10 +541,11 @@ export default function WarehousePage() {
                 processedBy: "Warehouse Team",
               }
             };
-            historyOrders.push(order);
+            ordersMap.set(order.id, order);
           }
         });
 
+        const historyOrders = Array.from(ordersMap.values());
         // Sort history orders by TimeStamp (processed date) - most recent first
         historyOrders.sort((a, b) => {
           return parseFlexibleDate(b.planned5) - parseFlexibleDate(a.planned5);
@@ -930,10 +891,10 @@ export default function WarehousePage() {
         throw new Error(`HTTP error! status: ${updateResponse.status}`);
       }
 
-      // Warehouse sheet insert (second call)
+      // Warehouse sheet update (second call) - Now using updateByOrderNo to prevent duplicates
       const formData2 = new FormData();
       formData2.append("sheetName", "Warehouse");
-      formData2.append("action", "insertWarehouseWithDynamicColumns");
+      formData2.append("action", "updateByOrderNo");
       formData2.append("orderNo", order.orderNo);
 
       formData2.append("totalItems", allItems.length.toString());
@@ -944,18 +905,22 @@ export default function WarehousePage() {
       warehouseRowData[1] = order.orderNo; // 2. Order No.
       warehouseRowData[2] = order.quotationNo; // 3. Quotation No.
 
-      // Use pre-uploaded file URLs if available
+      // Use pre-uploaded file URLs if available, otherwise preserve existing
       if (hasPreUploadedUrls) {
         warehouseRowData[3] = fileUrls.beforePhotoUrl || ""; // 4. Before Photo URLs
         warehouseRowData[4] = fileUrls.afterPhotoUrl || "";  // 5. After Photo URLs
         warehouseRowData[5] = fileUrls.biltyUrl || "";       // 6. Bilty Upload URLs
+      } else {
+        warehouseRowData[3] = order.beforePhoto || "";
+        warehouseRowData[4] = order.afterPhoto || "";
+        warehouseRowData[5] = order.biltyUpload || "";
       }
 
-      warehouseRowData[6] = transporterName || ""; // 7. Transporter Name
-      warehouseRowData[7] = transporterContact || ""; // 8. Transporter Contact
-      warehouseRowData[8] = biltyNumber || ""; // 9. Bilty No.
-      warehouseRowData[9] = totalCharges || ""; // 10. Total Charges
-      warehouseRowData[10] = warehouseRemarks || ""; // 11. Warehouse Remarks
+      warehouseRowData[6] = transporterName || order.transporterName || ""; // 7. Transporter Name
+      warehouseRowData[7] = transporterContact || order.transporterContact || ""; // 8. Transporter Contact
+      warehouseRowData[8] = biltyNumber || order.biltyNumber || ""; // 9. Bilty No.
+      warehouseRowData[9] = totalCharges || order.totalCharges || ""; // 10. Total Charges
+      warehouseRowData[10] = warehouseRemarks || order.warehouseRemarks || ""; // 11. Warehouse Remarks
 
       // Add ALL items to warehouse sheet starting from index 11
       // Items: Column L onwards (index 11 = Item Name 1, index 12 = Qty 1, etc.)
@@ -967,51 +932,71 @@ export default function WarehousePage() {
       });
 
       // Explicitly submit to Column EB (Index 131) and Column EC (Index 132)
-      // Note: Column EE (Index 134) is intentionally left empty
-      warehouseRowData[131] = dispatchStatus || "okay";
-      warehouseRowData[132] = dispatchStatus === "notokay" ? notOkReason : "";
+      // Preserve existing if not provided
+      warehouseRowData[131] = dispatchStatus || order.dispatchStatus || "okay";
+      warehouseRowData[132] = dispatchStatus === "notokay" ? notOkReason : (order.notOkReason || "");
       // Index 133 (ED) and 134 (EE) are left empty
 
       formData2.append("rowData", JSON.stringify(warehouseRowData));
 
-      const updateResponse2 = await fetch(APPS_SCRIPT_URL, {
+      let response2 = await fetch(APPS_SCRIPT_URL, {
         method: "POST",
         mode: "cors",
         body: formData2,
       });
 
-      if (!updateResponse2.ok) {
-        throw new Error(
-          `Warehouse insert HTTP error! status: ${updateResponse2.status}`
-        );
-      }
-
-      let result;
+      let whResult;
       try {
-        const responseText = await updateResponse.text();
-        result = JSON.parse(responseText);
-      } catch (parseError) {
-        result = { success: true };
+        const text = await response2.text();
+        whResult = JSON.parse(text);
+      } catch (e) {
+        whResult = { success: false, error: "Parse error" };
       }
 
-      if (result.success !== false) {
-        await fetchPendingOrders();
-        await fetchHistoryOrders();
+      // If update failed because order was not found, try inserting instead
+      if (!whResult.success && (whResult.error?.includes("not found") || whResult.error?.includes("Order No."))) {
+        console.log("Order not found in Warehouse, falling back to insert...");
+        const formDataInsert = new FormData();
+        formDataInsert.append("sheetName", "Warehouse");
+        formDataInsert.append("action", "insertWarehouseWithDynamicColumns");
+        formDataInsert.append("orderNo", order.orderNo);
+        formDataInsert.append("totalItems", allItems.length.toString());
+        formDataInsert.append("rowData", JSON.stringify(warehouseRowData));
+
+        response2 = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          mode: "cors",
+          body: formDataInsert,
+        });
+
+        try {
+          const text = await response2.text();
+          whResult = JSON.parse(text);
+        } catch (e) {
+          whResult = { success: true }; // Assume success if insert fetch completed
+        }
+      }
+
+      if (whResult.success !== false) {
+        setIsSaving(false);
+        setIsDialogOpen(false);
+        fetchPendingOrders();
+        fetchHistoryOrders();
         return {
           success: true,
-          fileUrls: result.fileUrls,
+          fileUrls: whResult.fileUrls,
           totalItems: allItems.length,
           totalQty: totalQty,
         };
       } else {
-        throw new Error(result.error || "Update failed");
+        throw new Error(whResult.error || "Warehouse update failed");
       }
     } catch (err) {
-      console.error("Error updating order:", err);
+      console.error("Error processing warehouse order:", err);
       setError(err.message);
       return { success: false, error: err.message };
     } finally {
-      setUploading(false);
+      setIsSaving(false);
     }
   };
 
@@ -2695,6 +2680,7 @@ export default function WarehousePage() {
           onSubmit={handleProcessSubmit}
           uploading={uploading}
           currentUser={currentUser}
+          salesMode={true}
         />
 
         {/* View Dialog */}

@@ -10,6 +10,7 @@ interface User {
   fullName: string
   role: "super_admin" | "admin" | "user"
   assignedSteps: string[]
+  pageAccess: string[]
 }
 
 interface AuthContextType {
@@ -24,8 +25,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Google Sheets configuration
 const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbwTTD2lHyL8ADg0dvVUDXMDnolyy3466G0dH0es3TYWFsNRhYyYJQxYwsiK0_bmfkmQ/exec"
-const SHEET_ID = "1Bxg2ryPzHKGMv9jeBtfEweaVJ-rsxIX_XO9dYF4D02Y"
+  "https://script.google.com/macros/s/AKfycbyzW8-RldYx917QpAfO4kY-T8_ntg__T0sbr7Yup2ZTVb1FC5H1g6TYuJgAU6wTquVM/exec"
+const SHEET_ID = "1yEsh4yzyvglPXHxo-5PT70VpwVJbxV7wwH8rpU1RFJA"
 const LOGIN_SHEET_NAME = "Login"
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -61,70 +62,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Replace the login function with this implementation that works with your existing Apps Script
 
-// In the login function, update the user data parsing:
-const login = async (username: string, password: string): Promise<boolean> => {
-  try {
-    setIsLoading(true)
+  // In the login function, update the user data parsing:
+  const login = async (username: string, password: string): Promise<boolean> => {
+    try {
+      setIsLoading(true)
 
-    // Fetch users from Google Sheets
-    const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${LOGIN_SHEET_NAME}`
-    const response = await fetch(sheetUrl)
-    const text = await response.text()
+      // Fetch users from Google Sheets
+      const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${LOGIN_SHEET_NAME}`
+      const response = await fetch(sheetUrl)
+      const text = await response.text()
 
-    const jsonStart = text.indexOf("{")
-    const jsonEnd = text.lastIndexOf("}") + 1
-    const jsonData = text.substring(jsonStart, jsonEnd)
+      const jsonStart = text.indexOf("{")
+      const jsonEnd = text.lastIndexOf("}") + 1
+      const jsonData = text.substring(jsonStart, jsonEnd)
 
-    const data = JSON.parse(jsonData)
+      const data = JSON.parse(jsonData)
 
-    if (data && data.table && data.table.rows) {
-      // Skip header row
-      for (let i = 1; i < data.table.rows.length; i++) {
-        const row = data.table.rows[i]
+      if (data && data.table && data.table.rows) {
+        // Skip header row
+        for (let i = 1; i < data.table.rows.length; i++) {
+          const row = data.table.rows[i]
 
-        if (row.c) {
-          const rowUsername = row.c[0]?.v || ""
-          const rowFullName = row.c[1]?.v || ""
-          const rowPassword = row.c[2]?.v || ""
-          const rowRole = row.c[3]?.v || "user"
-          const rowAssignedSteps = row.c[4]?.v || ""
+          if (row.c) {
+            const rowUsername = row.c[0]?.v || ""
+            const rowFullName = row.c[1]?.v || ""
+            const rowPassword = row.c[2]?.v || ""
+            const rowRole = row.c[3]?.v || "user"
+            const rowAssignedSteps = row.c[4]?.v || ""
+            const rowPageAccess = row.c[6]?.v || ""
 
-          // Check if username and password match
-          if (rowUsername === username && rowPassword === password) {
-            // Parse assigned steps from comma-separated string
-            const assignedSteps = rowAssignedSteps.split(",").map((step: string) => step.trim())
+            // Check if username and password match
+            if (rowUsername === username && rowPassword === password) {
+              // Parse assigned steps from comma-separated string
+              const assignedSteps = rowAssignedSteps.split(",").map((step: string) => step.trim())
+              // Parse page access from comma-separated string
+              const pageAccess = rowPageAccess.split(",").map((page: string) => page.trim())
 
-            // Determine role - support super_admin, admin, user
-            let userRole: "super_admin" | "admin" | "user" = "user"
-            if (rowRole === "super_admin") userRole = "super_admin"
-            else if (rowRole === "admin") userRole = "admin"
+              // Determine role - support super_admin, admin, user
+              let userRole: "super_admin" | "admin" | "user" = "user"
+              if (rowRole === "super_admin") userRole = "super_admin"
+              else if (rowRole === "admin") userRole = "admin"
 
-            const userData: User = {
-              id: `user_${Date.now()}`,
-              username: rowUsername,
-              fullName: rowFullName,
-              role: userRole,
-              assignedSteps: assignedSteps.length > 0 ? assignedSteps : ["all"],
+              const userData: User = {
+                id: `user_${Date.now()}`,
+                username: rowUsername,
+                fullName: rowFullName,
+                role: userRole,
+                assignedSteps: assignedSteps.length > 0 ? assignedSteps : ["all"],
+                pageAccess: pageAccess.length > 0 ? pageAccess : ["all"],
+              }
+
+              setUser(userData)
+              setIsAuthenticated(true)
+              localStorage.setItem("otp-user", JSON.stringify(userData))
+              localStorage.setItem("otp-authenticated", "true")
+              return true
             }
-
-            setUser(userData)
-            setIsAuthenticated(true)
-            localStorage.setItem("otp-user", JSON.stringify(userData))
-            localStorage.setItem("otp-authenticated", "true")
-            return true
           }
         }
       }
-    }
 
-    return false
-  } catch (error) {
-    console.error("Login error:", error)
-    return false
-  } finally {
-    setIsLoading(false)
+      return false
+    } catch (error) {
+      console.error("Login error:", error)
+      return false
+    } finally {
+      setIsLoading(false)
+    }
   }
-}
 
   const logout = () => {
     setUser(null)

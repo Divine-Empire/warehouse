@@ -21,6 +21,9 @@ export default function ProcessDialog({
     onSubmit,
     uploading = false,
     currentUser,
+    transportMode = false,
+    packagingMode = false,
+    salesMode = false
 }) {
     const [beforePhotos, setBeforePhotos] = useState([]);
     const [afterPhotos, setAfterPhotos] = useState([]);
@@ -72,7 +75,10 @@ export default function ProcessDialog({
                 if (selectedOrder.itemQtyJson) {
                     let jsonItems = [];
 
-                    if (typeof selectedOrder.itemQtyJson === "string") {
+                    if (typeof selectedOrder.itemQtyJson === "string" &&
+                        selectedOrder.itemQtyJson.trim() !== "" &&
+                        selectedOrder.itemQtyJson !== "Item/Qty" &&
+                        (selectedOrder.itemQtyJson.startsWith("[") || selectedOrder.itemQtyJson.startsWith("{"))) {
                         jsonItems = JSON.parse(selectedOrder.itemQtyJson);
                     } else if (Array.isArray(selectedOrder.itemQtyJson)) {
                         jsonItems = selectedOrder.itemQtyJson;
@@ -221,6 +227,18 @@ export default function ProcessDialog({
             return;
         }
 
+        // Mandatory field validation for Transport Mode
+        if (transportMode && !transporterName.trim()) {
+            alert("Please enter Transporter / Courier Name.");
+            return;
+        }
+
+        // Mandatory field validation for Packaging Mode
+        if (packagingMode && beforePhotos.length === 0) {
+            alert("Please upload at least one 'Before Photo (Packing)'.");
+            return;
+        }
+
         setIsUploading(true);
         setUploadProgress(0);
         setUploadStatus("Preparing files...");
@@ -364,7 +382,10 @@ export default function ProcessDialog({
             if (selectedOrder.itemQtyJson) {
                 let jsonItems = [];
 
-                if (typeof selectedOrder.itemQtyJson === "string") {
+                if (typeof selectedOrder.itemQtyJson === "string" &&
+                    selectedOrder.itemQtyJson.trim() !== "" &&
+                    selectedOrder.itemQtyJson !== "Item/Qty" &&
+                    (selectedOrder.itemQtyJson.startsWith("[") || selectedOrder.itemQtyJson.startsWith("{"))) {
                     jsonItems = JSON.parse(selectedOrder.itemQtyJson);
                 } else if (Array.isArray(selectedOrder.itemQtyJson)) {
                     jsonItems = selectedOrder.itemQtyJson;
@@ -498,544 +519,362 @@ export default function ProcessDialog({
                 <DialogHeader>
                     <DialogTitle>Warehouse Processing</DialogTitle>
                     <DialogDescription>
-                        Upload warehouse documentation and enter processing details
+                        {transportMode ? "Enter transportation details for the order" :
+                            packagingMode ? "Upload packaging photos and documentation" :
+                                salesMode ? "Enter order items and basic details" :
+                                    "Upload warehouse documentation and enter processing details"}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-6 py-2">
-                    {/* Section 1 */}
-                    <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-                        <div className="flex items-center gap-2 mb-2 border-b border-slate-200 pb-3">
-                            <div className="p-1.5 bg-violet-600 rounded-lg">
-                                <Settings className="h-4 w-4 text-white" />
-                            </div>
-                            <h4 className="text-lg font-bold text-slate-800 tracking-tight">
-                                Section 1
-                            </h4>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="orderNumber">Order Number</Label>
-                                <Input
-                                    id="orderNumber"
-                                    className="font-bold bg-white"
-                                    value={selectedOrder?.orderNo}
-                                    disabled
-                                />
+                    {!transportMode && !packagingMode && (
+                        <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                            {/* Section 1: Order/Items */}
+                            <div className="flex items-center gap-2 mb-2 border-b border-slate-200 pb-3">
+                                <div className="p-1.5 bg-violet-600 rounded-lg">
+                                    <Settings className="h-4 w-4 text-white" />
+                                </div>
+                                <h4 className="text-lg font-bold text-slate-800 tracking-tight">
+                                    Section 1
+                                </h4>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label>Quotation No.</Label>
-                                <Input
-                                    className="font-bold bg-white"
-                                    value={selectedOrder?.quotationNo || ""}
-                                    disabled
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>Date</Label>
-                                <Input
-                                    className="font-bold bg-white"
-                                    value={
-                                        selectedOrder?.timeStamp
-                                            ? convertTimestampToDDMMYYYY(selectedOrder.timeStamp)
-                                            : ""
-                                    }
-                                    disabled
-                                />
-                            </div>
-                        </div>
-
-                        {/* Items Section */}
-                        <div className="mt-4">
-                            <h5 className="font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                                <div className="w-1.5 h-4 bg-violet-500 rounded-full"></div>
-                                Items Verification
-                            </h5>
-                            {renderItemsSection()}
-                        </div>
-
-                        {/* Attachments Section */}
-                        <div className="mt-6">
-                            <h5 className="font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                                <div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div>
-                                Account Attachments
-                            </h5>
                             <div className="grid grid-cols-2 gap-4">
-                                {selectedOrder?.invoiceUpload && (
-                                    <div className="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <Eye className="h-4 w-4 text-indigo-500" />
-                                            <Label className="text-xs font-semibold text-slate-600">
-                                                INVOICE DOCUMENT
-                                            </Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="orderNumber">Order Number</Label>
+                                    <Input
+                                        id="orderNumber"
+                                        className="font-bold bg-white"
+                                        value={selectedOrder?.orderNo}
+                                        disabled
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Quotation No.</Label>
+                                    <Input
+                                        className="font-bold bg-white"
+                                        value={selectedOrder?.quotationNo || ""}
+                                        disabled
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Date</Label>
+                                    <Input
+                                        className="font-bold bg-white"
+                                        value={
+                                            selectedOrder?.timeStamp
+                                                ? convertTimestampToDDMMYYYY(selectedOrder.timeStamp)
+                                                : ""
+                                        }
+                                        disabled
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="mt-4">
+                                <h5 className="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                                    <div className="w-1.5 h-4 bg-violet-500 rounded-full"></div>
+                                    Items Verification
+                                </h5>
+                                {renderItemsSection()}
+                            </div>
+
+                            <div className="mt-6">
+                                <h5 className="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                                    <div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div>
+                                    Account Attachments
+                                </h5>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {selectedOrder?.invoiceUpload && (
+                                        <div className="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <Eye className="h-4 w-4 text-indigo-500" />
+                                                <Label className="text-xs font-semibold text-slate-600">
+                                                    INVOICE DOCUMENT
+                                                </Label>
+                                            </div>
+                                            <a
+                                                href={selectedOrder.invoiceUpload}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-indigo-600 hover:text-indigo-800 text-xs font-bold bg-indigo-50 px-2 py-1 rounded transition-colors"
+                                            >
+                                                VIEW
+                                            </a>
                                         </div>
-                                        <a
-                                            href={selectedOrder.invoiceUpload}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-indigo-600 hover:text-indigo-800 text-xs font-bold bg-indigo-50 px-2 py-1 rounded transition-colors"
-                                        >
-                                            VIEW
-                                        </a>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Section 2 */}
-                    <div className="space-y-6 mt-6">
-                        <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-200 shadow-sm space-y-6">
-                            <div className="flex items-center gap-2 mb-2 border-b border-indigo-200 pb-3">
-                                <div className="p-1.5 bg-indigo-600 rounded-lg">
-                                    <Save className="h-4 w-4 text-white" />
-                                </div>
-                                <h4 className="text-lg font-bold text-indigo-900 tracking-tight">
-                                    Section 2
-                                </h4>
-                            </div>
-
-                            {/* Dispatch Basics */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label
-                                        htmlFor="transporterName"
-                                        className="text-indigo-700 font-medium"
-                                    >
-                                        Transporter / Courier Name
-                                    </Label>
-                                    <Input
-                                        id="transporterName"
-                                        value={transporterName}
-                                        className="bg-white border-indigo-100"
-                                        onChange={(e) => setTransporterName(e.target.value)}
-                                        placeholder="Enter transporter name"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label
-                                        htmlFor="transporterContact"
-                                        className="text-indigo-700 font-medium"
-                                    >
-                                        Transporter Contact No.
-                                    </Label>
-                                    <Input
-                                        id="transporterContact"
-                                        value={transporterContact}
-                                        className="bg-white border-indigo-100"
-                                        onChange={(e) => setTransporterContact(e.target.value)}
-                                        placeholder="Enter contact number"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label
-                                        htmlFor="biltyNumber"
-                                        className="text-indigo-700 font-medium"
-                                    >
-                                        Bilty No. / Docket No.
-                                    </Label>
-                                    <Input
-                                        id="biltyNumber"
-                                        value={biltyNumber}
-                                        className="bg-white border-indigo-100"
-                                        onChange={(e) => setBiltyNumber(e.target.value)}
-                                        placeholder="Enter bilty/docket number"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label
-                                        htmlFor="totalCharges"
-                                        className="text-indigo-700 font-medium"
-                                    >
-                                        Total Charges (₹)
-                                    </Label>
-                                    <Input
-                                        id="totalCharges"
-                                        value={totalCharges}
-                                        className="bg-white border-indigo-100"
-                                        onChange={(e) => setTotalCharges(e.target.value)}
-                                        placeholder="0.00"
-                                        type="number"
-                                        step="0.01"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label
-                                    htmlFor="warehouseRemarks"
-                                    className="text-indigo-700 font-medium"
-                                >
-                                    Warehouse Remarks
-                                </Label>
-                                <Textarea
-                                    id="warehouseRemarks"
-                                    value={warehouseRemarks}
-                                    className="bg-white border-indigo-100 min-h-[100px]"
-                                    onChange={(e) => setWarehouseRemarks(e.target.value)}
-                                    placeholder="Enter additional warehouse/dispatch remarks..."
-                                    rows={3}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Section 3 */}
-                    <div className="space-y-6 mt-6">
-                        <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-200 shadow-sm space-y-6">
-                            <div className="flex items-center gap-2 mb-2 border-b border-emerald-200 pb-3">
-                                <div className="p-1.5 bg-emerald-600 rounded-lg">
-                                    <CloudUpload className="h-4 w-4 text-white" />
-                                </div>
-                                <h4 className="text-lg font-bold text-emerald-900 tracking-tight">
-                                    Section 3: Documentation
-                                </h4>
-                            </div>
-
-                            <div className="space-y-5">
-                                {/* Before Photo Upload */}
-                                <div className="space-y-3">
-                                    <Label
-                                        htmlFor="beforePhoto"
-                                        className="text-emerald-700 font-semibold flex items-center gap-2"
-                                    >
-                                        Before Photo (Packing)
-                                        <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">
-                                            MULTIPLE
-                                        </span>
-                                    </Label>
-                                    <div className="relative group">
-                                        <Input
-                                            id="beforePhoto"
-                                            className="bg-white border-emerald-100 h-12 cursor-pointer file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 transition-all invisible absolute"
-                                            type="file"
-                                            accept="image/*"
-                                            multiple
-                                            onChange={(e) => {
-                                                const newFiles = Array.from(e.target.files || []);
-                                                setBeforePhotos((prev) => [...prev, ...newFiles]);
-                                            }}
-                                        />
-                                        <label
-                                            htmlFor="beforePhoto"
-                                            className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-200 rounded-xl bg-white hover:bg-emerald-50/50 hover:border-emerald-400 transition-all cursor-pointer"
-                                        >
-                                            <div className="flex flex-center gap-2 items-center">
-                                                <CloudUpload className="h-5 w-5 text-emerald-500" />
-                                                <span className="text-sm font-medium text-emerald-700">
-                                                    Click or drag to upload photos
-                                                </span>
-                                            </div>
-                                            <p className="text-[10px] text-emerald-500 mt-1 uppercase tracking-wider font-bold">
-                                                Images only
-                                            </p>
-                                        </label>
+                    {!packagingMode && !salesMode && (
+                        <div className="space-y-6">
+                            {/* Section 2: Transportation details */}
+                            <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-200 shadow-sm space-y-6">
+                                <div className="flex items-center gap-2 mb-2 border-b border-indigo-200 pb-3">
+                                    <div className="p-1.5 bg-indigo-600 rounded-lg">
+                                        <Save className="h-4 w-4 text-white" />
                                     </div>
-                                    {beforePhotos.length > 0 && (
-                                        <div className="grid grid-cols-1 gap-2 mt-2">
-                                            {beforePhotos.map((file, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-emerald-100 shadow-sm group animate-in fade-in slide-in-from-top-1"
-                                                >
-                                                    <div className="flex items-center gap-3 overflow-hidden">
-                                                        <div className="p-2 bg-emerald-50 rounded-lg">
-                                                            <FileText className="h-4 w-4 text-emerald-600" />
-                                                        </div>
-                                                        <div className="flex flex-col overflow-hidden">
-                                                            <span className="text-xs font-bold text-slate-700 truncate">
-                                                                {file.name}
-                                                            </span>
-                                                            <span className="text-[10px] text-slate-400 font-medium">
-                                                                {(file.size / 1024).toFixed(1)} KB
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-8 w-8 p-0 rounded-full hover:bg-red-50 hover:text-red-600 transition-colors"
-                                                        onClick={() =>
-                                                            setBeforePhotos((prev) =>
-                                                                prev.filter((_, i) => i !== idx)
-                                                            )
-                                                        }
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                    <h4 className="text-lg font-bold text-indigo-900 tracking-tight">
+                                        Section 2
+                                    </h4>
                                 </div>
 
-                                {/* After Photo Upload */}
-                                <div className="space-y-3">
-                                    <Label
-                                        htmlFor="afterPhoto"
-                                        className="text-emerald-700 font-semibold flex items-center gap-2"
-                                    >
-                                        After Photo (Final Package)
-                                        <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">
-                                            MULTIPLE
-                                        </span>
-                                    </Label>
-                                    <div className="relative group">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="transporterName" className="text-indigo-700 font-medium">
+                                            Transporter / Courier Name <span className="text-red-500 font-bold">*</span>
+                                        </Label>
                                         <Input
-                                            id="afterPhoto"
-                                            className="bg-white border-emerald-100 h-12 cursor-pointer invisible absolute"
-                                            type="file"
-                                            accept="image/*"
-                                            multiple
-                                            onChange={(e) => {
-                                                const newFiles = Array.from(e.target.files || []);
-                                                setAfterPhotos((prev) => [...prev, ...newFiles]);
-                                            }}
+                                            id="transporterName"
+                                            value={transporterName}
+                                            className="bg-white border-indigo-100"
+                                            onChange={(e) => setTransporterName(e.target.value)}
+                                            placeholder="Enter transporter name"
                                         />
-                                        <label
-                                            htmlFor="afterPhoto"
-                                            className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-200 rounded-xl bg-white hover:bg-emerald-50/50 hover:border-emerald-400 transition-all cursor-pointer"
-                                        >
-                                            <div className="flex flex-center gap-2 items-center">
-                                                <CloudUpload className="h-5 w-5 text-emerald-500" />
-                                                <span className="text-sm font-medium text-emerald-700">
-                                                    Click or drag to upload photos
-                                                </span>
-                                            </div>
-                                            <p className="text-[10px] text-emerald-500 mt-1 uppercase tracking-wider font-bold">
-                                                Images only
-                                            </p>
-                                        </label>
                                     </div>
-                                    {afterPhotos.length > 0 && (
-                                        <div className="grid grid-cols-1 gap-2 mt-2">
-                                            {afterPhotos.map((file, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-emerald-100 shadow-sm group animate-in fade-in slide-in-from-top-1"
-                                                >
-                                                    <div className="flex items-center gap-3 overflow-hidden">
-                                                        <div className="p-2 bg-emerald-50 rounded-lg">
-                                                            <FileText className="h-4 w-4 text-emerald-600" />
-                                                        </div>
-                                                        <div className="flex flex-col overflow-hidden">
-                                                            <span className="text-xs font-bold text-slate-700 truncate">
-                                                                {file.name}
-                                                            </span>
-                                                            <span className="text-[10px] text-slate-400 font-medium">
-                                                                {(file.size / 1024).toFixed(1)} KB
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-8 w-8 p-0 rounded-full hover:bg-red-50 hover:text-red-600 transition-colors"
-                                                        onClick={() =>
-                                                            setAfterPhotos((prev) =>
-                                                                prev.filter((_, i) => i !== idx)
-                                                            )
-                                                        }
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="transporterContact" className="text-indigo-700 font-medium">
+                                            Transporter Contact No.
+                                        </Label>
+                                        <Input
+                                            id="transporterContact"
+                                            value={transporterContact}
+                                            className="bg-white border-indigo-100"
+                                            onChange={(e) => setTransporterContact(e.target.value)}
+                                            placeholder="Enter contact number"
+                                        />
+                                    </div>
                                 </div>
 
-                                {/* Bilty Upload */}
-                                <div className="space-y-3">
-                                    <Label
-                                        htmlFor="biltyUpload"
-                                        className="text-emerald-700 font-semibold flex items-center gap-2"
-                                    >
-                                        Bilty / Docket Upload
-                                        <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">
-                                            MULTIPLE
-                                        </span>
-                                    </Label>
-                                    <div className="relative group">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="biltyNumber" className="text-indigo-700 font-medium">
+                                            Bilty No. / Docket No.
+                                        </Label>
                                         <Input
-                                            id="biltyUpload"
-                                            className="bg-white border-emerald-100 h-12 cursor-pointer invisible absolute"
-                                            type="file"
-                                            accept="image/*,.pdf"
-                                            multiple
-                                            onChange={(e) => {
-                                                const newFiles = Array.from(e.target.files || []);
-                                                setBiltyUploads((prev) => [...prev, ...newFiles]);
-                                            }}
+                                            id="biltyNumber"
+                                            value={biltyNumber}
+                                            className="bg-white border-indigo-100"
+                                            onChange={(e) => setBiltyNumber(e.target.value)}
+                                            placeholder="Enter bilty/docket number"
                                         />
-                                        <label
-                                            htmlFor="biltyUpload"
-                                            className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-200 rounded-xl bg-white hover:bg-emerald-50/50 hover:border-emerald-400 transition-all cursor-pointer"
-                                        >
-                                            <div className="flex flex-center gap-2 items-center">
-                                                <CloudUpload className="h-5 w-5 text-emerald-500" />
-                                                <span className="text-sm font-medium text-emerald-700">
-                                                    Click or drag to upload documents
-                                                </span>
-                                            </div>
-                                            <p className="text-[10px] text-emerald-500 mt-1 uppercase tracking-wider font-bold">
-                                                Images & PDFs only
-                                            </p>
-                                        </label>
                                     </div>
-                                    {biltyUploads.length > 0 && (
-                                        <div className="grid grid-cols-1 gap-2 mt-2">
-                                            {biltyUploads.map((file, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-emerald-100 shadow-sm group animate-in fade-in slide-in-from-top-1"
-                                                >
-                                                    <div className="flex items-center gap-3 overflow-hidden">
-                                                        <div className="p-2 bg-emerald-50 rounded-lg">
-                                                            <FileText className="h-4 w-4 text-emerald-600" />
-                                                        </div>
-                                                        <div className="flex flex-col overflow-hidden">
-                                                            <span className="text-xs font-bold text-slate-700 truncate">
-                                                                {file.name}
-                                                            </span>
-                                                            <span className="text-[10px] text-slate-400 font-medium">
-                                                                {(file.size / 1024).toFixed(1)} KB
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-8 w-8 p-0 rounded-full hover:bg-red-50 hover:text-red-600 transition-colors"
-                                                        onClick={() =>
-                                                            setBiltyUploads((prev) =>
-                                                                prev.filter((_, i) => i !== idx)
-                                                            )
-                                                        }
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="totalCharges" className="text-indigo-700 font-medium">
+                                            Total Charges (₹)
+                                        </Label>
+                                        <Input
+                                            id="totalCharges"
+                                            value={totalCharges}
+                                            className="bg-white border-indigo-100"
+                                            onChange={(e) => setTotalCharges(e.target.value)}
+                                            placeholder="0.00"
+                                            type="number"
+                                            step="0.01"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="warehouseRemarks" className="text-indigo-700 font-medium">
+                                        Warehouse Remarks
+                                    </Label>
+                                    <Textarea
+                                        id="warehouseRemarks"
+                                        value={warehouseRemarks}
+                                        className="bg-white border-indigo-100 min-h-[100px]"
+                                        onChange={(e) => setWarehouseRemarks(e.target.value)}
+                                        placeholder="Enter additional warehouse/dispatch remarks..."
+                                        rows={3}
+                                    />
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
-                    {/* Section 4: Final Confirmation */}
-                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="p-1.5 bg-slate-600 rounded-lg">
-                                    <RefreshCw className="h-4 w-4 text-white" />
+                    {!transportMode && !salesMode && (
+                        <>
+                            {/* Section 3: Documentation upload & Photos */}
+                            <div className="space-y-6 mt-6">
+                                <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-200 shadow-sm space-y-6">
+                                    <div className="flex items-center gap-2 mb-2 border-b border-emerald-200 pb-3">
+                                        <div className="p-1.5 bg-emerald-600 rounded-lg">
+                                            <CloudUpload className="h-4 w-4 text-white" />
+                                        </div>
+                                        <h4 className="text-lg font-bold text-emerald-900 tracking-tight">
+                                            Section 3: Documentation
+                                        </h4>
+                                    </div>
+
+                                    <div className="space-y-5">
+                                        <div className="space-y-3">
+                                            <Label htmlFor="beforePhoto" className="text-emerald-700 font-semibold flex items-center gap-2">
+                                                Before Photo (Packing) <span className="text-red-500 font-bold">*</span>
+                                                <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">MULTIPLE</span>
+                                            </Label>
+                                            <div className="relative group">
+                                                <Input
+                                                    id="beforePhoto"
+                                                    className="bg-white border-emerald-100 h-12 cursor-pointer invisible absolute"
+                                                    type="file"
+                                                    accept="image/*"
+                                                    multiple
+                                                    onChange={(e) => {
+                                                        const newFiles = Array.from(e.target.files || []);
+                                                        setBeforePhotos((prev) => [...prev, ...newFiles]);
+                                                    }}
+                                                />
+                                                <label htmlFor="beforePhoto" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-200 rounded-xl bg-white hover:bg-emerald-50/50 hover:border-emerald-400 transition-all cursor-pointer">
+                                                    <div className="flex flex-center gap-2 items-center">
+                                                        <CloudUpload className="h-5 w-5 text-emerald-500" />
+                                                        <span className="text-sm font-medium text-emerald-700">Click or drag to upload photos</span>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {/* After Photo (Final Package) */}
+                                        <div className="space-y-3">
+                                            <Label htmlFor="afterPhoto" className="text-emerald-700 font-semibold flex items-center gap-2">
+                                                After Photo (Final Package)
+                                                <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">MULTIPLE</span>
+                                            </Label>
+                                            <div className="relative group">
+                                                <Input
+                                                    id="afterPhoto"
+                                                    className="bg-white border-emerald-100 h-12 cursor-pointer invisible absolute"
+                                                    type="file"
+                                                    accept="image/*"
+                                                    multiple
+                                                    onChange={(e) => {
+                                                        const newFiles = Array.from(e.target.files || []);
+                                                        setAfterPhotos((prev) => [...prev, ...newFiles]);
+                                                    }}
+                                                />
+                                                <label htmlFor="afterPhoto" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-200 rounded-xl bg-white hover:bg-emerald-50/50 hover:border-emerald-400 transition-all cursor-pointer">
+                                                    <div className="flex flex-center gap-2 items-center">
+                                                        <CloudUpload className="h-5 w-5 text-emerald-500" />
+                                                        <span className="text-sm font-medium text-emerald-700">Click or drag to upload photos</span>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        {/* Bilty / Docket Upload */}
+                                        <div className="space-y-3">
+                                            <Label htmlFor="biltyUpload" className="text-emerald-700 font-semibold flex items-center gap-2">
+                                                Bilty / Docket Upload
+                                                <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">MULTIPLE</span>
+                                            </Label>
+                                            <div className="relative group">
+                                                <Input
+                                                    id="biltyUpload"
+                                                    className="bg-white border-emerald-100 h-12 cursor-pointer invisible absolute"
+                                                    type="file"
+                                                    accept="image/*,application/pdf"
+                                                    multiple
+                                                    onChange={(e) => {
+                                                        const newFiles = Array.from(e.target.files || []);
+                                                        setBiltyUploads((prev) => [...prev, ...newFiles]);
+                                                    }}
+                                                />
+                                                <label htmlFor="biltyUpload" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-200 rounded-xl bg-white hover:bg-emerald-50/50 hover:border-emerald-400 transition-all cursor-pointer">
+                                                    <div className="flex flex-center gap-2 items-center">
+                                                        <CloudUpload className="h-5 w-5 text-emerald-500" />
+                                                        <span className="text-sm font-medium text-emerald-700">Click or drag to upload documents</span>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        {/* Selected files count badges */}
+                                        <div className="flex flex-wrap gap-2 pt-2">
+                                            {beforePhotos.length > 0 && (
+                                                <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs font-bold">
+                                                    <FileText className="h-3 w-3" />
+                                                    Before: {beforePhotos.length}
+                                                    <button onClick={() => setBeforePhotos([])} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button>
+                                                </div>
+                                            )}
+                                            {afterPhotos.length > 0 && (
+                                                <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs font-bold">
+                                                    <FileText className="h-3 w-3" />
+                                                    After: {afterPhotos.length}
+                                                    <button onClick={() => setAfterPhotos([])} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button>
+                                                </div>
+                                            )}
+                                            {biltyUploads.length > 0 && (
+                                                <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs font-bold">
+                                                    <FileText className="h-3 w-3" />
+                                                    Bilty: {biltyUploads.length}
+                                                    <button onClick={() => setBiltyUploads([])} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                                <h4 className="text-base font-bold text-slate-800">
-                                    Section 4: Dispatch Confirmation
-                                </h4>
                             </div>
 
-                            <div className="flex bg-slate-200/50 p-1 rounded-xl border border-slate-200">
-                                <button
-                                    type="button"
-                                    onClick={() => setDispatchStatus("okay")}
-                                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${dispatchStatus === "okay"
-                                        ? "bg-green-600 text-white shadow-md shadow-green-100"
-                                        : "text-slate-500 hover:text-slate-700"
-                                        }`}
-                                >
-                                    OKAY
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setDispatchStatus("notokay")}
-                                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${dispatchStatus === "notokay"
-                                        ? "bg-red-600 text-white shadow-md shadow-red-100"
-                                        : "text-slate-500 hover:text-slate-700"
-                                        }`}
-                                >
-                                    NOT OKAY
-                                </button>
-                            </div>
-                        </div>
+                            {!salesMode && (
+                                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 shadow-sm">
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className="p-1.5 bg-slate-600 rounded-lg">
+                                                    <RefreshCw className="h-4 w-4 text-white" />
+                                                </div>
+                                                <h4 className="text-base font-bold text-slate-800">Section 4: Dispatch Confirmation</h4>
+                                            </div>
+                                            <div className="flex bg-slate-200/50 p-1 rounded-xl border border-slate-200">
+                                                <button type="button" onClick={() => setDispatchStatus("okay")} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${dispatchStatus === "okay" ? "bg-green-600 text-white shadow-md shadow-green-100" : "text-slate-500 hover:text-slate-700"}`}>OKAY</button>
+                                                <button type="button" onClick={() => setDispatchStatus("notokay")} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${dispatchStatus === "notokay" ? "bg-red-600 text-white shadow-md shadow-red-100" : "text-slate-500 hover:text-slate-700"}`}>NOT OKAY</button>
+                                            </div>
+                                        </div>
 
-                        {dispatchStatus === "notokay" && (
-                            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                                <Label
-                                    htmlFor="notOkReason"
-                                    className="text-red-700 font-bold flex items-center gap-2"
-                                >
-                                    <X className="h-4 w-4" />
-                                    REASON FOR NOT OKAY
-                                </Label>
-                                <Textarea
-                                    id="notOkReason"
-                                    value={notOkReason}
-                                    onChange={(e) => setNotOkReason(e.target.value)}
-                                    placeholder="Please explicitly state the reason for rejecting this dispatch..."
-                                    className="border-red-200 focus:border-red-400 focus:ring-red-400 min-h-[100px] bg-red-50/30"
-                                    rows={3}
-                                />
-                            </div>
-                        )}
-                    </div>
-                    {/* Upload Progress Indicator */}
+                                        {dispatchStatus === "notokay" && (
+                                            <div className="space-y-2 pt-2 animate-in fade-in slide-in-from-top-2 border-t border-slate-200">
+                                                <Label htmlFor="notOkReason" className="text-red-700 font-semibold flex items-center gap-2">
+                                                    Reason for NOT OKAY
+                                                </Label>
+                                                <Textarea
+                                                    id="notOkReason"
+                                                    value={notOkReason}
+                                                    onChange={(e) => setNotOkReason(e.target.value)}
+                                                    placeholder="Please specify why this order is not okay for dispatch..."
+                                                    className="bg-white border-red-100 min-h-[80px] focus:ring-red-500 focus:border-red-500"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+
                     {isUploading && (
                         <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 space-y-3 animate-in fade-in slide-in-from-top-2">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <RefreshCw className="h-4 w-4 text-blue-600 animate-spin" />
-                                    <span className="text-sm font-semibold text-blue-700">
-                                        {uploadStatus || "Processing..."}
-                                    </span>
+                                    <span className="text-sm font-semibold text-blue-700">{uploadStatus || "Processing..."}</span>
                                 </div>
-                                <span className="text-sm font-bold text-blue-800">
-                                    {uploadProgress}%
-                                </span>
+                                <span className="text-sm font-bold text-blue-800">{uploadProgress}%</span>
                             </div>
                             <div className="w-full bg-blue-100 rounded-full h-2.5 overflow-hidden">
-                                <div
-                                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out"
-                                    style={{ width: `${uploadProgress}%` }}
-                                />
+                                <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out" style={{ width: `${uploadProgress}%` }} />
                             </div>
                         </div>
                     )}
 
                     <div className="flex justify-end gap-2 pt-4">
-                        <Button
-                            variant="outline"
-                            onClick={() => onOpenChange(false)}
-                            disabled={isUploading}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={handleSubmit}
-                            disabled={isUploading || uploading || currentUser?.role === "user"}
-                            className={isUploading ? "bg-blue-600 hover:bg-blue-700" : ""}
-                        >
-                            {isUploading ? (
-                                <>
-                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                    Uploading... {uploadProgress}%
-                                </>
-                            ) : uploading ? (
-                                <>
-                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                    Processing...
-                                </>
-                            ) : (
-                                "Submit"
-                            )}
+                        <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isUploading}>Cancel</Button>
+                        <Button onClick={handleSubmit} disabled={isUploading || uploading || currentUser?.role === "user"} className={isUploading ? "bg-blue-600 hover:bg-blue-700" : ""}>
+                            {isUploading ? `Uploading... ${uploadProgress}%` : uploading ? "Processing..." : "Submit"}
                         </Button>
                     </div>
                 </div>

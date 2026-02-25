@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 
-const SHEET_ID = "1Bxg2ryPzHKGMv9jeBtfEweaVJ-rsxIX_XO9dYF4D02Y"
+const SHEET_ID = "1yEsh4yzyvglPXHxo-5PT70VpwVJbxV7wwH8rpU1RFJA"
 const ORDER_DISPATCH_SHEET = "ORDER-DISPATCH"
 const DISPATCH_DELIVERY_SHEET = "DISPATCH-DELIVERY"
 
@@ -15,13 +15,13 @@ export function useDashboardData() {
     cancelOrders: 0,
     deliveredOrders: 0,
     totalRevenue: 0,
-    
+
     // Dispatch metrics (for dispatch/analytics tabs)
     totalDispatches: 0,
     pendingDispatches: 0,
     completedDispatches: 0,
     dispatchRevenue: 0,
-    
+
     // Other existing metrics
     completedRevenue: 0,
     pendingRevenue: 0,
@@ -36,7 +36,7 @@ export function useDashboardData() {
     approvalPending: 0,
     invoiceGenerated: 0,
     dispatchComplete: 0,
-    
+
     // New dispatch order lists
     allDispatchOrders: [], // All dispatch orders from DISPATCH-DELIVERY sheet
   })
@@ -89,7 +89,7 @@ export function useDashboardData() {
   // Helper function to format date from cell
   const formatDateFromCell = (row, index) => {
     if (!row.c || !row.c[index] || !row.c[index].v) return ""
-    
+
     const dateValue = row.c[index].v
     if (typeof dateValue === "string" && dateValue.includes('/')) {
       return dateValue
@@ -148,7 +148,7 @@ export function useDashboardData() {
         let cancelOrderCount = 0
         let totalOrderRevenue = 0
         let deliveredCount = 0
-        
+
         // Dispatch metrics from ORDER-DISPATCH sheet
         let pendingDispatchCount = 0
         let completedDispatchCount = 0
@@ -167,7 +167,7 @@ export function useDashboardData() {
 
             // Order Status - Column AW (index 48)
             const orderStatus = getCellValue(row, 48)
-            
+
             // Categorize orders based on Column AW
             if (orderStatus.toLowerCase() === "complete") {
               completedOrderCount++
@@ -210,14 +210,14 @@ export function useDashboardData() {
             // Analytics data
             const paymentMode = getCellValue(row, 8) || "Unknown"
             const transportModeValue = getCellValue(row, 32)
-            
+
             let transportMode
             if (!transportModeValue || transportModeValue === "null") {
               transportMode = "Not Specified"
             } else {
               transportMode = transportModeValue
             }
-            
+
             transportModeMap[transportMode] = (transportModeMap[transportMode] || 0) + 1
             paymentModeMap[paymentMode] = (paymentModeMap[paymentMode] || 0) + 1
 
@@ -236,19 +236,19 @@ export function useDashboardData() {
               orderNo: getCellValue(row, 1), // Column B
               quotationNo: getCellValue(row, 2), // Column C
               company: getCellValue(row, 3), // Column D
-              
+
               // Contact info (columns E-G)
               contactPersonName: getCellValue(row, 4), // Column E
               contactNumber: getCellValue(row, 5), // Column F
               billingAddress: getCellValue(row, 6), // Column G
               shippingAddress: getCellValue(row, 7), // Column H
-              
+
               // Payment info (columns I-K)
               paymentMode: getCellValue(row, 8), // Column I
               paymentTerms: getCellValue(row, 9), // Column J
               referenceName: getCellValue(row, 10), // Column K
               email: getCellValue(row, 11), // Column L
-              
+
               // Items 1-10 (columns M-Z, AA-AF)
               itemName1: getCellValue(row, 12), // Column M
               quantity1: getCellValue(row, 13), // Column N
@@ -270,12 +270,12 @@ export function useDashboardData() {
               quantity9: getCellValue(row, 29), // Column AD
               itemName10: getCellValue(row, 30), // Column AE
               quantity10: getCellValue(row, 31), // Column AF
-              
+
               // Transport info (columns AG-AI)
               transportMode: getCellValue(row, 32), // Column AG
               freightType: getCellValue(row, 33), // Column AH
               destination: getCellValue(row, 34), // Column AI
-              
+
               // Order details (columns AJ-AO)
               poNumber: getCellValue(row, 35), // Column AJ
               quotationCopy: getCellValue(row, 36), // Column AK
@@ -283,10 +283,10 @@ export function useDashboardData() {
               offerShow: getCellValue(row, 38), // Column AM
               conveyedForRegistration: getCellValue(row, 39), // Column AN
               totalOrderQty: getCellValue(row, 40), // Column AO
-              
+
               // Financial info (column AP)
               amount: getCellValue(row, 41), // Column AP
-              
+
               // Dispatch info (columns AQ-AU)
               totalDispatchQuantity: getCellValue(row, 42), // Column AQ
               quantityDelivered: getCellValue(row, 43), // Column AR
@@ -294,14 +294,14 @@ export function useDashboardData() {
               pendingDeliveryQty: getCellValue(row, 45), // Column AT
               pendingDispatchQty: getCellValue(row, 46), // Column AU
               materialReturn: getCellValue(row, 47), // Column AV
-              
+
               // Status info (columns AW-AZ)
               deliveryStatus: getCellValue(row, 47), // Column AV
               status: getCellValue(row, 48), // Column AW (Order Status)
               dispatchStatus: getCellValue(row, 49), // Column AX
               dispatchCompleteDate: formatDateFromCell(row, 50), // Column AY
               deliveryCompleteDate: formatDateFromCell(row, 51), // Column AZ
-              
+
               // Additional fields (continue pattern for remaining columns up to CA)
               isOrderAcceptable: getCellValue(row, 55), // Column BD
               orderAcceptanceChecklist: getCellValue(row, 56), // Column BE
@@ -318,7 +318,7 @@ export function useDashboardData() {
               receivedDate: formatDateFromCell(row, 72), // Column BU
               approvalName: getCellValue(row, 77), // Column BZ
               revenue: getCellValue(row, 78), // Column CA
-              
+
               // Date (column A)
               date: formatDateFromCell(row, 0), // Column A
             }
@@ -342,12 +342,12 @@ export function useDashboardData() {
           cancelOrders: cancelOrderCount,
           totalRevenue: totalOrderRevenue,
           deliveredOrders: deliveredCount,
-          
+
           // Dispatch metrics
           pendingDispatches: pendingDispatchCount,
           completedDispatches: completedDispatchCount,
           dispatchRevenue: dispatchRevenueSum,
-          
+
           // Analytics data
           monthlyOrdersMap,
           paymentModeMap,
@@ -425,13 +425,13 @@ export function useDashboardData() {
               orderNo: getCellValue(row, 1), // Column B
               quotationNo: getCellValue(row, 2), // Column C
               company: getCellValue(row, 3), // Column D
-              
+
               // Contact info (columns E-H)
               contactPersonName: getCellValue(row, 4), // Column E
               contactNumber: getCellValue(row, 5), // Column F
               billingAddress: getCellValue(row, 6), // Column G
               shippingAddress: getCellValue(row, 7), // Column H
-              
+
               // Payment and logistics (columns I-L)
               paymentMode: getCellValue(row, 8), // Column I
               quotationCopy: getCellValue(row, 9), // Column J
@@ -447,7 +447,7 @@ export function useDashboardData() {
               qty: getCellValue(row, 19), // Column T
               amount: getCellValue(row, 20), // Column U
               approvedName: getCellValue(row, 21), // Column V
-              
+
               // Calibration and installation (columns W-AC)
               calibrationCertificateRequired: getCellValue(row, 22), // Column W
               certificateCategory: getCellValue(row, 23), // Column X
@@ -457,7 +457,7 @@ export function useDashboardData() {
               srnNumber: getCellValue(row, 27), // Column AB
               srnNumberAttachment: getCellValue(row, 28), // Column AC
               attachment: getCellValue(row, 29), // Column AD
-              
+
               // Items 1-15 (columns AE-BC)
               itemName1: getCellValue(row, 30), // Column AE
               quantity1: getCellValue(row, 31), // Column AF
@@ -489,12 +489,12 @@ export function useDashboardData() {
               quantity14: getCellValue(row, 57), // Column BF
               itemName15: getCellValue(row, 58), // Column BG
               quantity15: getCellValue(row, 59), // Column BH
-              
+
               // Quantities and remarks (columns BI-BL)
               totalQty: getCellValue(row, 60), // Column BI
               remarks: getCellValue(row, 61), // Column BJ
               // Skip planned/actual columns (BK-BM)
-              
+
               // Invoice and billing (columns BN-BT)
               invoiceNumber: getCellValue(row, 65), // Column BN
               invoiceUpload: getCellValue(row, 66), // Column BO
@@ -502,7 +502,7 @@ export function useDashboardData() {
               totalQtyField: getCellValue(row, 68), // Column BQ
               totalBillAmount: getCellValue(row, 69), // Column BR
               // Skip planned/actual columns (BS-BU)
-              
+
               // Photo and transport (columns BV-CD)
               beforePhotoUpload: getCellValue(row, 73), // Column BV
               afterPhotoUpload: getCellValue(row, 74), // Column BW
@@ -513,13 +513,13 @@ export function useDashboardData() {
               totalCharges: getCellValue(row, 79), // Column CB
               warehouseRemarks: getCellValue(row, 80), // Column CC
               // Skip planned/actual columns (CD-CF)
-              
+
               // Material and installation (columns CG-CK)
               materialReceivingStatus: getCellValue(row, 84), // Column CG
               reason: getCellValue(row, 85), // Column CH
               installationRequiredField: getCellValue(row, 86), // Column CI
               // Skip planned/actual columns (CJ-CL)
-              
+
               // Calibration details (columns CM-CX)
               labCalibrationCertificate: getCellValue(row, 90), // Column CM
               stCalibrationCertificate: getCellValue(row, 91), // Column CN
@@ -530,11 +530,11 @@ export function useDashboardData() {
               labDueDate: formatDateFromCell(row, 96), // Column CS
               stDueDate: formatDateFromCell(row, 97), // Column CT
               // Skip planned/actual columns (CU-CW)
-              
+
               // Final fields (columns CX-CY)
               uploadDN: getCellValue(row, 101), // Column CX
               status: dispatchStatus, // Column CY (Dispatch Status)
-              
+
               // Date (column A)
               date: formatDateFromCell(row, 0), // Column A
             }

@@ -23,17 +23,20 @@ import {
   LogOut,
   Menu,
   ReceiptText,
-  XOctagon
+  XOctagon,
+  Truck
 } from "lucide-react"
 
 const menuItems = [
-  { href: "/sales", label: "Sales", icon: Warehouse, step: "warehouse" },
-  { href: "/purchase", label: "Purchase", icon: PackageCheck, step: "warehouse-material" },
-  { href: "/ims", label: "IMS", icon: Award, step: "calibration" },
-  { href: "/PR_SR_DR_form", label: "PR_SR_DR Form", icon: Bell, step: "update-delivery" },
-  // { href: "/order-cancel", label: "Order Cancel", icon: XOctagon, step: "order-cancel" },
-  // { href: "/credit-note", label: "Credit Note", icon: ReceiptText, step: "credit-note" },
-  // { href: "/settings", label: "Settings", icon: Settings, step: "settings" },
+  { href: "/sales", label: "Sales", icon: Warehouse, pageAccess: "Sales" },
+  { href: "/transporting", label: "Transporting", icon: Truck, pageAccess: "Transporting" },
+  { href: "/packaging", label: "Packaging", icon: Package, pageAccess: "Packaging" },
+  { href: "/purchase", label: "Purchase", icon: PackageCheck, pageAccess: "Purchase" },
+  { href: "/ims", label: "IMS", icon: Award, pageAccess: "IMS" },
+  { href: "/PR_SR_DR_form", label: "PR_SR_DR Form", icon: Bell, pageAccess: "PR_SR_DR Form" },
+  // { href: "/order-cancel", label: "Order Cancel", icon: XOctagon, pageAccess: "Order Cancel" },
+  // { href: "/credit-note", label: "Credit Note", icon: ReceiptText, pageAccess: "Credit Note" },
+  // { href: "/settings", label: "Settings", icon: Settings, pageAccess: "Settings" },
 ]
 
 export function Sidebar() {
@@ -42,8 +45,8 @@ export function Sidebar() {
   const [open, setOpen] = useState(false)
 
   const filteredMenuItems = menuItems.filter((item) => {
-    if (user?.role === "admin") return true
-    return user?.assignedSteps.includes(item.step) || user?.assignedSteps.includes("all")
+    if (user?.role === "admin" || user?.role === "super_admin") return true
+    return user?.pageAccess.includes(item.pageAccess) || user?.pageAccess.includes("all")
   })
 
   const SidebarContent = () => (
@@ -63,9 +66,8 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-gray-100 ${
-                  isActive ? "bg-gradient-to-b from-blue-50 to-purple-100  text-blue-700 border-r-2 border-blue-700" : "text-gray-700"
-                }`}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-gray-100 ${isActive ? "bg-gradient-to-b from-blue-50 to-purple-100  text-blue-700 border-r-2 border-blue-700" : "text-gray-700"
+                  }`}
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
@@ -98,24 +100,24 @@ export function Sidebar() {
         <div className="px-3 pb-4">
           <div className="bg-white/40 backdrop-blur-sm border border-gray-200/50 rounded-lg p-3 text-center shadow-sm">
             <div className="text-xs text-gray-500 mb-1">Powered by</div>
-            <a 
-              href="https://www.botivate.in/" 
-              target="_blank" 
+            <a
+              href="https://www.botivate.in/"
+              target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hover:from-blue-700 hover:to-purple-700 transition-all duration-200 hover:scale-105"
             >
               Botivate
-              <svg 
-                className="w-3 h-3 text-blue-500" 
-                fill="none" 
-                stroke="currentColor" 
+              <svg
+                className="w-3 h-3 text-blue-500"
+                fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                 />
               </svg>
             </a>

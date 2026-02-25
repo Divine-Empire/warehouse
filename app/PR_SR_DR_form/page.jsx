@@ -23,7 +23,7 @@ const FormDataPage = () => {
     customer: false,
     supplier: false,
     dnCustomer: false,
-    
+
     salesItem: false,
     purchaseItem: false,
     deliveryItem: false,
@@ -436,7 +436,7 @@ const FormDataPage = () => {
     // Reset temp input
     setTempItemInput((prev) => ({
       ...prev,
-      [section]: section === "damage" 
+      [section]: section === "damage"
         ? { item: "", quantity: "", damageIdentifiedAt: "" }
         : { item: "", quantity: "" }
     }));
@@ -469,11 +469,10 @@ const FormDataPage = () => {
           {/* Success/Error Message */}
           {message && (
             <div
-              className={`mb-4 p-4 rounded-lg text-center font-medium ${
-                message.includes("success")
-                  ? "bg-green-100 text-green-700 border border-green-300"
-                  : "bg-red-100 text-red-700 border border-red-300"
-              }`}
+              className={`mb-4 p-4 rounded-lg text-center font-medium ${message.includes("success")
+                ? "bg-green-100 text-green-700 border border-green-300"
+                : "bg-red-100 text-red-700 border border-red-300"
+                }`}
             >
               {message}
             </div>
@@ -1468,7 +1467,7 @@ const FormDataPage = () => {
                               {row.timestamp}
                             </div>
                           </div>
-                          
+
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <span className="text-sm text-gray-600">Date:</span>
