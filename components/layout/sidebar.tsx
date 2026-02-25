@@ -31,6 +31,7 @@ const menuItems = [
   { href: "/sales", label: "Sales", icon: Warehouse, pageAccess: "Sales" },
   { href: "/transporting", label: "Transporting", icon: Truck, pageAccess: "Transporting" },
   { href: "/packaging", label: "Packaging", icon: Package, pageAccess: "Packaging" },
+  { href: "/bilty-upload", label: "Bilty Upload", icon: FileSpreadsheet, pageAccess: "Bilty Upload" },
   { href: "/purchase", label: "Purchase", icon: PackageCheck, pageAccess: "Purchase" },
   { href: "/ims", label: "IMS", icon: Award, pageAccess: "IMS" },
   { href: "/PR_SR_DR_form", label: "PR_SR_DR Form", icon: Bell, pageAccess: "PR_SR_DR Form" },

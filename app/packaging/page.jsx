@@ -352,7 +352,6 @@ export default function PackagingPage() {
                                 <>
                                     <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Before Photo Upload</TableHead>
                                     <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">After Photo Upload</TableHead>
-                                    <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Bilty Upload</TableHead>
                                     <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Dispatch Confirmation</TableHead>
                                     <TableHead className="font-bold text-slate-700 h-10 min-w-[200px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Reason for not okay</TableHead>
                                 </>
@@ -447,15 +446,6 @@ export default function PackagingPage() {
                                                     <a href={order.afterPhoto} target="_blank" rel="noopener noreferrer">
                                                         <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 cursor-pointer text-[10px] font-bold">
                                                             <Camera className="h-2.5 w-2.5 mr-1" /> View Photo
-                                                        </Badge>
-                                                    </a>
-                                                ) : <span className="text-slate-300">-</span>}
-                                            </TableCell>
-                                            <TableCell className="border-b border-r border-slate-100">
-                                                {order.biltyUpload ? (
-                                                    <a href={order.biltyUpload} target="_blank" rel="noopener noreferrer">
-                                                        <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-100 hover:bg-amber-100 cursor-pointer text-[10px] font-bold">
-                                                            <FileText className="h-2.5 w-2.5 mr-1" /> View Bilty
                                                         </Badge>
                                                     </a>
                                                 ) : <span className="text-slate-300">-</span>}
