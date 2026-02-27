@@ -182,12 +182,12 @@ export default function BiltyUploadPage() {
     const filteredOrders = useMemo(() => {
         // 1. Filter by Column BY (matching user.fullName)
         let userFiltered = orders;
-        
+
         // Debug: Check user data
         console.log("Current user:", user);
         console.log("User role:", user?.role);
         console.log("User fullName:", user?.fullName);
-        
+
         if (user && user.role === "user") {
             const userFullName = user.fullName?.toLowerCase().trim();
             console.log("Filtering for fullName:", userFullName);
@@ -222,17 +222,21 @@ export default function BiltyUploadPage() {
     const handleProcessBilty = async (dialogData) => {
         try {
             setUploading(true);
-            const { order, driverCharges, fileUrls } = dialogData;
+            const { order, driverCharges, fileUrls, transporterContact, biltyNumber, totalCharges, warehouseRemarks } = dialogData;
 
             // 1. Update DISPATCH-DELIVERY (Main Sheet)
-            // BX (index 75)
+            // BX (index 75), BZ (index 77), CA (index 78), CB (index 79), CC (index 80)
             const formData = new FormData();
             formData.append("sheetName", SHEET_NAME);
             formData.append("action", "updateByDSrNumber");
             formData.append("dSrNumber", order.dSrNumber);
 
             const rowData = new Array(143).fill("");
-            rowData[75] = fileUrls.biltyUrl || ""; // Column BX
+            rowData[75] = fileUrls.biltyUrl || ""; // Column BX - Bilty Upload
+            rowData[77] = transporterContact || ""; // Column BZ - Transporter Contact
+            rowData[78] = biltyNumber || ""; // Column CA - Bilty Number
+            rowData[79] = totalCharges || ""; // Column CB - Total Charges
+            rowData[80] = warehouseRemarks || ""; // Column CC - Warehouse Remarks
             formData.append("rowData", JSON.stringify(rowData));
 
             const response = await fetch(APPS_SCRIPT_URL, {
@@ -244,16 +248,18 @@ export default function BiltyUploadPage() {
             if (!response.ok) throw new Error("Main sheet update failed");
 
             // 2. Update Warehouse Sheet
-            // BX (index 5) and EN (index 143)
+            // BX (index 5), BZ (index 7), CA (index 8), CB (index 9), CC (index 10), EN (index 143)
             const formData2 = new FormData();
             formData2.append("sheetName", "Warehouse");
             formData2.append("action", "updateByOrderNo");
             formData2.append("orderNo", order.orderNo);
 
             const warehouseRowData = new Array(145).fill("");
-            warehouseRowData[5] = fileUrls.biltyUrl || ""; // Column BX (in Warehouse sheet this is index 5 usually)
-            // Actually, let's check transportation/packaging logic for index mapping in Warehouse
-            // In transportation page: warehouseRowData[5] = fileUrls.biltyUrl (Column F)
+            warehouseRowData[5] = fileUrls.biltyUrl || ""; // Column BX (in Warehouse sheet)
+            warehouseRowData[7] = transporterContact || ""; // Column BZ
+            warehouseRowData[8] = biltyNumber || ""; // Column CA
+            warehouseRowData[9] = totalCharges || ""; // Column CB
+            warehouseRowData[10] = warehouseRemarks || ""; // Column CC
             warehouseRowData[143] = driverCharges; // Column EN
 
             // Ensure D-Sr Number is also there if missing

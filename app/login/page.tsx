@@ -19,9 +19,46 @@ export default function LoginPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // If already authenticated, redirect to dashboard
+    // If already authenticated, redirect to first accessible page
     if (!isLoading && isAuthenticated) {
-      router.push("/sales")
+      // Define menu items in the same order as sidebar
+      const menuItems = [
+        { href: "/sales", pageAccess: "Sales" },
+        { href: "/transporting", pageAccess: "Transporting" },
+        { href: "/packaging", pageAccess: "Packaging" },
+        { href: "/bilty-upload", pageAccess: "Bilty Upload" },
+        { href: "/purchase", pageAccess: "Purchase" },
+        { href: "/ims", pageAccess: "IMS" },
+        { href: "/PR_SR_DR_form", pageAccess: "PR_SR_DR Form" },
+      ]
+
+      // Get user's page access
+      const savedUser = localStorage.getItem("otp-user")
+      if (savedUser) {
+        const userData = JSON.parse(savedUser)
+        const userPageAccess = userData.pageAccess || []
+        const userRole = userData.role
+
+        // Super admin and admin can access all pages - redirect to first page
+        if (userRole === "super_admin" || userRole === "admin" || userPageAccess.includes("all")) {
+          router.push("/sales")
+          return
+        }
+
+        // Find first accessible page
+        const firstAccessiblePage = menuItems.find(item => 
+          userPageAccess.includes(item.pageAccess)
+        )
+
+        if (firstAccessiblePage) {
+          router.push(firstAccessiblePage.href)
+        } else {
+          // Default to sales if no specific access
+          router.push("/sales")
+        }
+      } else {
+        router.push("/sales")
+      }
     }
   }, [isAuthenticated, isLoading, router])
 
@@ -31,8 +68,45 @@ export default function LoginPage() {
     setIsSubmitting(true)
 
     try {
-      if (login(username, password)) {
-        router.push("/sales")
+      const success = await login(username, password)
+      if (success) {
+        // Get the user data that was just saved
+        const savedUser = localStorage.getItem("otp-user")
+        if (savedUser) {
+          const userData = JSON.parse(savedUser)
+          const userPageAccess = userData.pageAccess || []
+          const userRole = userData.role
+
+          // Define menu items in the same order as sidebar
+          const menuItems = [
+            { href: "/sales", pageAccess: "Sales" },
+            { href: "/transporting", pageAccess: "Transporting" },
+            { href: "/packaging", pageAccess: "Packaging" },
+            { href: "/bilty-upload", pageAccess: "Bilty Upload" },
+            { href: "/purchase", pageAccess: "Purchase" },
+            { href: "/ims", pageAccess: "IMS" },
+            { href: "/PR_SR_DR_form", pageAccess: "PR_SR_DR Form" },
+          ]
+
+          // Super admin and admin can access all pages - redirect to first page
+          if (userRole === "super_admin" || userRole === "admin" || userPageAccess.includes("all")) {
+            router.push("/sales")
+            return
+          }
+
+          // Find first accessible page
+          const firstAccessiblePage = menuItems.find(item => 
+            userPageAccess.includes(item.pageAccess)
+          )
+
+          if (firstAccessiblePage) {
+            router.push(firstAccessiblePage.href)
+          } else {
+            router.push("/sales")
+          }
+        } else {
+          router.push("/sales")
+        }
       } else {
         setError("Invalid username or password")
       }

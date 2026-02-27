@@ -647,67 +647,23 @@ export default function ProcessDialog({
                                     </h4>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="transporterName" className="text-indigo-700 font-medium">
-                                            Transporter / Courier Name <span className="text-red-500 font-bold">*</span>
-                                        </Label>
-                                        <Select
-                                            value={transporterName}
-                                            onValueChange={(value) => setTransporterName(value)}
-                                        >
-                                            <SelectTrigger className="bg-white border-indigo-100">
-                                                <SelectValue placeholder="Select transporter name" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Roshan Dewangan">Roshan Dewangan</SelectItem>
-                                                <SelectItem value="Mahesh Sahu">Mahesh Sahu</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="transporterContact" className="text-indigo-700 font-medium">
-                                            Transporter Contact No.
-                                        </Label>
-                                        <Input
-                                            id="transporterContact"
-                                            value={transporterContact}
-                                            className="bg-white border-indigo-100"
-                                            onChange={(e) => setTransporterContact(e.target.value)}
-                                            placeholder="Enter contact number"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="biltyNumber" className="text-indigo-700 font-medium">
-                                            Bilty No. / Docket No.
-                                        </Label>
-                                        <Input
-                                            id="biltyNumber"
-                                            value={biltyNumber}
-                                            className="bg-white border-indigo-100"
-                                            onChange={(e) => setBiltyNumber(e.target.value)}
-                                            placeholder="Enter bilty/docket number"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="totalCharges" className="text-indigo-700 font-medium">
-                                            Total Charges (₹)
-                                        </Label>
-                                        <Input
-                                            id="totalCharges"
-                                            value={totalCharges}
-                                            className="bg-white border-indigo-100"
-                                            onChange={(e) => setTotalCharges(e.target.value)}
-                                            placeholder="0.00"
-                                            type="number"
-                                            step="0.01"
-                                        />
-                                    </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="transporterName" className="text-indigo-700 font-medium">
+                                        Transporter / Courier Name <span className="text-red-500 font-bold">*</span>
+                                    </Label>
+                                    <Input
+                                        id="transporterName"
+                                        list="transporterOptions"
+                                        value={transporterName}
+                                        className="bg-white border-indigo-100"
+                                        onChange={(e) => setTransporterName(e.target.value)}
+                                        placeholder="Select or enter transporter name"
+                                    />
+                                    <datalist id="transporterOptions">
+                                        <option value="Roshan Dewangan" />
+                                        <option value="Mahesh Sahu" />
+                                        <option value="Other" />
+                                    </datalist>
                                 </div>
 
                                 <div className="space-y-2">
@@ -739,7 +695,50 @@ export default function ProcessDialog({
                                 </h4>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="transporterContact" className="text-indigo-700 font-medium">
+                                        Transporter Contact No.
+                                    </Label>
+                                    <Input
+                                        id="transporterContact"
+                                        value={transporterContact}
+                                        className="bg-white border-indigo-100"
+                                        onChange={(e) => setTransporterContact(e.target.value)}
+                                        placeholder="Enter contact number"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="biltyNumber" className="text-indigo-700 font-medium">
+                                        Bilty No. / Docket No.
+                                    </Label>
+                                    <Input
+                                        id="biltyNumber"
+                                        value={biltyNumber}
+                                        className="bg-white border-indigo-100"
+                                        onChange={(e) => setBiltyNumber(e.target.value)}
+                                        placeholder="Enter bilty/docket number"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="totalCharges" className="text-indigo-700 font-medium">
+                                        Total Charges (₹)
+                                    </Label>
+                                    <Input
+                                        id="totalCharges"
+                                        value={totalCharges}
+                                        className="bg-white border-indigo-100"
+                                        onChange={(e) => setTotalCharges(e.target.value)}
+                                        placeholder="0.00"
+                                        type="number"
+                                        step="0.01"
+                                    />
+                                </div>
+
                                 <div className="space-y-2">
                                     <Label htmlFor="driverCharges" className="text-indigo-700 font-medium">
                                         Driver Transporting Charges <span className="text-red-500 font-bold">*</span>
@@ -753,42 +752,56 @@ export default function ProcessDialog({
                                         type="number"
                                     />
                                 </div>
+                            </div>
 
-                                <div className="space-y-3">
-                                    <Label htmlFor="biltyUpload" className="text-indigo-700 font-semibold flex items-center gap-2">
-                                        Bilty / Docket Upload <span className="text-red-500 font-bold">*</span>
-                                        <span className="text-[10px] font-normal text-indigo-500 bg-indigo-100 px-1.5 py-0.5 rounded-full">MULTIPLE</span>
-                                    </Label>
-                                    <div className="relative group">
-                                        <Input
-                                            id="biltyUpload"
-                                            className="bg-white border-indigo-100 h-12 cursor-pointer invisible absolute"
-                                            type="file"
-                                            accept="image/*,application/pdf"
-                                            multiple
-                                            onChange={(e) => {
-                                                const newFiles = Array.from(e.target.files || []);
-                                                setBiltyUploads((prev) => [...prev, ...newFiles]);
-                                            }}
-                                        />
-                                        <label htmlFor="biltyUpload" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-indigo-200 rounded-xl bg-white hover:bg-indigo-50/50 hover:border-indigo-400 transition-all cursor-pointer">
-                                            <div className="flex flex-center gap-2 items-center">
-                                                <CloudUpload className="h-5 w-5 text-indigo-500" />
-                                                <span className="text-sm font-medium text-indigo-700">Click or drag to upload documents</span>
-                                            </div>
-                                        </label>
-                                    </div>
-
-                                    {biltyUploads.length > 0 && (
-                                        <div className="flex flex-wrap gap-2 pt-2">
-                                            <div className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-200 text-xs font-bold">
-                                                <FileText className="h-3 w-3" />
-                                                Bilty: {biltyUploads.length}
-                                                <button onClick={() => setBiltyUploads([])} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button>
-                                            </div>
+                            <div className="space-y-3">
+                                <Label htmlFor="biltyUpload" className="text-indigo-700 font-semibold flex items-center gap-2">
+                                    Bilty / Docket Upload <span className="text-red-500 font-bold">*</span>
+                                    <span className="text-[10px] font-normal text-indigo-500 bg-indigo-100 px-1.5 py-0.5 rounded-full">MULTIPLE</span>
+                                </Label>
+                                <div className="relative group">
+                                    <Input
+                                        id="biltyUpload"
+                                        className="bg-white border-indigo-100 h-12 cursor-pointer invisible absolute"
+                                        type="file"
+                                        accept="image/*,application/pdf"
+                                        multiple
+                                        onChange={(e) => {
+                                            const newFiles = Array.from(e.target.files || []);
+                                            setBiltyUploads((prev) => [...prev, ...newFiles]);
+                                        }}
+                                    />
+                                    <label htmlFor="biltyUpload" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-indigo-200 rounded-xl bg-white hover:bg-indigo-50/50 hover:border-indigo-400 transition-all cursor-pointer">
+                                        <div className="flex flex-center gap-2 items-center">
+                                            <CloudUpload className="h-5 w-5 text-indigo-500" />
+                                            <span className="text-sm font-medium text-indigo-700">Click or drag to upload documents</span>
                                         </div>
-                                    )}
+                                    </label>
                                 </div>
+
+                                {biltyUploads.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 pt-2">
+                                        <div className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-200 text-xs font-bold">
+                                            <FileText className="h-3 w-3" />
+                                            Bilty: {biltyUploads.length}
+                                            <button onClick={() => setBiltyUploads([])} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="warehouseRemarks" className="text-indigo-700 font-medium">
+                                    Warehouse Remarks
+                                </Label>
+                                <Textarea
+                                    id="warehouseRemarks"
+                                    value={warehouseRemarks}
+                                    className="bg-white border-indigo-100 min-h-[100px]"
+                                    onChange={(e) => setWarehouseRemarks(e.target.value)}
+                                    placeholder="Enter additional warehouse/dispatch remarks..."
+                                    rows={3}
+                                />
                             </div>
                         </div>
                     )}

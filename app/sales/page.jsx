@@ -65,8 +65,7 @@ const pendingColumns = [
   { key: "transportid", label: "Transport ID", searchable: true },
   { key: "freightType", label: "Freight Type", searchable: true },
   { key: "destination", label: "Destination", searchable: true },
-  { key: "poNumber", label: "Po Number", searchable: true },
-  { key: "quotationCopy2", label: "Quotation Copy", searchable: true },
+
   {
     key: "acceptanceCopy",
     label: "Acceptance Copy (Purchase Order Only)",
@@ -96,10 +95,10 @@ const pendingColumns = [
     label: "Installation Required",
     searchable: true,
   },
-  { key: "ewayBillDetails", label: "Eway Bill Details", searchable: true },
+  { key: "ewayBillDetails", label: "Tranporter id", searchable: true },
   {
     key: "ewayBillAttachment",
-    label: "Eway Bill Attachment",
+    label: "Vechile no.",
     searchable: true,
   },
   { key: "srnNumber", label: "Srn Number", searchable: true },
@@ -250,6 +249,7 @@ export default function WarehousePage() {
   const [companyNameFilter, setCompanyNameFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedColumn, setSelectedColumn] = useState("all");
+  const [activeTab, setActiveTab] = useState("pending");
 
   const [visiblePendingColumns, setVisiblePendingColumns] = useState(
     pendingColumns.reduce((acc, col) => ({ ...acc, [col.key]: true }), {})
@@ -582,9 +582,9 @@ export default function WarehousePage() {
   };
 
   const getUniqueCompanyNames = () => {
-    const companies = [
-      ...new Set(pendingOrders.map((order) => order.companyName)),
-    ];
+    // Only show companies from the currently filtered table data
+    const sourceOrders = activeTab === "pending" ? filteredPendingOrders : filteredHistoryOrders;
+    const companies = [...new Set(sourceOrders.map((order) => order.companyName))];
     return companies.filter((company) => company).sort();
   };
 
@@ -626,6 +626,7 @@ export default function WarehousePage() {
     selectedColumn,
     currentUser,
     companyNameFilter,
+    activeTab,
   ]);
 
   // Update the filteredHistoryOrders useMemo to include role-based filtering
@@ -666,6 +667,7 @@ export default function WarehousePage() {
     selectedColumn,
     currentUser,
     companyNameFilter,
+    activeTab,
   ]);
 
   // Column visibility handlers
@@ -1943,7 +1945,7 @@ export default function WarehousePage() {
           </select>
         </div>
 
-        <Tabs defaultValue="pending" className="hidden sm:block space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="hidden sm:block space-y-4">
           <TabsList>
             <TabsTrigger value="pending">
               Pending ({filteredPendingOrders.length})
@@ -2262,7 +2264,7 @@ export default function WarehousePage() {
 
         {/* Mobile Card View */}
         <div className="block sm:hidden space-y-4">
-          <Tabs defaultValue="pending" className="space-y-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="pending">
                 Pending ({filteredPendingOrders.length})
