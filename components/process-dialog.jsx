@@ -13,6 +13,13 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RefreshCw, CloudUpload, FileText, X, Settings, Save, Eye, FileSpreadsheet } from "lucide-react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export default function ProcessDialog({
     isOpen,
@@ -645,13 +652,18 @@ export default function ProcessDialog({
                                         <Label htmlFor="transporterName" className="text-indigo-700 font-medium">
                                             Transporter / Courier Name <span className="text-red-500 font-bold">*</span>
                                         </Label>
-                                        <Input
-                                            id="transporterName"
+                                        <Select
                                             value={transporterName}
-                                            className="bg-white border-indigo-100"
-                                            onChange={(e) => setTransporterName(e.target.value)}
-                                            placeholder="Enter transporter name"
-                                        />
+                                            onValueChange={(value) => setTransporterName(value)}
+                                        >
+                                            <SelectTrigger className="bg-white border-indigo-100">
+                                                <SelectValue placeholder="Select transporter name" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Roshan Dewangan">Roshan Dewangan</SelectItem>
+                                                <SelectItem value="Mahesh Sahu">Mahesh Sahu</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
 
                                     <div className="space-y-2">
@@ -784,128 +796,130 @@ export default function ProcessDialog({
                     {!salesMode && !biltyMode && (
                         <>
                             {/* Section 3: Documentation upload & Photos */}
-                            <div className="space-y-6 mt-6">
-                                <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-200 shadow-sm space-y-6">
-                                    <div className="flex items-center gap-2 mb-2 border-b border-emerald-200 pb-3">
-                                        <div className="p-1.5 bg-emerald-600 rounded-lg">
-                                            <CloudUpload className="h-4 w-4 text-white" />
-                                        </div>
-                                        <h4 className="text-lg font-bold text-emerald-900 tracking-tight">
-                                            Section 3: Documentation
-                                        </h4>
-                                    </div>
-
-                                    <div className="space-y-5">
-                                        <div className="space-y-3">
-                                            <Label htmlFor="beforePhoto" className="text-emerald-700 font-semibold flex items-center gap-2">
-                                                Before Photo (Packing) <span className="text-red-500 font-bold">*</span>
-                                                <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">MULTIPLE</span>
-                                            </Label>
-                                            <div className="relative group">
-                                                <Input
-                                                    id="beforePhoto"
-                                                    className="bg-white border-emerald-100 h-12 cursor-pointer invisible absolute"
-                                                    type="file"
-                                                    accept="image/*"
-                                                    multiple
-                                                    onChange={(e) => {
-                                                        const newFiles = Array.from(e.target.files || []);
-                                                        setBeforePhotos((prev) => [...prev, ...newFiles]);
-                                                    }}
-                                                />
-                                                <label htmlFor="beforePhoto" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-200 rounded-xl bg-white hover:bg-emerald-50/50 hover:border-emerald-400 transition-all cursor-pointer">
-                                                    <div className="flex flex-center gap-2 items-center">
-                                                        <CloudUpload className="h-5 w-5 text-emerald-500" />
-                                                        <span className="text-sm font-medium text-emerald-700">Click or drag to upload photos</span>
-                                                    </div>
-                                                </label>
+                            {!transportMode && (
+                                <div className="space-y-6 mt-6">
+                                    <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-200 shadow-sm space-y-6">
+                                        <div className="flex items-center gap-2 mb-2 border-b border-emerald-200 pb-3">
+                                            <div className="p-1.5 bg-emerald-600 rounded-lg">
+                                                <CloudUpload className="h-4 w-4 text-white" />
                                             </div>
-                                        </div>
-                                        {/* After Photo (Final Package) */}
-                                        <div className="space-y-3">
-                                            <Label htmlFor="afterPhoto" className="text-emerald-700 font-semibold flex items-center gap-2">
-                                                After Photo (Final Package)
-                                                <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">MULTIPLE</span>
-                                            </Label>
-                                            <div className="relative group">
-                                                <Input
-                                                    id="afterPhoto"
-                                                    className="bg-white border-emerald-100 h-12 cursor-pointer invisible absolute"
-                                                    type="file"
-                                                    accept="image/*"
-                                                    multiple
-                                                    onChange={(e) => {
-                                                        const newFiles = Array.from(e.target.files || []);
-                                                        setAfterPhotos((prev) => [...prev, ...newFiles]);
-                                                    }}
-                                                />
-                                                <label htmlFor="afterPhoto" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-200 rounded-xl bg-white hover:bg-emerald-50/50 hover:border-emerald-400 transition-all cursor-pointer">
-                                                    <div className="flex flex-center gap-2 items-center">
-                                                        <CloudUpload className="h-5 w-5 text-emerald-500" />
-                                                        <span className="text-sm font-medium text-emerald-700">Click or drag to upload photos</span>
-                                                    </div>
-                                                </label>
-                                            </div>
+                                            <h4 className="text-lg font-bold text-emerald-900 tracking-tight">
+                                                Section 3: Documentation
+                                            </h4>
                                         </div>
 
-                                        {/* Bilty / Docket Upload */}
-                                        {!packagingMode && (
+                                        <div className="space-y-5">
                                             <div className="space-y-3">
-                                                <Label htmlFor="biltyUpload" className="text-emerald-700 font-semibold flex items-center gap-2">
-                                                    Bilty / Docket Upload
+                                                <Label htmlFor="beforePhoto" className="text-emerald-700 font-semibold flex items-center gap-2">
+                                                    Before Photo (Packing) <span className="text-red-500 font-bold">*</span>
                                                     <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">MULTIPLE</span>
                                                 </Label>
                                                 <div className="relative group">
                                                     <Input
-                                                        id="biltyUpload"
+                                                        id="beforePhoto"
                                                         className="bg-white border-emerald-100 h-12 cursor-pointer invisible absolute"
                                                         type="file"
-                                                        accept="image/*,application/pdf"
+                                                        accept="image/*"
                                                         multiple
                                                         onChange={(e) => {
                                                             const newFiles = Array.from(e.target.files || []);
-                                                            setBiltyUploads((prev) => [...prev, ...newFiles]);
+                                                            setBeforePhotos((prev) => [...prev, ...newFiles]);
                                                         }}
                                                     />
-                                                    <label htmlFor="biltyUpload" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-200 rounded-xl bg-white hover:bg-emerald-50/50 hover:border-emerald-400 transition-all cursor-pointer">
+                                                    <label htmlFor="beforePhoto" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-200 rounded-xl bg-white hover:bg-emerald-50/50 hover:border-emerald-400 transition-all cursor-pointer">
                                                         <div className="flex flex-center gap-2 items-center">
                                                             <CloudUpload className="h-5 w-5 text-emerald-500" />
-                                                            <span className="text-sm font-medium text-emerald-700">Click or drag to upload documents</span>
+                                                            <span className="text-sm font-medium text-emerald-700">Click or drag to upload photos</span>
                                                         </div>
                                                     </label>
                                                 </div>
                                             </div>
-                                        )}
+                                            {/* After Photo (Final Package) */}
+                                            <div className="space-y-3">
+                                                <Label htmlFor="afterPhoto" className="text-emerald-700 font-semibold flex items-center gap-2">
+                                                    After Photo (Final Package)
+                                                    <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">MULTIPLE</span>
+                                                </Label>
+                                                <div className="relative group">
+                                                    <Input
+                                                        id="afterPhoto"
+                                                        className="bg-white border-emerald-100 h-12 cursor-pointer invisible absolute"
+                                                        type="file"
+                                                        accept="image/*"
+                                                        multiple
+                                                        onChange={(e) => {
+                                                            const newFiles = Array.from(e.target.files || []);
+                                                            setAfterPhotos((prev) => [...prev, ...newFiles]);
+                                                        }}
+                                                    />
+                                                    <label htmlFor="afterPhoto" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-200 rounded-xl bg-white hover:bg-emerald-50/50 hover:border-emerald-400 transition-all cursor-pointer">
+                                                        <div className="flex flex-center gap-2 items-center">
+                                                            <CloudUpload className="h-5 w-5 text-emerald-500" />
+                                                            <span className="text-sm font-medium text-emerald-700">Click or drag to upload photos</span>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
 
-                                        {/* Selected files count badges */}
-                                        <div className="flex flex-wrap gap-2 pt-2">
-                                            {beforePhotos.length > 0 && (
-                                                <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs font-bold">
-                                                    <FileText className="h-3 w-3" />
-                                                    Before: {beforePhotos.length}
-                                                    <button onClick={() => setBeforePhotos([])} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button>
+                                            {/* Bilty / Docket Upload */}
+                                            {!packagingMode && (
+                                                <div className="space-y-3">
+                                                    <Label htmlFor="biltyUpload" className="text-emerald-700 font-semibold flex items-center gap-2">
+                                                        Bilty / Docket Upload
+                                                        <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">MULTIPLE</span>
+                                                    </Label>
+                                                    <div className="relative group">
+                                                        <Input
+                                                            id="biltyUpload"
+                                                            className="bg-white border-emerald-100 h-12 cursor-pointer invisible absolute"
+                                                            type="file"
+                                                            accept="image/*,application/pdf"
+                                                            multiple
+                                                            onChange={(e) => {
+                                                                const newFiles = Array.from(e.target.files || []);
+                                                                setBiltyUploads((prev) => [...prev, ...newFiles]);
+                                                            }}
+                                                        />
+                                                        <label htmlFor="biltyUpload" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-200 rounded-xl bg-white hover:bg-emerald-50/50 hover:border-emerald-400 transition-all cursor-pointer">
+                                                            <div className="flex flex-center gap-2 items-center">
+                                                                <CloudUpload className="h-5 w-5 text-emerald-500" />
+                                                                <span className="text-sm font-medium text-emerald-700">Click or drag to upload documents</span>
+                                                            </div>
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             )}
-                                            {afterPhotos.length > 0 && (
-                                                <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs font-bold">
-                                                    <FileText className="h-3 w-3" />
-                                                    After: {afterPhotos.length}
-                                                    <button onClick={() => setAfterPhotos([])} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button>
-                                                </div>
-                                            )}
-                                            {biltyUploads.length > 0 && !packagingMode && (
-                                                <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs font-bold">
-                                                    <FileText className="h-3 w-3" />
-                                                    Bilty: {biltyUploads.length}
-                                                    <button onClick={() => setBiltyUploads([])} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button>
-                                                </div>
-                                            )}
+
+                                            {/* Selected files count badges */}
+                                            <div className="flex flex-wrap gap-2 pt-2">
+                                                {beforePhotos.length > 0 && (
+                                                    <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs font-bold">
+                                                        <FileText className="h-3 w-3" />
+                                                        Before: {beforePhotos.length}
+                                                        <button onClick={() => setBeforePhotos([])} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button>
+                                                    </div>
+                                                )}
+                                                {afterPhotos.length > 0 && (
+                                                    <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs font-bold">
+                                                        <FileText className="h-3 w-3" />
+                                                        After: {afterPhotos.length}
+                                                        <button onClick={() => setAfterPhotos([])} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button>
+                                                    </div>
+                                                )}
+                                                {biltyUploads.length > 0 && !packagingMode && (
+                                                    <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs font-bold">
+                                                        <FileText className="h-3 w-3" />
+                                                        Bilty: {biltyUploads.length}
+                                                        <button onClick={() => setBiltyUploads([])} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
 
-                            {!salesMode && (
+                            {!salesMode && !transportMode && (
                                 <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 shadow-sm">
                                     <div className="flex flex-col gap-4">
                                         <div className="flex items-center justify-between">

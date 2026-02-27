@@ -70,7 +70,7 @@ const historyColumns = [
 ];
 
 export default function BiltyUploadPage() {
-    const { user } = useAuth();
+    const { user, isLoading } = useAuth();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
@@ -127,41 +127,43 @@ export default function BiltyUploadPage() {
             const ordersMap = new Map();
 
             data.table.rows.slice(1).forEach((row, index) => {
-                if (!row.c || !row.c[105] || !row.c[105].v) return;
+                if (!row.c) return;
+
+                if (!row.c[105] || !row.c[105].v) return;
 
                 const dSrNumber = String(row.c[105].v).trim();
                 const bvColumn = row.c[73] ? row.c[73].v : null; // BV
                 const bxColumn = row.c[75] ? row.c[75].v : null; // BX
+                const byColumn = row.c[76] ? String(row.c[76].v || "").trim() : ""; // BY
 
-                if (bvColumn) {
-                    const orderNo = row.c[1] ? String(row.c[1].v).trim() : "";
-                    const whInfo = whDataMap.get(orderNo) || {};
-                    const order = {
-                        rowIndex: index + 2,
-                        id: dSrNumber,
-                        dSrNumber: dSrNumber,
-                        orderNo,
-                        quotationNo: row.c[2] ? row.c[2].v : "",
-                        companyName: row.c[3] ? row.c[3].v : "",
-                        transporterName: whInfo.transporterName || (row.c[6] ? row.c[6].v : ""),
-                        transporterContact: whInfo.transporterContact || "",
-                        biltyNumber: whInfo.biltyNumber || "",
-                        totalCharges: whInfo.totalCharges || "",
-                        warehouseRemarks: whInfo.warehouseRemarks || "",
-                        invoiceNumber: row.c[65]?.v || "",
-                        invoiceUpload: row.c[66]?.v || "",
-                        attachment: row.c[29]?.v || "",
-                        beforePhoto: whInfo.beforePhoto || "",
-                        afterPhoto: whInfo.afterPhoto || "",
-                        biltyUpload: bxColumn || whInfo.biltyUpload || "",
-                        driverCharges: whInfo.driverCharges || "",
-                        dispatchStatus: whInfo.dispatchStatus || "okay",
-                        notOkReason: whInfo.notOkReason || "",
-                        bvColumn,
-                        bxColumn
-                    };
-                    ordersMap.set(dSrNumber, order);
-                }
+                const orderNo = row.c[1] ? String(row.c[1].v).trim() : "";
+                const whInfo = whDataMap.get(orderNo) || {};
+                const order = {
+                    rowIndex: index + 2,
+                    id: dSrNumber,
+                    dSrNumber: dSrNumber,
+                    orderNo,
+                    quotationNo: row.c[2] ? row.c[2].v : "",
+                    companyName: row.c[3] ? row.c[3].v : "",
+                    transporterName: whInfo.transporterName || (row.c[6] ? row.c[6].v : ""),
+                    transporterContact: whInfo.transporterContact || "",
+                    biltyNumber: whInfo.biltyNumber || "",
+                    totalCharges: whInfo.totalCharges || "",
+                    warehouseRemarks: whInfo.warehouseRemarks || "",
+                    invoiceNumber: row.c[65]?.v || "",
+                    invoiceUpload: row.c[66]?.v || "",
+                    attachment: row.c[29]?.v || "",
+                    beforePhoto: whInfo.beforePhoto || "",
+                    afterPhoto: whInfo.afterPhoto || "",
+                    biltyUpload: bxColumn || whInfo.biltyUpload || "",
+                    driverCharges: whInfo.driverCharges || "",
+                    dispatchStatus: whInfo.dispatchStatus || "okay",
+                    notOkReason: whInfo.notOkReason || "",
+                    transporterByName: byColumn,
+                    bvColumn,
+                    bxColumn
+                };
+                ordersMap.set(dSrNumber, order);
             });
 
             const allOrders = Array.from(ordersMap.values());
@@ -178,15 +180,35 @@ export default function BiltyUploadPage() {
     }, [fetchOrders]);
 
     const filteredOrders = useMemo(() => {
-        // First filter by tab status (BV vs BX)
-        let tabFiltered = [];
-        if (activeTab === "pending") {
-            tabFiltered = orders.filter(o => o.bvColumn && !o.bxColumn);
-        } else {
-            tabFiltered = orders.filter(o => o.bvColumn && o.bxColumn);
+        // 1. Filter by Column BY (matching user.fullName)
+        let userFiltered = orders;
+        
+        // Debug: Check user data
+        console.log("Current user:", user);
+        console.log("User role:", user?.role);
+        console.log("User fullName:", user?.fullName);
+        
+        if (user && user.role === "user") {
+            const userFullName = user.fullName?.toLowerCase().trim();
+            console.log("Filtering for fullName:", userFullName);
+            userFiltered = orders.filter(o => {
+                const match = o.transporterByName?.toLowerCase().trim() === userFullName;
+                if (match) {
+                    console.log("Matched order:", o.orderNo, "transporterByName:", o.transporterByName);
+                }
+                return match;
+            });
         }
 
-        // Then filter by search query
+        // 2. Filter by tab status (BX - Bilty Uploaded)
+        let tabFiltered = [];
+        if (activeTab === "pending") {
+            tabFiltered = userFiltered.filter(o => !o.bxColumn);
+        } else {
+            tabFiltered = userFiltered.filter(o => o.bxColumn);
+        }
+
+        // 3. Filter by search query
         if (!searchQuery) return tabFiltered;
         const lowQuery = searchQuery.toLowerCase();
         return tabFiltered.filter(
@@ -195,7 +217,7 @@ export default function BiltyUploadPage() {
                 o.companyName?.toLowerCase().includes(lowQuery) ||
                 o.dSrNumber?.toLowerCase().includes(lowQuery)
         );
-    }, [orders, activeTab, searchQuery]);
+    }, [orders, activeTab, searchQuery, user]);
 
     const handleProcessBilty = async (dialogData) => {
         try {
@@ -257,6 +279,16 @@ export default function BiltyUploadPage() {
             setUploading(false);
         }
     };
+
+    if (isLoading) {
+        return (
+            <MainLayout>
+                <div className="flex h-screen items-center justify-center">
+                    <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+                </div>
+            </MainLayout>
+        );
+    }
 
     return (
         <MainLayout>
