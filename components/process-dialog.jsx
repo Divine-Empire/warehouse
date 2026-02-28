@@ -255,7 +255,7 @@ export default function ProcessDialog({
                 alert("Please upload at least one 'Bilty / Docket' file.");
                 return;
             }
-            if (!driverCharges.trim()) {
+            if (!totalCharges.trim()) {
                 alert("Please enter Driver Transporting Charges.");
                 return;
             }
@@ -649,7 +649,7 @@ export default function ProcessDialog({
 
                                 <div className="space-y-2">
                                     <Label htmlFor="transporterName" className="text-indigo-700 font-medium">
-                                        Transporter / Courier Name <span className="text-red-500 font-bold">*</span>
+                                        Transporter / Driver Name <span className="text-red-500 font-bold">*</span>
                                     </Label>
                                     <Input
                                         id="transporterName"
@@ -723,35 +723,18 @@ export default function ProcessDialog({
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="totalCharges" className="text-indigo-700 font-medium">
-                                        Total Charges (₹)
-                                    </Label>
-                                    <Input
-                                        id="totalCharges"
-                                        value={totalCharges}
-                                        className="bg-white border-indigo-100"
-                                        onChange={(e) => setTotalCharges(e.target.value)}
-                                        placeholder="0.00"
-                                        type="number"
-                                        step="0.01"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="driverCharges" className="text-indigo-700 font-medium">
-                                        Driver Transporting Charges <span className="text-red-500 font-bold">*</span>
-                                    </Label>
-                                    <Input
-                                        id="driverCharges"
-                                        value={driverCharges}
-                                        className="bg-white border-indigo-100"
-                                        onChange={(e) => setDriverCharges(e.target.value)}
-                                        placeholder="Enter charges"
-                                        type="number"
-                                    />
-                                </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="totalCharges" className="text-indigo-700 font-medium">
+                                    Driver Transporting Charges <span className="text-red-500 font-bold">*</span>
+                                </Label>
+                                <Input
+                                    id="totalCharges"
+                                    value={totalCharges}
+                                    className="bg-white border-indigo-100"
+                                    onChange={(e) => setTotalCharges(e.target.value)}
+                                    placeholder="Enter charges"
+                                    type="number"
+                                />
                             </div>
 
                             <div className="space-y-3">

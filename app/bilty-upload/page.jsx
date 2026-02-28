@@ -48,7 +48,7 @@ const sharedColumns = [
     { key: "transporterName", label: "Transporter Name" },
     { key: "transporterContact", label: "Transporter Contact" },
     { key: "biltyNumber", label: "Bilty/Docket No." },
-    { key: "totalCharges", label: "Total Charges" },
+    { key: "totalCharges", label: "Driver Charges" },
     { key: "warehouseRemarks", label: "Warehouse Remarks" },
     { key: "attachment", label: "Attachment" },
     { key: "beforePhoto", label: "Before Photo Upload" },
@@ -66,7 +66,6 @@ const historyColumns = [
     { key: "actions", label: "Status" },
     ...sharedColumns,
     { key: "biltyUpload", label: "Bilty Upload" },
-    { key: "driverCharges", label: "Driver Charges" },
 ];
 
 export default function BiltyUploadPage() {
@@ -472,13 +471,6 @@ export default function BiltyUploadPage() {
                                                                         <AlertCircle className="h-3.5 w-3.5" />
                                                                         Missing
                                                                     </span>
-                                                                )}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {order.driverCharges ? (
-                                                                    <span className="font-bold text-slate-900">₹{order.driverCharges}</span>
-                                                                ) : (
-                                                                    <span className="text-slate-400 italic">Not set</span>
                                                                 )}
                                                             </TableCell>
                                                         </>
