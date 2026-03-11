@@ -118,11 +118,8 @@ export default function PackagingPage() {
                         invoiceUpload: row.c[66]?.v || "",
 
                         bsColumn: row.c[70]?.v || null,
-<<<<<<< HEAD
                         blColumn: row.c[63]?.v || null, // Column BL (index 63)
                         btColumn: row.c[71]?.v || null,
-=======
->>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
                         byColumn: row.c[76]?.v || null,
                         bvColumn: row.c[73]?.v || null,
 
@@ -338,7 +335,6 @@ export default function PackagingPage() {
         filteredOrders.filter(order => !!order.byColumn && !!order.bvColumn),
         [filteredOrders])
 
-<<<<<<< HEAD
     const formatDateToMMDDYYYY = (dateVal) => {
         if (!dateVal || dateVal === "" || dateVal === "-") return "-";
         const s = String(dateVal);
@@ -379,8 +375,6 @@ export default function PackagingPage() {
         return `${mm}/${dd}/${yyyy}`;
     };
 
-=======
->>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
     const OrderTable = ({ data, showActions = true }) => (
         <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-white flex flex-col">
             <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)] relative w-full scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
@@ -393,10 +387,7 @@ export default function PackagingPage() {
                             <TableHead className="font-bold text-slate-700 h-10 min-w-[200px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Company Name</TableHead>
                             <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Invoice Number</TableHead>
                             <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Invoice Upload</TableHead>
-<<<<<<< HEAD
                             <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Invoice Created Date</TableHead>
-=======
->>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
                             <TableHead className="font-bold text-slate-700 h-10 min-w-[180px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Transporter Name</TableHead>
                             <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Transporter Contact</TableHead>
                             <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Bilty/Docket No.</TableHead>
@@ -457,10 +448,7 @@ export default function PackagingPage() {
                                             </a>
                                         ) : <span className="text-slate-300">-</span>}
                                     </TableCell>
-<<<<<<< HEAD
                                     <TableCell className="font-medium text-slate-600 border-b border-r border-slate-100">{formatDateToMMDDYYYY(order.blColumn)}</TableCell>
-=======
->>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
                                     <TableCell className="text-slate-800 font-medium border-b border-r border-slate-100">{order.transporterName || <span className="text-slate-300">-</span>}</TableCell>
                                     <TableCell className="text-slate-600 border-b border-r border-slate-100">{order.transporterContact || <span className="text-slate-300">-</span>}</TableCell>
                                     <TableCell className="text-slate-700 font-bold border-b border-r border-slate-100">{order.biltyNumber || <span className="text-slate-300">-</span>}</TableCell>

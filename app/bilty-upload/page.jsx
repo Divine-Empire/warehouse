@@ -45,10 +45,7 @@ const sharedColumns = [
     { key: "companyName", label: "Company Name" },
     { key: "invoiceNumber", label: "Invoice Number" },
     { key: "invoiceUpload", label: "Invoice Upload" },
-<<<<<<< HEAD
     { key: "invoiceCreatedDate", label: "Invoice Created Date" },
-=======
->>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
     { key: "transporterName", label: "Transporter Name" },
     { key: "transporterContact", label: "Transporter Contact" },
     { key: "biltyNumber", label: "Bilty/Docket No." },
@@ -163,10 +160,7 @@ export default function BiltyUploadPage() {
                     dispatchStatus: whInfo.dispatchStatus || "okay",
                     notOkReason: whInfo.notOkReason || "",
                     transporterByName: byColumn,
-<<<<<<< HEAD
                     invoiceCreatedDate: row.c[63]?.v || "-", // Column BL (index 63)
-=======
->>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
                     bvColumn,
                     bxColumn
                 };
@@ -226,7 +220,6 @@ export default function BiltyUploadPage() {
         );
     }, [orders, activeTab, searchQuery, user]);
 
-<<<<<<< HEAD
     const formatDateToMMDDYYYY = (dateVal) => {
         if (!dateVal || dateVal === "" || dateVal === "-") return "-";
         const s = String(dateVal);
@@ -267,8 +260,6 @@ export default function BiltyUploadPage() {
         return `${mm}/${dd}/${yyyy}`;
     };
 
-=======
->>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
     const handleProcessBilty = async (dialogData) => {
         try {
             setUploading(true);
@@ -464,10 +455,7 @@ export default function BiltyUploadPage() {
                                                             </a>
                                                         ) : <span className="text-slate-300">-</span>}
                                                     </TableCell>
-<<<<<<< HEAD
                                                     <TableCell className="text-slate-600 font-medium">{formatDateToMMDDYYYY(order.invoiceCreatedDate)}</TableCell>
-=======
->>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
                                                     <TableCell className="text-slate-600">{order.transporterName}</TableCell>
                                                     <TableCell className="text-slate-600">{order.transporterContact || "-"}</TableCell>
                                                     <TableCell className="font-bold text-slate-900">{order.biltyNumber || "-"}</TableCell>
