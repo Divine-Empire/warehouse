@@ -347,7 +347,7 @@ export default function PurchasePage() {
                 unit: row[7] ?? "",
                 rate: row[8] ?? "",
                 qty: row[25] ?? "",
-                qcRequirement: row[9] ?? "", // Originally from Indent
+                qcRequirement: wData[25] || row[28] || "", // From Warehouse Col Z (index 25)
                 supplierInvoiceNo: row[10] ?? "",
                 supplierInvoiceDate: row[11] ?? "",
                 lrNo: row[12] ?? "",
@@ -360,9 +360,9 @@ export default function PurchasePage() {
                 localConveyanceDestination: wData[10] || row[20] || "", // From Warehouse Col K
                 lrDoc: wData[11] || row[21] || "", // From Warehouse Col L
                 invoiceType: row[22] ?? "",
-                invoiceDate: row[23] ?? "",
+                invoiceDate: wData[2] || row[23] || "", // From Warehouse Col C (index 2)
                 invoiceDoc: wData[12] || row[22] || "", // From Warehouse Col M
-                weightSlip: wData[13] || row[23] || "", // From Warehouse Col N
+                weightSlip: wData[13] || "", // From Warehouse Col N
                 invoiceNo: invoiceNo,
                 receivedQty: row[25] ?? "",
                 receivedItemImage: wData[18] || row[26] || "", // From Warehouse Col S
@@ -3130,37 +3130,37 @@ export default function PurchasePage() {
                           {[
                             {
                               id: "checklist-1",
-                              value: "informed",
+                              value: "If so, have you informed the purchasing and accounts department?",
                               label:
                                 "If so, have you informed the purchasing and accounts department?",
                             },
                             {
                               id: "checklist-2",
-                              value: "repairable",
+                              value: "If any problem is found during inspection, can the machine be repaired at our premises or does it have to be sent back to the seller?",
                               label:
                                 "If any problem is found during inspection, can the machine be repaired at our premises or does it have to be sent back to the seller?",
                             },
                             {
                               id: "checklist-3",
-                              value: "defects",
+                              value: "When inspecting the machine, do you notice any defects as per its external visibility?",
                               label:
                                 "When inspecting the machine, do you notice any defects as per its external visibility?",
                             },
                             {
                               id: "checklist-4",
-                              value: "quality",
+                              value: "While checking the quality of the product, did you find any defects in it?",
                               label:
                                 "While checking the quality of the product, did you find any defects in it?",
                             },
                             {
                               id: "checklist-5",
-                              value: "quantity",
+                              value: "Is the quantity in the bill and the material received quantity are same?",
                               label:
                                 "Is the quantity in the bill and the material received quantity are same?",
                             },
                             {
                               id: "checklist-6",
-                              value: "standard",
+                              value: "Do all the materials we procure match the standard quality as per our requirements?",
                               label:
                                 "Do all the materials we procure match the standard quality as per our requirements?",
                             },
@@ -3168,7 +3168,7 @@ export default function PurchasePage() {
                             // Safely check if item.value exists in checklist
                             const checklistArray = commonFormData.checklist
                               ? commonFormData.checklist
-                                .split(",")
+                                .split("|")
                                 .filter(Boolean)
                               : [];
                             const isChecked = checklistArray.includes(
@@ -3201,7 +3201,7 @@ export default function PurchasePage() {
 
                                     handleCommonFormChange(
                                       "checklist",
-                                      newValues.join(",")
+                                      newValues.join("|")
                                     );
                                   }}
                                   className="mt-1 w-4 h-4 text-violet-600 border-gray-300 rounded focus:ring-violet-500 cursor-pointer"
@@ -3221,7 +3221,7 @@ export default function PurchasePage() {
                             Selected:{" "}
                             {
                               commonFormData.checklist
-                                .split(",")
+                                .split("|")
                                 .filter(Boolean).length
                             }{" "}
                             items

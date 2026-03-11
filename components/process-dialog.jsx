@@ -649,7 +649,11 @@ export default function ProcessDialog({
 
                                 <div className="space-y-2">
                                     <Label htmlFor="transporterName" className="text-indigo-700 font-medium">
+<<<<<<< HEAD
                                         Assign Driver for Material Dispatch <span className="text-red-500 font-bold">*</span>
+=======
+                                        Transporter / Driver Name <span className="text-red-500 font-bold">*</span>
+>>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
                                     </Label>
                                     <Input
                                         id="transporterName"
@@ -668,7 +672,11 @@ export default function ProcessDialog({
 
                                 <div className="space-y-2">
                                     <Label htmlFor="warehouseRemarks" className="text-indigo-700 font-medium">
+<<<<<<< HEAD
                                         Transporter Assign
+=======
+                                        Warehouse Remarks
+>>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
                                     </Label>
                                     <Textarea
                                         id="warehouseRemarks"
@@ -775,7 +783,11 @@ export default function ProcessDialog({
 
                             <div className="space-y-2">
                                 <Label htmlFor="warehouseRemarks" className="text-indigo-700 font-medium">
+<<<<<<< HEAD
                                     Transporter Assign
+=======
+                                    Warehouse Remarks
+>>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
                                 </Label>
                                 <Textarea
                                     id="warehouseRemarks"

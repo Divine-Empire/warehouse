@@ -110,7 +110,10 @@ const pendingColumns = [
   { key: "attachment", label: "Attachment", searchable: true },
   { key: "invoiceNumber", label: "Invoice Number", searchable: true },
   { key: "invoiceUpload", label: "Invoice Upload", searchable: true },
+<<<<<<< HEAD
   { key: "invoiceCreatedDate", label: "Invoice Created Date", searchable: true },
+=======
+>>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
 ];
 
 // Column definitions for History tab (includes BN to BR and BV to CC) - Defined before component to avoid temporal dead zone
@@ -313,6 +316,7 @@ export default function WarehousePage() {
     return isNaN(d.getTime()) ? 0 : d.getTime();
   };
 
+<<<<<<< HEAD
   const formatDateToMMDDYYYY = (dateVal) => {
     if (!dateVal || dateVal === "" || dateVal === "-") return "-";
     const s = String(dateVal);
@@ -353,6 +357,8 @@ export default function WarehousePage() {
     return `${mm}/${dd}/${yyyy}`;
   };
 
+=======
+>>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
   const fetchPendingOrders = async () => {
     setLoadingPending(true);
     setError(null);
@@ -461,7 +467,10 @@ export default function WarehousePage() {
                 totalQtyHistory: row.c[68] ? row.c[68].v : "",
                 totalBillAmount: row.c[69] ? row.c[69].v : "",
                 creName: row.c[106] ? row.c[106].v : "", // Column CD (index 81) - CRE Name
+<<<<<<< HEAD
                 invoiceCreatedDate: row.c[63] ? row.c[63].v : "", // Column BL (index 63) - Invoice Created Date
+=======
+>>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
 
                 planned5: row.c[62] ? row.c[62].v : "",
                 actual5: row.c[63] ? row.c[63].v : "",
@@ -1751,8 +1760,11 @@ export default function WarehousePage() {
           return historyParsedDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
         }
         return actualValue || "";
+<<<<<<< HEAD
       case "invoiceCreatedDate":
         return formatDateToMMDDYYYY(actualValue);
+=======
+>>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
       default:
         return actualValue || "";
     }
@@ -1886,8 +1898,11 @@ export default function WarehousePage() {
           return parsedDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
         }
         return actualValue || "";
+<<<<<<< HEAD
       case "invoiceCreatedDate":
         return formatDateToMMDDYYYY(actualValue);
+=======
+>>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
       default:
         return actualValue || "";
     }
@@ -2525,7 +2540,11 @@ export default function WarehousePage() {
                         </div>
 
                         {/* Invoice & Documents */}
+<<<<<<< HEAD
                         {(order.invoiceNumber || order.invoiceUpload || order.invoiceCreatedDate) && (
+=======
+                        {(order.invoiceNumber || order.invoiceUpload) && (
+>>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
                           <div className="border-t pt-3">
                             <span className="text-gray-500 text-xs">
                               Invoice:
@@ -2536,11 +2555,14 @@ export default function WarehousePage() {
                                   {order.invoiceNumber}
                                 </p>
                               )}
+<<<<<<< HEAD
                               {order.invoiceCreatedDate && (
                                 <p className="text-xs text-slate-500 font-medium italic">
                                   Created: {formatDateToMMDDYYYY(order.invoiceCreatedDate)}
                                 </p>
                               )}
+=======
+>>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
                               {order.invoiceUpload &&
                                 order.invoiceUpload.startsWith("http") && (
                                   <a
@@ -2701,9 +2723,16 @@ export default function WarehousePage() {
                                   <div className="text-right flex-1 ml-4">
                                     {/* Use the SAME renderHistoryCellContent function as desktop */}
                                     <div className="text-sm text-gray-900 break-words">
+<<<<<<< HEAD
                                       {column.key === "invoiceCreatedDate"
                                         ? formatDateToMMDDYYYY(order[column.key])
                                         : renderHistoryCellContent(order, column.key)}
+=======
+                                      {renderHistoryCellContent(
+                                        order,
+                                        column.key
+                                      )}
+>>>>>>> 5a034d3ee28a4965b53d0c163d1089d9d0509c79
                                     </div>
                                   </div>
                                 </div>
