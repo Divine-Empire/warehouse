@@ -152,6 +152,42 @@ export default function MisPage() {
     return filtered;
   }, [inventoryData, searchTerm, itemNameFilter]);
 
+  const getDisplayableImageUrl = (url) => {
+    if (!url) return null;
+
+    try {
+      const ucExportMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (ucExportMatch && ucExportMatch[1]) {
+        return `https://drive.google.com/thumbnail?id=${ucExportMatch[1]}&sz=w150`;
+      }
+
+      const directMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (directMatch && directMatch[1]) {
+        return `https://drive.google.com/thumbnail?id=${directMatch[1]}&sz=w150`;
+      }
+
+      const openMatch = url.match(/open\?id=([a-zA-Z0-9_-]+)/);
+      if (openMatch && openMatch[1]) {
+        return `https://drive.google.com/thumbnail?id=${openMatch[1]}&sz=w150`;
+      }
+
+      if (url.includes("thumbnail?id=")) {
+        return url;
+      }
+
+      const anyIdMatch = url.match(/([a-zA-Z0-9_-]{25,})/);
+      if (anyIdMatch && anyIdMatch[1]) {
+        return `https://drive.google.com/thumbnail?id=${anyIdMatch[1]}&sz=w150`;
+      }
+
+      const cacheBuster = Date.now();
+      return url.includes("?") ? `${url}&cb=${cacheBuster}` : `${url}?cb=${cacheBuster}`;
+    } catch (e) {
+      console.error("Error processing image URL:", url, e);
+      return url; // Return original URL as fallback
+    }
+  };
+
   const renderCellContent = (item, columnKey) => {
     const value = item[columnKey];
 
@@ -162,9 +198,17 @@ export default function MisPage() {
             href={value}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+            className="block w-16 h-16 overflow-hidden rounded border border-gray-200"
           >
-            View Image
+            <img 
+              src={getDisplayableImageUrl(value)} 
+              alt="Item" 
+              loading="lazy"
+              className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+              onError={(e) => {
+                e.target.onerror = null;
+              }}
+            />
           </a>
         ) : (
           <span className="inline-block px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded">
@@ -232,19 +276,19 @@ export default function MisPage() {
           <div className="">
 
 
-          <select
-            value={itemNameFilter}
-            onChange={(e) => setItemNameFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white w-full"
+            <select
+              value={itemNameFilter}
+              onChange={(e) => setItemNameFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white w-full"
             >
-            <option value="all">All Groups</option>
-            {getUniqueItemNames().map((groupName) => (
-              <option key={groupName} value={groupName}>
-                {groupName}
-              </option>
-            ))}
-          </select>
-            </div>
+              <option value="all">All Groups</option>
+              {getUniqueItemNames().map((groupName) => (
+                <option key={groupName} value={groupName}>
+                  {groupName}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div className="flex gap-4 items-center">
             <div className="relative flex-1 max-w-md">

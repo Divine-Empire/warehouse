@@ -91,7 +91,10 @@ export default function PurchasePage() {
     gst: "",
     totalPkgFwd: "",
     paymentTerm: "",
-
+    warrantyClaim: "",
+    duration: "",
+    warrantyExpiry: "",
+    productExpiry: "",
   });
 
   const columns = [
@@ -160,6 +163,17 @@ export default function PurchasePage() {
     setVisibleColumns(
       columns.reduce((acc, col) => ({ ...acc, [col.key]: false }), {})
     );
+  };
+
+  const getUniqueVendors = () => {
+    const baseData =
+      activeTab === "pending"
+        ? purchaseData.filter((item) => item.isPending)
+        : historyData;
+    const vendors = [
+      ...new Set(baseData.map((item) => item.vendorName).filter(Boolean)),
+    ];
+    return vendors.sort();
   };
 
   // Add this helper function before your component or inside it
@@ -347,7 +361,7 @@ export default function PurchasePage() {
                 unit: row[7] ?? "",
                 rate: row[8] ?? "",
                 qty: row[25] ?? "",
-                qcRequirement: wData[25] || row[28] || "", // From Warehouse Col Z (index 25)
+                qcRequirement: wData[23] || row[28] || "", // From Warehouse Col X (index 23)
                 supplierInvoiceNo: row[10] ?? "",
                 supplierInvoiceDate: row[11] ?? "",
                 lrNo: row[12] ?? "",
@@ -367,7 +381,7 @@ export default function PurchasePage() {
                 receivedQty: row[25] ?? "",
                 receivedItemImage: wData[18] || row[26] || "", // From Warehouse Col S
                 srn: row[27] ?? "",
-                qcRequired: wData[25] || row[28] || "", // From Warehouse Col Z
+                qcRequired: wData[23] || row[28] || "", // From Warehouse Col X (index 23)
                 billAttachment: wData[19] || row[29] || "", // From Warehouse Col T
                 hydraAmt: wData[14] || row[30] || "", // From Warehouse Col O
                 labourAmt: wData[15] || row[31] || "", // From Warehouse Col P
@@ -376,8 +390,12 @@ export default function PurchasePage() {
                 expDate: wData[17] || row[34] || "", // From Warehouse Col R
                 pkgFwd: wData[20] || row[99] || "", // From Warehouse Col U
                 gstPkgFwd: wData[21] || row[100] || "", // From Warehouse Col V
-                totalPkgFwd: wData[22] || row[102] || "", // From Warehouse Col W
-                paymentTerm: wData[23] || row[103] || "", // From Warehouse Col X
+                totalPkgFwd: wData[28] || row[102] || "", // From Warehouse Col AC
+                paymentTerm: wData[29] || row[103] || "", // From Warehouse Col AD
+                warrantyClaim: wData[24] || row[104] || "", // From Warehouse Col Y
+                duration: wData[25] || row[105] || "", // From Warehouse Col Z
+                warrantyExpiry: wData[26] || row[106] || "", // From Warehouse Col AA
+                productExpiry: wData[27] || row[108] || "", // From Warehouse Col AB
 
               });
             }
@@ -920,11 +938,6 @@ export default function PurchasePage() {
     );
   }
 
-  // Get unique vendors
-  const getUniqueVendors = () => {
-    const vendors = [...new Set(purchaseData.map((item) => item.vendorName))];
-    return vendors.filter((v) => v).sort();
-  };
 
   // Filter data by vendor
   const handleVendorSelect = (vendor) => {
@@ -1126,7 +1139,10 @@ export default function PurchasePage() {
         gst: commonFormData.gst,
         totalPkgFwd: commonFormData.totalPkgFwd,
         paymentTerm: commonFormData.paymentTerm,
-
+        warrantyClaim: commonFormData.warrantyClaim,
+        duration: commonFormData.duration,
+        warrantyExpiry: commonFormData.warrantyExpiry,
+        productExpiry: commonFormData.productExpiry,
       };
     });
 
@@ -1140,7 +1156,6 @@ export default function PurchasePage() {
         // Note: Column C is at index 2 (Lift No)
         const today = new Date();
         const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        rowDataAccounts[15] = data.checklist; // Col P - Checklist
         rowDataAccounts[20] = formattedDate; // Col U - Actual1/Received Qty
         rowDataAccounts[22] = data.invoiceType; // Col W
         rowDataAccounts[23] = data.invoiceDate; // Col X
@@ -1159,6 +1174,10 @@ export default function PurchasePage() {
         rowDataAccounts[100] = data.gst; // Col CW
         rowDataAccounts[102] = data.totalPkgFwd; // Col CY
         rowDataAccounts[103] = data.paymentTerm; // Col CZ
+        rowDataAccounts[104] = data.warrantyClaim; // Col DA
+        rowDataAccounts[105] = data.duration; // Col DB
+        rowDataAccounts[106] = data.warrantyExpiry; // Col DC
+        rowDataAccounts[107] = data.productExpiry; // Col DE
 
 
         const paramsAccounts = new URLSearchParams();
@@ -1205,10 +1224,14 @@ export default function PurchasePage() {
         data.billAttachment,       // T: Bill Attachment
         data.pkgFwd,               // U: Pkg/Fwd
         data.gst,                  // V: GST%
-        data.totalPkgFwd,          // W: Total Pkg/Fwd
-        data.paymentTerm,          // X: Payment Term
-        data.qty,                  // Y: Qty (Input)
-        data.qcRequirement,        // Z: QC Requirement
+        data.qty,                  // W: Qty (Input)
+        data.qcRequirement,        // X: QC Requirement
+        data.warrantyClaim,        // Y: Warranty Claim
+        data.duration,             // Z: Duration
+        data.warrantyExpiry,       // AA: Warranty Expiry
+        data.productExpiry,        // AB: Product Expiry
+        data.totalPkgFwd,          // AC: Total Pkg/Fwd
+        data.paymentTerm,          // AD: Payment Term
       ]);
 
       const paramsWarehouse = new URLSearchParams();
@@ -1260,7 +1283,10 @@ export default function PurchasePage() {
           gst: "",
           totalPkgFwd: "",
           paymentTerm: "",
-
+          warrantyClaim: "",
+          duration: "",
+          warrantyExpiry: "",
+          productExpiry: "",
         });
         fetchPurchaseData();
       } else {
@@ -1842,6 +1868,18 @@ export default function PurchasePage() {
                           <th className="border p-2 min-w-[180px] sticky top-0 bg-gray-50">
                             Payment Term
                           </th>
+                          <th className="border p-2 min-w-[150px] sticky top-0 bg-gray-50">
+                            Warranty Claim
+                          </th>
+                          <th className="border p-2 min-w-[150px] sticky top-0 bg-gray-50">
+                            Duration
+                          </th>
+                          <th className="border p-2 min-w-[180px] sticky top-0 bg-gray-50">
+                            Warranty Expiry
+                          </th>
+                          <th className="border p-2 min-w-[180px] sticky top-0 bg-gray-50">
+                            Product Expiry
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2262,6 +2300,77 @@ export default function PurchasePage() {
                               <td className="border p-2">{rowData.gstPkgFwd || "-"}</td>
                               <td className="border p-2">{rowData.totalPkgFwd || "-"}</td>
                               <td className="border p-2">{rowData.paymentTerm || "-"}</td>
+                              <td className="border p-2">
+                                {isEditing ? (
+                                  <select
+                                    value={rowData.warrantyClaim}
+                                    onChange={(e) =>
+                                      setEditFormData({
+                                        ...editFormData,
+                                        warrantyClaim: e.target.value,
+                                      })
+                                    }
+                                    className="w-full p-1 border rounded"
+                                  >
+                                    <option value="">Select</option>
+                                    <option value="Yes">Yes</option>
+                                    <option value="No">No</option>
+                                  </select>
+                                ) : (
+                                  rowData.warrantyClaim || "-"
+                                )}
+                              </td>
+                              <td className="border p-2">
+                                {isEditing ? (
+                                  <input
+                                    type="text"
+                                    value={rowData.duration}
+                                    onChange={(e) =>
+                                      setEditFormData({
+                                        ...editFormData,
+                                        duration: e.target.value,
+                                      })
+                                    }
+                                    className="w-full p-1 border rounded"
+                                  />
+                                ) : (
+                                  rowData.duration || "-"
+                                )}
+                              </td>
+                              <td className="border p-2">
+                                {isEditing ? (
+                                  <input
+                                    type="date"
+                                    value={rowData.warrantyExpiry}
+                                    onChange={(e) =>
+                                      setEditFormData({
+                                        ...editFormData,
+                                        warrantyExpiry: e.target.value,
+                                      })
+                                    }
+                                    className="w-full p-1 border rounded"
+                                  />
+                                ) : (
+                                  formatDateForDisplay(rowData.warrantyExpiry) || "-"
+                                )}
+                              </td>
+                              <td className="border p-2">
+                                {isEditing ? (
+                                  <input
+                                    type="date"
+                                    value={rowData.productExpiry}
+                                    onChange={(e) =>
+                                      setEditFormData({
+                                        ...editFormData,
+                                        productExpiry: e.target.value,
+                                      })
+                                    }
+                                    className="w-full p-1 border rounded"
+                                  />
+                                ) : (
+                                  formatDateForDisplay(rowData.productExpiry) || "-"
+                                )}
+                              </td>
                             </tr>
                           );
                         })}
@@ -2508,6 +2617,109 @@ export default function PurchasePage() {
                                 )}
                               </div>
                             </div>
+
+                            {/* Warranty Information */}
+                            <div className="border-t pt-3">
+                              <span className="text-gray-500 text-xs font-medium mb-2 block">
+                                Warranty Information
+                              </span>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <span className="text-gray-500 text-xs">
+                                    Warranty Claim:
+                                  </span>
+                                  {isEditing ? (
+                                    <select
+                                      value={rowData.warrantyClaim}
+                                      onChange={(e) =>
+                                        setEditFormData({
+                                          ...editFormData,
+                                          warrantyClaim: e.target.value,
+                                        })
+                                      }
+                                      className="w-full p-2 border rounded mt-1 text-sm"
+                                    >
+                                      <option value="">Select</option>
+                                      <option value="Yes">Yes</option>
+                                      <option value="No">No</option>
+                                    </select>
+                                  ) : (
+                                    <p className="font-medium">
+                                      {rowData.warrantyClaim || "-"}
+                                    </p>
+                                  )}
+                                </div>
+                                <div>
+                                  <span className="text-gray-500 text-xs">
+                                    Duration:
+                                  </span>
+                                  {isEditing ? (
+                                    <input
+                                      type="text"
+                                      value={rowData.duration}
+                                      onChange={(e) =>
+                                        setEditFormData({
+                                          ...editFormData,
+                                          duration: e.target.value,
+                                        })
+                                      }
+                                      className="w-full p-2 border rounded mt-1 text-sm"
+                                    />
+                                  ) : (
+                                    <p className="font-medium">
+                                      {rowData.duration || "-"}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-3 mt-3">
+                                <div>
+                                  <span className="text-gray-500 text-xs">
+                                    Warranty Expiry:
+                                  </span>
+                                  {isEditing ? (
+                                    <input
+                                      type="date"
+                                      value={rowData.warrantyExpiry}
+                                      onChange={(e) =>
+                                        setEditFormData({
+                                          ...editFormData,
+                                          warrantyExpiry: e.target.value,
+                                        })
+                                      }
+                                      className="w-full p-2 border rounded mt-1 text-sm"
+                                    />
+                                  ) : (
+                                    <p className="font-medium">
+                                      {formatDateForDisplay(rowData.warrantyExpiry) || "-"}
+                                    </p>
+                                  )}
+                                </div>
+                                <div>
+                                  <span className="text-gray-500 text-xs">
+                                    Product Expiry:
+                                  </span>
+                                  {isEditing ? (
+                                    <input
+                                      type="date"
+                                      value={rowData.productExpiry}
+                                      onChange={(e) =>
+                                        setEditFormData({
+                                          ...editFormData,
+                                          productExpiry: e.target.value,
+                                        })
+                                      }
+                                      className="w-full p-2 border rounded mt-1 text-sm"
+                                    />
+                                  ) : (
+                                    <p className="font-medium">
+                                      {formatDateForDisplay(rowData.productExpiry) || "-"}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-3 mt-3">
                               <div>
                                 <span className="text-gray-500 text-xs">
@@ -3407,6 +3619,70 @@ export default function PurchasePage() {
                         />
                       </div>
 
+                      {/* Warranty Claim */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Warranty Claim
+                        </label>
+                        <select
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                          value={commonFormData.warrantyClaim}
+                          onChange={(e) =>
+                            handleCommonFormChange("warrantyClaim", e.target.value)
+                          }
+                        >
+                          <option value="">Select</option>
+                          <option value="Yes">Yes</option>
+                          <option value="No">No</option>
+                        </select>
+                      </div>
+
+                      {/* Duration */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Duration
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                          value={commonFormData.duration}
+                          onChange={(e) =>
+                            handleCommonFormChange("duration", e.target.value)
+                          }
+                          placeholder="Enter duration"
+                        />
+                      </div>
+
+                      {/* Warranty Expiry */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Warranty Expiry
+                        </label>
+                        <input
+                          type="date"
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                          value={commonFormData.warrantyExpiry}
+                          onChange={(e) =>
+                            handleCommonFormChange("warrantyExpiry", e.target.value)
+                          }
+                        />
+                      </div>
+
+                      {/* Product Expiry */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Product Expiry
+                        </label>
+                        <input
+                          type="date"
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                          value={commonFormData.productExpiry}
+                          onChange={(e) =>
+                            handleCommonFormChange("productExpiry", e.target.value)
+                          }
+                        />
+                      </div>
+
                       {/* Auto Charge */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -3515,11 +3791,6 @@ export default function PurchasePage() {
                           placeholder="Enter GST%"
                         />
                       </div>
-
-
-
-
-
                     </div>
                   </div>
 
