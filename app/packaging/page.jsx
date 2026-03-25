@@ -50,14 +50,14 @@ export default function PackagingPage() {
             if (data && data.table && data.table.rows) {
                 const ordersMap = new Map();
 
-                data.table.rows.slice(1).forEach((row, index) => {
+                data.table.rows.slice(6).forEach((row, index) => {
                     if (!row.c || !row.c[105] || !row.c[105].v) return;
 
                     const dSrNumber = String(row.c[105].v).trim();
                     if (!dSrNumber) return;
 
                     const order = {
-                        rowIndex: index + 2,
+                        rowIndex: index + 7,
                         timeStamp: row.c[0]?.v || "",
                         orderNo: row.c[1]?.v || "",
                         quotationNo: row.c[2]?.v || "",
@@ -119,6 +119,7 @@ export default function PackagingPage() {
 
                         bsColumn: row.c[70]?.v || null,
                         blColumn: row.c[63]?.v || null, // Column BL (index 63)
+                        bwColumn: row.c[74]?.v || null, // Column BW (index 74)
                         btColumn: row.c[71]?.v || null,
                         byColumn: row.c[76]?.v || null,
                         bvColumn: row.c[73]?.v || null,
@@ -325,14 +326,14 @@ export default function PackagingPage() {
         return result
     }, [orders, searchTerm, user])
 
-    // Pending: BY is NOT null AND BV is null
+    // Pending: BY is NOT null AND (BV is null OR BW is null)
     const pendingOrders = useMemo(() =>
-        filteredOrders.filter(order => !!order.byColumn && !order.bvColumn),
+        filteredOrders.filter(order => !!order.byColumn && (!order.bvColumn || !order.bwColumn)),
         [filteredOrders])
 
-    // History: BY is NOT null AND BV is NOT null
+    // History: BY is NOT null AND BV is NOT null AND BW is NOT null
     const historyOrders = useMemo(() =>
-        filteredOrders.filter(order => !!order.byColumn && !!order.bvColumn),
+        filteredOrders.filter(order => !!order.byColumn && !!order.bvColumn && !!order.bwColumn),
         [filteredOrders])
 
     const formatDateToMMDDYYYY = (dateVal) => {
@@ -519,8 +520,8 @@ export default function PackagingPage() {
                                         </>
                                     )}
                                     <TableCell className="border-b border-slate-100">
-                                        <Badge variant={order.bvColumn ? "success" : "secondary"} className="font-semibold shadow-sm text-[10px] h-5">
-                                            {order.bvColumn ? "Packaged" : "Ready for Packing"}
+                                        <Badge variant={(order.bvColumn && order.bwColumn) ? "success" : "secondary"} className="font-semibold shadow-sm text-[10px] h-5">
+                                            {(order.bvColumn && order.bwColumn) ? "Packaged" : "Ready for Packing"}
                                         </Badge>
                                     </TableCell>
                                 </TableRow>
@@ -542,7 +543,6 @@ export default function PackagingPage() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight text-slate-900">Packaging</h1>
-                            <p className="text-muted-foreground font-medium">Record packaging details and upload documentation.</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">

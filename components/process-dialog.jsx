@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -45,6 +45,7 @@ export default function ProcessDialog({
     const [notOkReason, setNotOkReason] = useState("");
     const [driverCharges, setDriverCharges] = useState("");
     const [itemQuantities, setItemQuantities] = useState({});
+    const [drivers, setDrivers] = useState([]); // Dynamic drivers from CRE sheet
 
     // Upload progress state
     const [isUploading, setIsUploading] = useState(false);
@@ -107,6 +108,25 @@ export default function ProcessDialog({
             setItemQuantities(initialQuantities);
         }
     }, [selectedOrder]);
+
+    // Fetch drivers from CRE sheet (Col I, index 8)
+    const fetchDrivers = useCallback(async () => {
+        try {
+            const response = await fetch(`${APPS_SCRIPT_URL}?sheet=CRE&action=fetch`);
+            const result = await response.json();
+            if (result.success && result.data) {
+                // Column I is index 8. Starting from row 1 (row 0 is header).
+                const driverNames = result.data.slice(1).map(row => row[8]).filter(Boolean);
+                setDrivers([...new Set(driverNames)].sort());
+            }
+        } catch (error) {
+            console.error("Error fetching drivers:", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchDrivers();
+    }, [fetchDrivers]);
 
     const convertTimestampToDDMMYYYY = (timestampString) => {
         if (!timestampString) return "";
@@ -660,9 +680,9 @@ export default function ProcessDialog({
                                         placeholder="Select or enter transporter name"
                                     />
                                     <datalist id="transporterOptions">
-                                        <option value="Roshan Dewangan" />
-                                        <option value="Mahesh Sahu" />
-                                        <option value="Other" />
+                                        {drivers.map((driver, idx) => (
+                                            <option key={idx} value={driver} />
+                                        ))}
                                     </datalist>
                                 </div>
 

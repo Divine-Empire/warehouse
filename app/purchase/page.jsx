@@ -1338,9 +1338,6 @@ export default function PurchasePage() {
               <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
                 Purchase Management
               </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Track and manage all purchase orders and transactions
-              </p>
             </div>
             <div className="flex gap-3">
               <button

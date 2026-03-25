@@ -581,7 +581,6 @@ export default function TransportingPage() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight text-slate-900">Transporting</h1>
-                            <p className="text-muted-foreground font-medium">Monitor dispatches and update transportation details.</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">

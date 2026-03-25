@@ -40,22 +40,14 @@ const SHEET_NAME = "DISPATCH-DELIVERY";
 const WAREHOUSE_SHEET_NAME = "Warehouse";
 
 const sharedColumns = [
-    { key: "orderNo", label: "Order No." },
-    { key: "quotationNo", label: "Quotation No." },
     { key: "companyName", label: "Company Name" },
     { key: "invoiceNumber", label: "Invoice Number" },
     { key: "invoiceUpload", label: "Invoice Upload" },
-    { key: "invoiceCreatedDate", label: "Invoice Created Date" },
-    { key: "transporterName", label: "Transporter Name" },
-    { key: "transporterContact", label: "Transporter Contact" },
-    { key: "biltyNumber", label: "Bilty/Docket No." },
-    { key: "totalCharges", label: "Driver Charges" },
-    { key: "warehouseRemarks", label: "Warehouse Remarks" },
-    { key: "attachment", label: "Attachment" },
-    { key: "beforePhoto", label: "Before Photo Upload" },
-    { key: "afterPhoto", label: "After Photo Upload" },
-    { key: "dispatchStatus", label: "Dispatch Confirmation" },
-    { key: "notOkReason", label: "Reason for not okay" },
+    { key: "invoiceCreatedDate", label: "Invoice Date" },
+    { key: "transportMode", label: "Transport Mode" },
+    { key: "shippingAddress", label: "Shipping Address" },
+    { key: "transporterName", label: "Assigned Driver for Dispatch" },
+    { key: "warehouseRemarks", label: "Transporter Assigned" },
 ];
 
 const pendingColumns = [
@@ -126,7 +118,7 @@ export default function BiltyUploadPage() {
 
             const ordersMap = new Map();
 
-            data.table.rows.slice(1).forEach((row, index) => {
+            data.table.rows.slice(6).forEach((row, index) => {
                 if (!row.c) return;
 
                 if (!row.c[105] || !row.c[105].v) return;
@@ -139,12 +131,14 @@ export default function BiltyUploadPage() {
                 const orderNo = row.c[1] ? String(row.c[1].v).trim() : "";
                 const whInfo = whDataMap.get(orderNo) || {};
                 const order = {
-                    rowIndex: index + 2,
+                    rowIndex: index + 7,
                     id: dSrNumber,
                     dSrNumber: dSrNumber,
                     orderNo,
                     quotationNo: row.c[2] ? row.c[2].v : "",
                     companyName: row.c[3] ? row.c[3].v : "",
+                    shippingAddress: row.c[7] ? row.c[7].v : "",
+                    transportMode: row.c[11] ? row.c[11].v : "",
                     transporterName: whInfo.transporterName || (row.c[6] ? row.c[6].v : ""),
                     transporterContact: whInfo.transporterContact || "",
                     biltyNumber: whInfo.biltyNumber || "",
@@ -280,41 +274,45 @@ export default function BiltyUploadPage() {
             rowData[80] = warehouseRemarks || ""; // Column CC - Warehouse Remarks
             formData.append("rowData", JSON.stringify(rowData));
 
-            const response = await fetch(APPS_SCRIPT_URL, {
-                method: "POST",
-                mode: "cors",
-                body: formData,
-            });
-
-            if (!response.ok) throw new Error("Main sheet update failed");
-
             // 2. Update Warehouse Sheet
-            // BX (index 5), BZ (index 7), CA (index 8), CB (index 9), CC (index 10), EN (index 143)
             const formData2 = new FormData();
             formData2.append("sheetName", "Warehouse");
             formData2.append("action", "updateByOrderNo");
             formData2.append("orderNo", order.orderNo);
 
             const warehouseRowData = new Array(145).fill("");
-            warehouseRowData[5] = fileUrls.biltyUrl || ""; // Column BX (in Warehouse sheet)
-            warehouseRowData[7] = transporterContact || ""; // Column BZ
-            warehouseRowData[8] = biltyNumber || ""; // Column CA
-            warehouseRowData[9] = totalCharges || ""; // Column CB
-            warehouseRowData[10] = warehouseRemarks || ""; // Column CC
-            warehouseRowData[143] = driverCharges; // Column EN
-
-            // Ensure D-Sr Number is also there if missing
+            warehouseRowData[5] = fileUrls.biltyUrl || "";
+            warehouseRowData[7] = transporterContact || "";
+            warehouseRowData[8] = biltyNumber || "";
+            warehouseRowData[9] = totalCharges || "";
+            warehouseRowData[10] = warehouseRemarks || "";
+            warehouseRowData[143] = driverCharges;
             warehouseRowData[105] = order.dSrNumber;
-
             formData2.append("rowData", JSON.stringify(warehouseRowData));
 
-            const response2 = await fetch(APPS_SCRIPT_URL, {
-                method: "POST",
-                mode: "cors",
-                body: formData2,
-            });
+            // Run both updates in parallel
+            const [response, response2] = await Promise.all([
+                fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "cors",
+                    body: formData,
+                }),
+                fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "cors",
+                    body: formData2,
+                })
+            ]);
 
+            if (!response.ok) throw new Error("Main sheet update failed");
             if (!response2.ok) throw new Error("Warehouse sheet update failed");
+
+            // Verify success for both
+            const res1 = await response.json();
+            const res2 = await response2.json();
+
+            if (!res1.success) throw new Error(`Main sheet: ${res1.error}`);
+            if (!res2.success) throw new Error(`Warehouse sheet: ${res2.error}`);
 
             setIsDialogOpen(false);
             await fetchOrders();
@@ -346,7 +344,6 @@ export default function BiltyUploadPage() {
                             <FileText className="h-8 w-8 text-blue-600" />
                             Bilty Upload
                         </h1>
-                        <p className="text-slate-500 mt-1">Manage Bilty/Docket uploads and Driver charges</p>
                     </div>
                     <Button
                         onClick={fetchOrders}
@@ -383,149 +380,165 @@ export default function BiltyUploadPage() {
                         </TabsTrigger>
                     </TabsList>
 
-                    <Card className="border-slate-200 shadow-sm overflow-hidden">
-                        <CardHeader className="bg-slate-50 border-b border-slate-200">
-                            <CardTitle className="text-xl">
-                                {activeTab === "pending" ? "Pending Uploads" : "Upload History"}
-                            </CardTitle>
-                            <CardDescription>
-                                {activeTab === "pending"
-                                    ? "Orders waiting for Bilty/Docket documentation"
-                                    : "Previously uploaded Bilty documentation"}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
-                                <Table>
-                                    <TableHeader className="sticky top-0 z-10">
-                                        <TableRow className="bg-slate-50 hover:bg-slate-50">
-                                            {(activeTab === "pending" ? pendingColumns : historyColumns).map((col) => (
-                                                <TableHead key={col.key} className="font-bold text-slate-700 whitespace-nowrap">
-                                                    {col.label}
-                                                </TableHead>
-                                            ))}
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {loading ? (
-                                            <TableRow>
-                                                <TableCell colSpan={activeTab === "pending" ? pendingColumns.length : historyColumns.length} className="h-32 text-center">
-                                                    <div className="flex flex-col items-center gap-2">
-                                                        <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
-                                                        <span className="text-slate-500 font-medium">Fetching orders...</span>
-                                                    </div>
-                                                </TableCell>
+                    <TabsContent value="pending" className="m-0">
+                        <Card className="border-slate-200 shadow-sm overflow-hidden bg-white">
+                            <CardHeader className="bg-blue-50/30 border-b border-blue-100/50">
+                                <CardTitle className="text-lg font-bold text-slate-800">Pending Uploads</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                <div className="relative overflow-x-auto max-h-[70vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                                    <Table className="relative border-separate border-spacing-0">
+                                        <TableHeader className="sticky top-0 z-20">
+                                            <TableRow className="bg-blue-50 hover:bg-blue-50 border-b border-blue-100">
+                                                {pendingColumns.map((col) => (
+                                                    <TableHead key={col.key} className="font-bold text-blue-900 h-12 whitespace-nowrap border-r border-blue-100/50 last:border-r-0 sticky top-0 bg-blue-50 z-30 shadow-sm">
+                                                        {col.label}
+                                                    </TableHead>
+                                                ))}
                                             </TableRow>
-                                        ) : filteredOrders.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell colSpan={activeTab === "pending" ? pendingColumns.length : historyColumns.length} className="h-32 text-center text-slate-500 font-medium">
-                                                    No orders found
-                                                </TableCell>
-                                            </TableRow>
-                                        ) : (
-                                            filteredOrders.map((order) => (
-                                                <TableRow key={order.dSrNumber} className="hover:bg-slate-50 transition-colors">
-                                                    <TableCell>
-                                                        {activeTab === "pending" ? (
+                                        </TableHeader>
+                                        <TableBody>
+                                            {loading ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={pendingColumns.length} className="h-32 text-center">
+                                                        <div className="flex flex-col items-center gap-2">
+                                                            <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+                                                            <span className="text-slate-500 font-medium">Fetching orders...</span>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : filteredOrders.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={pendingColumns.length} className="h-32 text-center text-slate-500 font-medium">
+                                                        No orders found
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                filteredOrders.map((order) => (
+                                                    <TableRow key={order.dSrNumber} className="hover:bg-blue-50/30 transition-colors border-b border-slate-100">
+                                                        <TableCell className="border-r border-slate-100">
                                                             <Button
                                                                 size="sm"
                                                                 onClick={() => {
                                                                     setSelectedOrder(order);
                                                                     setIsDialogOpen(true);
                                                                 }}
-                                                                className="bg-blue-600 hover:bg-blue-700 font-semibold"
+                                                                className="bg-blue-600 hover:bg-blue-700 font-semibold h-8 rounded-lg shadow-sm"
                                                             >
                                                                 Upload Bilty
                                                             </Button>
-                                                        ) : (
-                                                            <div className="flex items-center gap-2 text-green-600 font-bold bg-green-50 px-3 py-1 rounded-full w-fit">
-                                                                <CheckCircle2 className="h-4 w-4" />
-                                                                Uploaded
-                                                            </div>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="font-bold text-slate-900">{order.orderNo}</TableCell>
-                                                    <TableCell className="text-slate-600 font-medium">{order.quotationNo}</TableCell>
-                                                    <TableCell className="font-medium text-slate-800">{order.companyName}</TableCell>
-                                                    <TableCell className="font-medium text-slate-600">{order.invoiceNumber || "-"}</TableCell>
-                                                    <TableCell>
-                                                        {order.invoiceUpload ? (
-                                                            <a href={order.invoiceUpload} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-2 py-1 rounded text-[10px] font-bold border border-green-100">
-                                                                <FileText className="h-2.5 w-2.5" /> View Invoice
-                                                            </a>
-                                                        ) : <span className="text-slate-300">-</span>}
-                                                    </TableCell>
-                                                    <TableCell className="text-slate-600 font-medium">{formatDateToMMDDYYYY(order.invoiceCreatedDate)}</TableCell>
-                                                    <TableCell className="text-slate-600">{order.transporterName}</TableCell>
-                                                    <TableCell className="text-slate-600">{order.transporterContact || "-"}</TableCell>
-                                                    <TableCell className="font-bold text-slate-900">{order.biltyNumber || "-"}</TableCell>
-                                                    <TableCell className="font-bold text-slate-900">{order.totalCharges ? `₹${order.totalCharges}` : "-"}</TableCell>
-                                                    <TableCell className="text-slate-600 max-w-[200px] truncate" title={order.warehouseRemarks}>
-                                                        {order.warehouseRemarks || <span className="text-slate-400 italic">No remarks</span>}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {order.attachment ? (
-                                                            <a href={order.attachment} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2 py-1 rounded text-[10px] font-bold border border-blue-100">
-                                                                <FileText className="h-2.5 w-2.5" /> View
-                                                            </a>
-                                                        ) : <span className="text-slate-300">-</span>}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {order.beforePhoto ? (
-                                                            <a href={order.beforePhoto} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-[10px] font-bold border border-indigo-100">
-                                                                <CloudUpload className="h-2.5 w-2.5" /> Before
-                                                            </a>
-                                                        ) : <span className="text-slate-300">-</span>}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {order.afterPhoto ? (
-                                                            <a href={order.afterPhoto} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-[10px] font-bold border border-indigo-100">
-                                                                <CloudUpload className="h-2.5 w-2.5" /> After
-                                                            </a>
-                                                        ) : <span className="text-slate-300">-</span>}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className={`text-[10px] font-bold px-2 py-1 rounded w-fit border ${order.dispatchStatus === "okay"
-                                                            ? "bg-green-50 text-green-700 border-green-100"
-                                                            : "bg-red-50 text-red-700 border-red-100"
-                                                            }`}>
-                                                            {order.dispatchStatus === "okay" ? "Okay" : "Not Okay"}
+                                                        </TableCell>
+                                                        <TableCell className="font-semibold text-slate-900 border-r border-slate-100">{order.companyName}</TableCell>
+                                                        <TableCell className="text-slate-600 font-medium border-r border-slate-100">{order.invoiceNumber || "-"}</TableCell>
+                                                        <TableCell className="border-r border-slate-100">
+                                                            {order.invoiceUpload ? (
+                                                                <a href={order.invoiceUpload} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-2 py-1 rounded text-[10px] font-bold border border-green-100 transition-colors hover:bg-green-100">
+                                                                    <FileText className="h-2.5 w-2.5" /> View
+                                                                </a>
+                                                            ) : <span className="text-slate-300">-</span>}
+                                                        </TableCell>
+                                                        <TableCell className="text-slate-600 font-medium border-r border-slate-100">{formatDateToMMDDYYYY(order.invoiceCreatedDate)}</TableCell>
+                                                        <TableCell className="text-slate-600 border-r border-slate-100">{order.transportMode || "-"}</TableCell>
+                                                        <TableCell className="text-slate-600 max-w-[200px] truncate border-r border-slate-100" title={order.shippingAddress}>{order.shippingAddress || "-"}</TableCell>
+                                                        <TableCell className="text-slate-800 font-medium border-r border-slate-100">{order.transporterName || "-"}</TableCell>
+                                                        <TableCell className="text-slate-600 border-r border-slate-100">
+                                                            {order.warehouseRemarks || <span className="text-slate-400 italic">No remarks</span>}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="history" className="m-0">
+                        <Card className="border-slate-200 shadow-sm overflow-hidden bg-white">
+                            <CardHeader className="bg-blue-50/30 border-b border-blue-100/50">
+                                <CardTitle className="text-lg font-bold text-slate-800">Upload History</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                <div className="relative overflow-x-auto max-h-[70vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                                    <Table className="relative border-separate border-spacing-0">
+                                        <TableHeader className="sticky top-0 z-20">
+                                            <TableRow className="bg-blue-50 hover:bg-blue-50 border-b border-blue-100">
+                                                {historyColumns.map((col) => (
+                                                    <TableHead key={col.key} className="font-bold text-blue-900 h-12 whitespace-nowrap border-r border-blue-100/50 last:border-r-0 sticky top-0 bg-blue-50 z-30 shadow-sm">
+                                                        {col.label}
+                                                    </TableHead>
+                                                ))}
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {loading ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={historyColumns.length} className="h-32 text-center">
+                                                        <div className="flex flex-col items-center gap-2">
+                                                            <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+                                                            <span className="text-slate-500 font-medium">Fetching orders...</span>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-slate-600 max-w-[150px] truncate" title={order.notOkReason}>
-                                                        {order.notOkReason || "-"}
-                                                    </TableCell>
-
-                                                    {activeTab === "history" && (
-                                                        <>
-                                                            <TableCell>
-                                                                {order.biltyUpload ? (
-                                                                    <a
-                                                                        href={order.biltyUpload}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-bold bg-blue-50 px-2.5 py-1 rounded transition-colors w-fit"
-                                                                    >
-                                                                        <ExternalLink className="h-3.5 w-3.5" />
-                                                                        View Bilty
-                                                                    </a>
-                                                                ) : (
-                                                                    <span className="text-slate-400 text-sm flex items-center gap-1.5">
-                                                                        <AlertCircle className="h-3.5 w-3.5" />
-                                                                        Missing
-                                                                    </span>
-                                                                )}
-                                                            </TableCell>
-                                                        </>
-                                                    )}
                                                 </TableRow>
-                                            ))
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </CardContent>
-                    </Card>
+                                            ) : filteredOrders.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={historyColumns.length} className="h-32 text-center text-slate-500 font-medium">
+                                                        No orders found
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                filteredOrders.map((order) => (
+                                                    <TableRow key={order.dSrNumber} className="hover:bg-blue-50/30 transition-colors border-b border-slate-100">
+                                                        <TableCell className="border-r border-slate-100">
+                                                            <div className="flex items-center gap-2 text-green-700 font-bold bg-green-50 px-3 py-1.5 rounded-lg border border-green-100 w-fit text-xs">
+                                                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                                                Uploaded
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="font-semibold text-slate-900 border-r border-slate-100">{order.companyName}</TableCell>
+                                                        <TableCell className="text-slate-600 font-medium border-r border-slate-100">{order.invoiceNumber || "-"}</TableCell>
+                                                        <TableCell className="border-r border-slate-100">
+                                                            {order.invoiceUpload ? (
+                                                                <a href={order.invoiceUpload} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-2 py-1 rounded text-[10px] font-bold border border-green-100 transition-colors hover:bg-green-100">
+                                                                    <FileText className="h-2.5 w-2.5" /> View
+                                                                </a>
+                                                            ) : <span className="text-slate-300">-</span>}
+                                                        </TableCell>
+                                                        <TableCell className="text-slate-600 font-medium border-r border-slate-100">{formatDateToMMDDYYYY(order.invoiceCreatedDate)}</TableCell>
+                                                        <TableCell className="text-slate-600 border-r border-slate-100">{order.transportMode || "-"}</TableCell>
+                                                        <TableCell className="text-slate-600 max-w-[200px] truncate border-r border-slate-100" title={order.shippingAddress}>{order.shippingAddress || "-"}</TableCell>
+                                                        <TableCell className="text-slate-800 font-medium border-r border-slate-100">{order.transporterName || "-"}</TableCell>
+                                                        <TableCell className="text-slate-600 border-r border-slate-100">
+                                                            {order.warehouseRemarks || <span className="text-slate-400 italic">No remarks</span>}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {order.biltyUpload ? (
+                                                                <a
+                                                                    href={order.biltyUpload}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="flex items-center gap-1.5 text-blue-700 hover:text-blue-900 font-bold bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-100 transition-all w-fit text-xs shadow-sm"
+                                                                >
+                                                                    <ExternalLink className="h-3.5 w-3.5" />
+                                                                    View Bilty
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-slate-400 text-xs flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                                                                    <AlertCircle className="h-3.5 w-3.5" />
+                                                                    Missing
+                                                                </span>
+                                                            )}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
                 </Tabs>
             </div>
 

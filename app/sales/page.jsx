@@ -46,169 +46,32 @@ import ProcessDialog from "@/components/process-dialog";
 // Column definitions for Pending tab (B to BJ) - Defined before component to avoid temporal dead zone
 const pendingColumns = [
   { key: "actions", label: "Actions", searchable: false },
-  { key: "orderNo", label: "Order No.", searchable: true },
   { key: "planned5", label: "Date", searchable: true },
-  { key: "quotationNo", label: "Quotation No.", searchable: true },
   { key: "companyName", label: "Company Name", searchable: true },
-  {
-    key: "contactPersonName",
-    label: "Contact Person Name",
-    searchable: true,
-  },
+  { key: "contactPersonName", label: "Contact Person Name", searchable: true },
   { key: "contactNumber", label: "Contact Number", searchable: true },
-  { key: "billingAddress", label: "Billing Address", searchable: true },
-  { key: "shippingAddress", label: "Shipping Address", searchable: true },
-  { key: "paymentMode", label: "Payment Mode", searchable: true },
-  { key: "quotationCopy", label: "Quotation Copy", searchable: true },
-  { key: "paymentTerms", label: "Payment Terms(In Days)", searchable: true },
-  { key: "transportMode", label: "Transport Mode", searchable: true },
-  { key: "transportid", label: "Transport ID", searchable: true },
-  { key: "freightType", label: "Freight Type", searchable: true },
-  { key: "destination", label: "Destination", searchable: true },
-
-  {
-    key: "acceptanceCopy",
-    label: "Acceptance Copy (Purchase Order Only)",
-    searchable: true,
-  },
-  { key: "offer", label: "Offer", searchable: true },
-  {
-    key: "conveyedForRegistration",
-    label: "Conveyed For Registration Form",
-    searchable: true,
-  },
-  { key: "qty", label: "Qty", searchable: true },
-  { key: "amount", label: "Amount", searchable: true },
-  { key: "approvedName", label: "Approved Name", searchable: true },
-  {
-    key: "calibrationCertRequired",
-    label: "Calibration Certificate Required",
-    searchable: true,
-  },
-  {
-    key: "certificateCategory",
-    label: "Certificate Category",
-    searchable: true,
-  },
-  {
-    key: "installationRequired",
-    label: "Installation Required",
-    searchable: true,
-  },
-  { key: "ewayBillDetails", label: "Tranporter id", searchable: true },
-  {
-    key: "ewayBillAttachment",
-    label: "Vechile no.",
-    searchable: true,
-  },
-  { key: "srnNumber", label: "Srn Number", searchable: true },
-  {
-    key: "srnNumberAttachment",
-    label: "Srn Number Attachment",
-    searchable: true,
-  },
-  { key: "attachment", label: "Attachment", searchable: true },
   { key: "invoiceNumber", label: "Invoice Number", searchable: true },
+  { key: "invoiceCreatedDate", label: "Invoice Date", searchable: true },
   { key: "invoiceUpload", label: "Invoice Upload", searchable: true },
-  { key: "invoiceCreatedDate", label: "Invoice Created Date", searchable: true },
+  { key: "quotationNo", label: "Quotation Number", searchable: true },
+  { key: "quotationCopy", label: "Quotation Copy", searchable: true },
+  { key: "transportMode", label: "Transport Mode", searchable: true },
 ];
 
-// Column definitions for History tab (includes BN to BR and BV to CC) - Defined before component to avoid temporal dead zone
+
+// Column definitions for History tab - Defined before component to avoid temporal dead zone
 const historyColumns = [
   { key: "editActions", label: "Actions", searchable: false },
-  { key: "orderNo", label: "Order No.", searchable: true },
   { key: "planned5", label: "Date", searchable: true },
-  { key: "quotationNo", label: "Quotation No.", searchable: true },
   { key: "companyName", label: "Company Name", searchable: true },
-  {
-    key: "contactPersonName",
-    label: "Contact Person Name",
-    searchable: true,
-  },
+  { key: "contactPersonName", label: "Contact Person Name", searchable: true },
   { key: "contactNumber", label: "Contact Number", searchable: true },
-  { key: "billingAddress", label: "Billing Address", searchable: true },
-  { key: "shippingAddress", label: "Shipping Address", searchable: true },
-  { key: "paymentMode", label: "Payment Mode", searchable: true },
-  { key: "quotationCopy", label: "Quotation Copy", searchable: true },
-  { key: "paymentTerms", label: "Payment Terms(In Days)", searchable: true },
-  { key: "transportMode", label: "Transport Mode", searchable: true },
-  { key: "transportid", label: "Transport ID", searchable: true },
-  { key: "freightType", label: "Freight Type", searchable: true },
-  { key: "destination", label: "Destination", searchable: true },
-  { key: "poNumber", label: "Po Number", searchable: true },
-  { key: "quotationCopy2", label: "Quotation Copy", searchable: true },
-  {
-    key: "acceptanceCopy",
-    label: "Acceptance Copy (Purchase Order Only)",
-    searchable: true,
-  },
-  { key: "offer", label: "Offer", searchable: true },
-  {
-    key: "conveyedForRegistration",
-    label: "Conveyed For Registration Form",
-    searchable: true,
-  },
-  { key: "qty", label: "Qty", searchable: true },
-  { key: "amount", label: "Amount", searchable: true },
-  { key: "approvedName", label: "Approved Name", searchable: true },
-  {
-    key: "calibrationCertRequired",
-    label: "Calibration Certificate Required",
-    searchable: true,
-  },
-  {
-    key: "certificateCategory",
-    label: "Certificate Category",
-    searchable: true,
-  },
-  {
-    key: "installationRequired",
-    label: "Installation Required",
-    searchable: true,
-  },
-  { key: "transporterId", label: "Transporter ID", searchable: true },
-
-  { key: "srnNumber", label: "Srn Number", searchable: true },
-  {
-    key: "srnNumberAttachment",
-    label: "Srn Number Attachment",
-    searchable: true,
-  },
-  { key: "attachment", label: "Attachment", searchable: true },
-  { key: "vehicleNo", label: "Vehicle No.", searchable: true },
-
-  { key: "itemName1", label: "Item Name 1", searchable: true },
-  { key: "quantity1", label: "Quantity 1", searchable: true },
-  { key: "itemName2", label: "Item Name 2", searchable: true },
-  { key: "quantity2", label: "Quantity 2", searchable: true },
-  { key: "itemName3", label: "Item Name 3", searchable: true },
-  { key: "quantity3", label: "Quantity 3", searchable: true },
-  { key: "itemName4", label: "Item Name 4", searchable: true },
-  { key: "quantity4", label: "Quantity 4", searchable: true },
-  { key: "itemName5", label: "Item Name 5", searchable: true },
-  { key: "quantity5", label: "Quantity 5", searchable: true },
-  { key: "itemName6", label: "Item Name 6", searchable: true },
-  { key: "quantity6", label: "Quantity 6", searchable: true },
-  { key: "itemName7", label: "Item Name 7", searchable: true },
-  { key: "quantity7", label: "Quantity 7", searchable: true },
-  { key: "itemName8", label: "Item Name 8", searchable: true },
-  { key: "quantity8", label: "Quantity 8", searchable: true },
-  { key: "itemName9", label: "Item Name 9", searchable: true },
-  { key: "quantity9", label: "Quantity 9", searchable: true },
-  { key: "itemName10", label: "Item Name 10", searchable: true },
-  { key: "quantity10", label: "Quantity 10", searchable: true },
-  { key: "itemName11", label: "Item Name 11", searchable: true },
-  { key: "quantity11", label: "Quantity 11", searchable: true },
-  { key: "itemName12", label: "Item Name 12", searchable: true },
-  { key: "quantity12", label: "Quantity 12", searchable: true },
-  { key: "itemName13", label: "Item Name 13", searchable: true },
-  { key: "quantity13", label: "Quantity 13", searchable: true },
-  { key: "itemName14", label: "Item Name 14", searchable: true },
-  { key: "quantity14", label: "Quantity 14", searchable: true },
-  { key: "totalQty", label: "Total Qty", searchable: true },
-  { key: "remarks", label: "Remarks", searchable: true },
   { key: "invoiceNumber", label: "Invoice Number", searchable: true },
-
+  { key: "invoiceCreatedDate", label: "Invoice Date", searchable: true },
+  { key: "invoiceUpload", label: "Invoice Upload", searchable: true },
+  { key: "quotationNo", label: "Quotation Number", searchable: true },
+  { key: "quotationCopy", label: "Quotation Copy", searchable: true },
+  { key: "transportMode", label: "Transport Mode", searchable: true },
 ];
 
 // Memoized column width lookup to avoid recalculating on every render
@@ -408,7 +271,7 @@ export default function WarehousePage() {
                 contactPerson: row.c[4] ? row.c[4].v : "",
                 quantity: row.c[10] ? row.c[10].v : "",
                 totalQty: row.c[19] ? row.c[19].v : "",
-                quotationCopy: row.c[9] ? row.c[9] : "",
+                quotationCopy: row.c[9] ? row.c[9].v : "",
                 dSrNumber: row.c[105] ? row.c[105].v : "",
                 fullRowData: row.c,
                 conveyedForRegistration: row.c[18] ? row.c[18].v : "",
@@ -561,7 +424,11 @@ export default function WarehousePage() {
               quantity3: row.c[16] ? row.c[16].v : "",           // Column Q
 
               invoiceNumber: row.c[138] ? row.c[138].v : "",     // Column EI (index 138)
+              invoiceCreatedDate: row.c[139] ? row.c[139].v : "", // Assuming EJ (index 139) for now
+              invoiceUpload: row.c[140] ? row.c[140].v : "",      // Assuming EK (index 140) for now
+              quotationCopy: row.c[141] ? row.c[141].v : "",      // Assuming EL (index 141) for now
               creName: row.c[142] ? row.c[142].v : "",           // Column EM (index 142)
+              transportMode: row.c[143] ? row.c[143].v : "",     // Assuming EN (index 143) for now
 
               // Processed info
               dispatchStatus: row.c[131] ? row.c[131].v : "okay", // Column EB (index 131)
@@ -2361,18 +2228,18 @@ export default function WarehousePage() {
                         <div className="grid grid-cols-2 gap-3 text-sm">
                           <div>
                             <span className="text-gray-500 text-xs">
-                              Quotation No:
+                              Date:
                             </span>
                             <p className="font-medium">
-                              {order.quotationNo || "-"}
+                              {renderCellContent(order, "planned5")}
                             </p>
                           </div>
                           <div>
                             <span className="text-gray-500 text-xs">
-                              D-Sr Number:
+                              Quotation Number:
                             </span>
                             <p className="font-medium">
-                              {order.dSrNumber || "-"}
+                              {order.quotationNo || "-"}
                             </p>
                           </div>
                         </div>
@@ -2395,133 +2262,14 @@ export default function WarehousePage() {
                           )}
                         </div>
 
-                        {/* Addresses */}
-                        <div className="border-t pt-3 space-y-2">
-                          <div>
-                            <span className="text-gray-500 text-xs">
-                              Billing Address:
-                            </span>
-                            <p className="text-sm mt-1">
-                              {order.billingAddress || "-"}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-gray-500 text-xs">
-                              Shipping Address:
-                            </span>
-                            <p className="text-sm mt-1">
-                              {order.shippingAddress || "-"}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Payment & Transport Details */}
-                        <div className="border-t pt-3 grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <span className="text-gray-500 text-xs">
-                              Payment Mode:
-                            </span>
-                            <p className="font-medium">
-                              {order.paymentMode || "-"}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-gray-500 text-xs">
-                              Payment Terms:
-                            </span>
-                            <p className="font-medium">
-                              {order.paymentTerms || "-"}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-gray-500 text-xs">
-                              Transport Mode:
-                            </span>
-                            <p className="font-medium">
-                              {order.transportMode || "-"}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-gray-500 text-xs">
-                              Freight Type:
-                            </span>
-                            <p className="font-medium">
-                              {order.freightType || "-"}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Destination & Vehicle */}
-                        <div className="border-t pt-3 grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <span className="text-gray-500 text-xs">
-                              Destination:
-                            </span>
-                            <p className="font-medium">
-                              {order.destination || "-"}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-gray-500 text-xs">
-                              Vehicle No:
-                            </span>
-                            <p className="font-medium">
-                              {order.vehicleNo || "-"}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Items Summary */}
-                        <div className="border-t pt-3">
-                          <span className="text-gray-500 text-xs">Items:</span>
-                          <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
-                            {[
-                              1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-                            ].map((num) => {
-                              const itemName = order[`itemName${num}`];
-                              const quantity = order[`quantity${num}`];
-                              if (itemName || quantity) {
-                                return (
-                                  <div
-                                    key={num}
-                                    className="flex justify-between text-xs bg-gray-50 p-2 rounded"
-                                  >
-                                    <span className="font-medium">
-                                      {itemName || "-"}
-                                    </span>
-                                    <span className="text-gray-600">
-                                      Qty: {quantity || "-"}
-                                    </span>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Total Quantity & Amount */}
-                        <div className="border-t pt-3 flex justify-between items-center">
-                          <div>
-                            <span className="text-gray-500 text-xs">
-                              Total Qty:
-                            </span>
-                            <p className="text-lg font-bold text-violet-600">
-                              {order.totalQty || "0"}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-gray-500 text-xs">
-                              Amount:
-                            </span>
-                            <p className="text-lg font-bold text-violet-600">
-                              {order.amount
-                                ? `₹${Number(order.amount).toLocaleString(
-                                  "en-IN"
-                                )}`
-                                : "₹0"}
-                            </p>
-                          </div>
+                        {/* Transport Details */}
+                        <div className="border-t pt-3 text-sm">
+                          <span className="text-gray-500 text-xs">
+                            Transport Mode:
+                          </span>
+                          <p className="font-medium">
+                            {order.transportMode || "-"}
+                          </p>
                         </div>
 
                         {/* Invoice & Documents */}
@@ -2530,75 +2278,48 @@ export default function WarehousePage() {
                             <span className="text-gray-500 text-xs">
                               Invoice:
                             </span>
-                            <div className="mt-1 space-y-1">
+                            <div className="mt-1 space-y-2">
                               {order.invoiceNumber && (
                                 <p className="text-sm font-medium">
-                                  {order.invoiceNumber}
+                                  No: {order.invoiceNumber}
                                 </p>
                               )}
                               {order.invoiceCreatedDate && (
                                 <p className="text-xs text-slate-500 font-medium italic">
-                                  Created: {formatDateToMMDDYYYY(order.invoiceCreatedDate)}
+                                  Date: {formatDateToMMDDYYYY(order.invoiceCreatedDate)}
                                 </p>
                               )}
-                              {order.invoiceUpload &&
-                                order.invoiceUpload.startsWith("http") && (
-                                  <a
-                                    href={order.invoiceUpload}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 text-xs rounded"
-                                  >
-                                    <Eye className="h-3 w-3" />
-                                    View Invoice
-                                  </a>
-                                )}
+                              <div className="flex flex-wrap gap-2 pt-1">
+                                {typeof order.invoiceUpload === "string" &&
+                                  order.invoiceUpload.startsWith("http") && (
+                                    <a
+                                      href={order.invoiceUpload}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 text-xs rounded border border-blue-100 hover:bg-blue-100 transition-colors"
+                                    >
+                                      <Eye className="h-3 w-3" />
+                                      Invoice Upload
+                                    </a>
+                                  )}
+                                {typeof order.quotationCopy === "string" &&
+                                  order.quotationCopy.startsWith("http") && (
+                                    <a
+                                      href={order.quotationCopy}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-3 py-1 bg-purple-50 text-purple-700 text-xs rounded border border-purple-100 hover:bg-purple-100 transition-colors"
+                                    >
+                                      <FileText className="h-3 w-3" />
+                                      Quotation Copy
+                                    </a>
+                                  )}
+                              </div>
                             </div>
                           </div>
                         )}
-
-                        {/* Certificates & Installation */}
-                        <div className="border-t pt-3 grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <span className="text-gray-500 text-xs">
-                              Calibration Cert:
-                            </span>
-                            <span
-                              className={`inline-block mt-1 px-2 py-1 text-xs rounded ${order.calibrationCertRequired === "Yes"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-gray-100 text-gray-600"
-                                }`}
-                            >
-                              {order.calibrationCertRequired || "N/A"}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-gray-500 text-xs">
-                              Installation:
-                            </span>
-                            <span
-                              className={`inline-block mt-1 px-2 py-1 text-xs rounded ${order.installationRequired === "Yes"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-gray-100 text-gray-600"
-                                }`}
-                            >
-                              {order.installationRequired || "N/A"}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Remarks */}
-                        {order.remarks && (
-                          <div className="border-t pt-3">
-                            <span className="text-gray-500 text-xs">
-                              Remarks:
-                            </span>
-                            <p className="text-sm mt-1 text-gray-700">
-                              {order.remarks}
-                            </p>
-                          </div>
-                        )}
                       </div>
+
                     </div>
                   ))
                 ) : (
