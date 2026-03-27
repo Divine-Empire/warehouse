@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { format, parse } from "date-fns";
 import { MainLayout } from "@/components/layout/main-layout";
+import { useAuth } from "@/components/auth-provider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function PurchaseLocationUpdatePage() {
+  const { currentUser } = useAuth();
   const [purchaseData, setPurchaseData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -110,16 +112,28 @@ export default function PurchaseLocationUpdatePage() {
       }
     };
     try {
-      // Fetch from both sheets using the unified script
-      const [partialQCRes, receivingAccRes, locationItemsRes] = await Promise.all([
+      // Fetch from all required sheets using the unified script
+      const [partialQCRes, receivingAccRes, locationItemsRes, indentRes] = await Promise.all([
         fetch(`${SCRIPT_URL}?sheet=Partial QC&action=fetch`),
         fetch(`${SCRIPT_URL}?sheet=RECEIVING-ACCOUNTS&action=fetch`),
-        fetch(`${SCRIPT_URL}?sheet=LOCATION-ITEMS&action=fetch`)
+        fetch(`${SCRIPT_URL}?sheet=LOCATION-ITEMS&action=fetch`),
+        fetch(`${SCRIPT_URL}?sheet=INDENT-LIFT&action=fetch`)
       ]);
 
       const partialQCResult = await partialQCRes.json();
       const receivingAccResult = await receivingAccRes.json();
       const locationItemsResult = await locationItemsRes.json();
+      const indentResult = await indentRes.json();
+
+      // Build Indent No -> Warehouse Map
+      const indentMap = new Map();
+      if (indentResult.success && indentResult.data) {
+        indentResult.data.forEach(row => {
+          if (row && row[1] && row[6]) {
+            indentMap.set(String(row[1]).trim(), String(row[6]).trim());
+          }
+        });
+      }
 
       let combinedData = [];
       const receivingAccMap = new Map();
@@ -130,7 +144,7 @@ export default function PurchaseLocationUpdatePage() {
           const rowIndex = index + 8;
           const planned = row[111]; // DH (0-indexed col 111)
           const actual = row[112];  // DI (0-indexed col 112)
-          
+
           const hasPlanned = planned !== undefined && planned !== null && String(planned).trim() !== "" && String(planned).trim() !== "-";
           const hasActual = actual !== undefined && actual !== null && String(actual).trim() !== "" && String(actual).trim() !== "-" && String(actual).trim().toLowerCase() !== "n/a";
 
@@ -146,6 +160,7 @@ export default function PurchaseLocationUpdatePage() {
             actual: formatDate(actual),
             source: "RECEIVING-ACCOUNTS",
             rowIndex: rowIndex,
+            warehouseLocation: indentMap.get(String(row[1] ?? "").trim()) || "",
             isPending: hasPlanned && !hasActual,
             isHistory: false, // History now comes from LOCATION-ITEMS
           };
@@ -163,7 +178,7 @@ export default function PurchaseLocationUpdatePage() {
           const rowIndex = index + 8;
           const planned = row[29]; // AD (0-indexed col 29)
           const actual = row[30]; // AE (0-indexed col 30)
-          
+
           const hasPlanned = planned !== undefined && planned !== null && String(planned).trim() !== "" && String(planned).trim() !== "-";
           const hasActual = actual !== undefined && actual !== null && String(actual).trim() !== "" && String(actual).trim() !== "-" && String(actual).trim().toLowerCase() !== "n/a";
 
@@ -181,6 +196,7 @@ export default function PurchaseLocationUpdatePage() {
             actual: formatDate(actual),
             source: "Partial QC",
             rowIndex: rowIndex,
+            warehouseLocation: indentMap.get(String(row[1] ?? (lookup?.indentNo || "")).trim()) || "",
             isPending: hasPlanned && !hasActual,
             isHistory: false, // History now comes from LOCATION-ITEMS
           });
@@ -192,7 +208,7 @@ export default function PurchaseLocationUpdatePage() {
         locationItemsResult.data.slice(2).forEach((row, index) => {
           const liftNo = String(row[3] || "").trim();
           const lookup = liftNo ? receivingAccMap.get(liftNo) : null;
-          
+
           combinedData.push({
             id: `loc-${index}`,
             indentNo: row[2] || "",
@@ -204,6 +220,7 @@ export default function PurchaseLocationUpdatePage() {
             actual: formatTableDate(row[0]),  // Timestamp from col-A (DD-MM-YYYY)
             source: "LOCATION-ITEMS",
             rowIndex: index + 3,
+            warehouseLocation: indentMap.get(String(row[2] || "").trim()) || "",
             isPending: false,
             isHistory: true,
             recLocation: row[4] || "", // Keep for potential UI use
@@ -245,20 +262,36 @@ export default function PurchaseLocationUpdatePage() {
   }, [fetchData, fetchLocations]);
 
   const filteredData = useMemo(() => {
-    let data = purchaseData.filter(item => 
+    let data = purchaseData.filter(item =>
       activeTab === "pending" ? item.isPending : item.isHistory
     );
 
+    // Helper to normalize location strings for robust matching
+    // Helper to normalize location strings for robust matching
+    const normalizeLoc = (loc) => String(loc || "").toLowerCase().replace(/^by\s*/i, "").replace(/[^a-z0-9]/g, "").trim();
+
+    // Apply user location-based filtering
+    if (currentUser && currentUser.role !== "super_admin") {
+      const userLocations = currentUser.location || ["None"];
+      const isAllLocations = userLocations.some(l => l.toLowerCase() === "all");
+      if (!isAllLocations) {
+        data = data.filter(item => {
+          const itemLocNormalized = normalizeLoc(item.warehouseLocation);
+          return userLocations.some(l => normalizeLoc(l) === itemLocNormalized);
+        });
+      }
+    }
+
     if (searchTerm) {
-      data = data.filter(item => 
-        Object.values(item).some(val => 
+      data = data.filter(item =>
+        Object.values(item).some(val =>
           String(val).toLowerCase().includes(searchTerm.toLowerCase())
         )
       );
     }
 
     return data;
-  }, [purchaseData, activeTab, searchTerm]);
+  }, [purchaseData, activeTab, searchTerm, currentUser]);
 
   const [itemSearchTerm, setItemSearchTerm] = useState("");
   // Unique item names for search
@@ -268,9 +301,9 @@ export default function PurchaseLocationUpdatePage() {
       .map(item => item.itemName)
       .filter(Boolean);
     const sorted = [...new Set(names)].sort();
-    
+
     if (itemSearchTerm) {
-      return sorted.filter(name => 
+      return sorted.filter(name =>
         name.toLowerCase().includes(itemSearchTerm.toLowerCase())
       );
     }
@@ -309,24 +342,24 @@ export default function PurchaseLocationUpdatePage() {
       }
     }));
   };
- 
-   const resetModal = () => {
-     setShowSearchModal(false);
-     setModalStep("status");
-     setSelectedItemName("");
-     setItemSearchTerm("");
-     setSelectedRows({});
-     setSelectedStatus("");
-     setModalEdits({});
-     setExtraRows([]);
-     setStockTransferRows([{ id: Date.now(), fromLoc: "", item: "", qty: "", toLoc: "", itemTo: "", qtyTo: "" }]);
-   };
+
+  const resetModal = () => {
+    setShowSearchModal(false);
+    setModalStep("status");
+    setSelectedItemName("");
+    setItemSearchTerm("");
+    setSelectedRows({});
+    setSelectedStatus("");
+    setModalEdits({});
+    setExtraRows([]);
+    setStockTransferRows([{ id: Date.now(), fromLoc: "", item: "", qty: "", toLoc: "", itemTo: "", qtyTo: "" }]);
+  };
 
   const handleAddRow = () => {
     if (!selectedItemName) return;
     const baseItems = uniqueItemsGrouped[selectedItemName] || [];
     if (baseItems.length === 0) return;
-    
+
     // Use the first record as a template for metadata
     const template = baseItems[0];
     const newId = `${template.id}_split_${Date.now()}`;
@@ -336,7 +369,7 @@ export default function PurchaseLocationUpdatePage() {
       isSplit: true,
       originalId: template.id
     };
-    
+
     setExtraRows(prev => [...prev, newRow]);
     // Automatically select the new row
     setSelectedRows(prev => ({ ...prev, [newId]: true }));
@@ -376,9 +409,9 @@ export default function PurchaseLocationUpdatePage() {
       alert("Please select at least one record.");
       return;
     }
-    
+
     // Basic validation for "Received" status
-    if (selectedStatus === "Received") {
+    if (selectedStatus === "Dispatch") {
       const invalid = selectedIds.some(id => !modalEdits[id]?.receivedLocation || !modalEdits[id]?.qty);
       if (invalid) {
         alert("Please fill all required fields (Location and Quantity) for all selected items.");
@@ -395,7 +428,7 @@ export default function PurchaseLocationUpdatePage() {
         try {
           const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
           const edits = modalEdits[record.id] || {};
-          
+
           // 1. Submit to LOCATION-ITEMS
           const submissionData = new URLSearchParams({
             action: "insert",
@@ -422,11 +455,11 @@ export default function PurchaseLocationUpdatePage() {
           const sourceUpdateData = [];
           // AE (30) for Partial QC, DI (112) for RECEIVING-ACCOUNTS
           sourceUpdateData[record.source === "Partial QC" ? 30 : 112] = timestamp;
-          
+
           // AF (31) for Partial QC, DJ (113) for RECEIVING-ACCOUNTS
           // The user requested to NOT write to RECEIVING-ACCOUNTS col-DJ (113)
           if (record.source === "Partial QC") {
-            sourceUpdateData[31] = "In-Stock"; 
+            sourceUpdateData[31] = "In-Stock";
           }
 
           const updateData = new URLSearchParams({
@@ -442,7 +475,7 @@ export default function PurchaseLocationUpdatePage() {
           });
           const updateResult = await updateRes.json();
           if (!updateResult.success) throw new Error(`Update failed for ${record.liftNo}: ${updateResult.error}`);
-          
+
           results.push({ success: true });
         } catch (err) {
           results.push({ success: false, error: err.toString() });
@@ -585,9 +618,9 @@ export default function PurchaseLocationUpdatePage() {
               <thead className="sticky top-0 z-10">
                 <tr className="bg-slate-50/95 backdrop-blur-md">
                   {columns.map(col => (
-                    <th 
-                      key={col.key} 
-                      className="px-4 py-3 text-slate-600 uppercase text-[11px] font-bold border-b border-gray-100 shadow-[inset_0_-1px_0_rgba(0,0,0,0.05)]" 
+                    <th
+                      key={col.key}
+                      className="px-4 py-3 text-slate-600 uppercase text-[11px] font-bold border-b border-gray-100 shadow-[inset_0_-1px_0_rgba(0,0,0,0.05)]"
                       style={{ minWidth: col.width }}
                     >
                       {col.label}
@@ -650,9 +683,9 @@ export default function PurchaseLocationUpdatePage() {
                 </p>
               </div>
               {modalStep === "selection" || modalStep === "stockTransfer" ? (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={modalStep === "selection" ? handleAddRow : handleAddStockRow}
                   className="flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 font-medium"
                 >
@@ -669,19 +702,19 @@ export default function PurchaseLocationUpdatePage() {
               {modalStep === "status" && (
                 <div className="p-8 flex flex-col items-center justify-center gap-6">
                   <div className="grid grid-cols-2 gap-4 w-full max-w-md">
-                    <div 
-                      className={`p-6 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center gap-3 ${selectedStatus === "Received" ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-100 hover:border-blue-200 hover:bg-blue-50/30"}`}
+                    <div
+                      className={`p-6 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center gap-3 ${selectedStatus === "Dispatch" ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-100 hover:border-blue-200 hover:bg-blue-50/30"}`}
                       onClick={() => {
-                        setSelectedStatus("Received");
+                        setSelectedStatus("Dispatch");
                         setModalStep("search");
                       }}
                     >
                       <div className="bg-blue-100 p-3 rounded-full text-blue-600">
                         <Box className="h-6 w-6" />
                       </div>
-                      <span className="font-semibold text-gray-700">Received</span>
+                      <span className="font-semibold text-gray-700">Dispatch</span>
                     </div>
-                    <div 
+                    <div
                       className={`p-6 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center gap-3 ${selectedStatus === "Stock Transfer" ? "border-purple-500 bg-purple-50 shadow-md" : "border-gray-100 hover:border-purple-200 hover:bg-purple-50/30"}`}
                       onClick={() => {
                         setSelectedStatus("Stock Transfer");
@@ -713,15 +746,15 @@ export default function PurchaseLocationUpdatePage() {
                       <p className="text-center py-10 text-gray-500">No items found.</p>
                     ) : (
                       uniqueItemNames.map(name => (
-                        <div 
-                          key={name} 
+                        <div
+                          key={name}
                           className="p-3 rounded-lg border border-gray-100 hover:bg-blue-50 hover:border-blue-200 cursor-pointer transition-colors font-medium text-gray-700"
                           onClick={() => {
                             const records = uniqueItemsGrouped[name] || [];
                             setSelectedItemName(name);
                             setModalStep("selection");
-                            setSelectedRows({}); 
-                            
+                            setSelectedRows({});
+
                             const initialEdits = {};
                             records.forEach(record => {
                               initialEdits[record.id] = {
@@ -751,7 +784,7 @@ export default function PurchaseLocationUpdatePage() {
                           <th className="px-3 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Qty</th>
                           <th className="px-3 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">To Location</th>
                           <th className="px-3 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Item (Dest)</th>
-                           <th className="px-3 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Qty</th>
+                          <th className="px-3 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Qty</th>
                           <th className="w-10"></th>
                         </tr>
                       </thead>
@@ -759,7 +792,7 @@ export default function PurchaseLocationUpdatePage() {
                         {stockTransferRows.map((row) => (
                           <tr key={row.id}>
                             <td className="p-2 w-[16%]">
-                              <select 
+                              <select
                                 className="w-full h-9 text-xs border border-gray-200 rounded px-1 outline-none focus:border-blue-400"
                                 value={row.fromLoc}
                                 onChange={(e) => handleStockEdit(row.id, "fromLoc", e.target.value)}
@@ -769,7 +802,7 @@ export default function PurchaseLocationUpdatePage() {
                               </select>
                             </td>
                             <td className="p-2 w-[22%]">
-                              <input 
+                              <input
                                 list={`stockItems-${row.id}`}
                                 className="w-full h-9 text-xs border border-gray-200 rounded px-2 outline-none focus:border-blue-400"
                                 placeholder="Type item..."
@@ -781,7 +814,7 @@ export default function PurchaseLocationUpdatePage() {
                               </datalist>
                             </td>
                             <td className="p-2 w-[10%]">
-                              <input 
+                              <input
                                 type="number"
                                 className="w-full h-9 text-xs border border-gray-200 rounded px-2 outline-none focus:border-blue-400 text-center"
                                 value={row.qty}
@@ -789,7 +822,7 @@ export default function PurchaseLocationUpdatePage() {
                               />
                             </td>
                             <td className="p-2 w-[16%]">
-                              <select 
+                              <select
                                 className="w-full h-9 text-xs border border-gray-200 rounded px-1 outline-none focus:border-blue-400"
                                 value={row.toLoc}
                                 onChange={(e) => handleStockEdit(row.id, "toLoc", e.target.value)}
@@ -799,14 +832,14 @@ export default function PurchaseLocationUpdatePage() {
                               </select>
                             </td>
                             <td className="p-2 w-[22%]">
-                              <input 
+                              <input
                                 className="w-full h-9 text-xs border border-gray-200 rounded px-2 outline-none focus:border-blue-400"
                                 value={row.itemTo}
                                 onChange={(e) => handleStockEdit(row.id, "itemTo", e.target.value)}
                               />
                             </td>
                             <td className="p-2 w-[10%]">
-                              <input 
+                              <input
                                 type="number"
                                 className="w-full h-9 text-xs border border-gray-200 rounded px-2 outline-none focus:border-blue-400 text-center"
                                 value={row.qtyTo || row.qty}
@@ -815,9 +848,9 @@ export default function PurchaseLocationUpdatePage() {
                             </td>
                             <td className="p-2 text-center">
                               {stockTransferRows.length > 1 && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
                                   onClick={() => setStockTransferRows(prev => prev.filter(r => r.id !== row.id))}
                                 >
@@ -840,11 +873,11 @@ export default function PurchaseLocationUpdatePage() {
                       <thead className="bg-gray-50 text-gray-700 uppercase font-semibold border-b">
                         <tr>
                           <th className="px-3 py-3 w-10 text-center">
-                            <Checkbox 
+                            <Checkbox
                               checked={
-                                itemRecords.length > 0 && 
+                                itemRecords.length > 0 &&
                                 itemRecords.every(item => selectedRows[item.id])
-                              } 
+                              }
                               onCheckedChange={(checked) => {
                                 const nextSelected = {};
                                 itemRecords.forEach(item => {
@@ -865,8 +898,8 @@ export default function PurchaseLocationUpdatePage() {
                         {itemRecords.map((item) => (
                           <tr key={item.id} className={`${selectedRows[item.id] ? "bg-blue-50/50" : ""} hover:bg-gray-50/50 transition-colors`}>
                             <td className="px-3 py-3 text-center">
-                              <Checkbox 
-                                checked={!!selectedRows[item.id]} 
+                              <Checkbox
+                                checked={!!selectedRows[item.id]}
                                 onCheckedChange={(checked) => toggleRow(item.id, checked)}
                               />
                             </td>
@@ -876,7 +909,7 @@ export default function PurchaseLocationUpdatePage() {
                               <span className="font-medium text-gray-800">{item.vendorName || "-"}</span>
                             </td>
                             <td className="px-3 py-3">
-                              <select 
+                              <select
                                 className={`w-full border rounded px-2 py-1.5 text-xs outline-none shadow-sm transition-all ${selectedRows[item.id] ? "border-blue-300 bg-white focus:ring-2 focus:ring-blue-100" : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"}`}
                                 disabled={!selectedRows[item.id]}
                                 value={modalEdits[item.id]?.receivedLocation || ""}
@@ -889,7 +922,7 @@ export default function PurchaseLocationUpdatePage() {
                               </select>
                             </td>
                             <td className="px-3 py-3">
-                              <Input 
+                              <Input
                                 type="number"
                                 className={`h-9 px-2 text-xs shadow-sm transition-all ${selectedRows[item.id] ? "border-blue-300 bg-white focus:ring-2 focus:ring-blue-100" : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"}`}
                                 disabled={!selectedRows[item.id]}
@@ -908,30 +941,30 @@ export default function PurchaseLocationUpdatePage() {
 
             {/* Modal Footer */}
             <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => {
-                    if (modalStep === "search" || modalStep === "stockTransfer") setModalStep("status");
-                    else if (modalStep === "selection") setModalStep("search");
-                  }}
-                  disabled={modalStep === "status"}
-                >
-                  Back
-                </Button>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={resetModal}>Cancel</Button>
-                  {(modalStep === "selection" || modalStep === "stockTransfer") && (
-                    <Button size="sm" onClick={modalStep === "selection" ? handleSubmitUpdate : handleSubmitStockTransfer} disabled={isSubmitting}>
-                      {isSubmitting ? (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Processing...
-                        </div>
-                      ) : "Submit Selection"}
-                    </Button>
-                  )}
-                </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (modalStep === "search" || modalStep === "stockTransfer") setModalStep("status");
+                  else if (modalStep === "selection") setModalStep("search");
+                }}
+                disabled={modalStep === "status"}
+              >
+                Back
+              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={resetModal}>Cancel</Button>
+                {(modalStep === "selection" || modalStep === "stockTransfer") && (
+                  <Button size="sm" onClick={modalStep === "selection" ? handleSubmitUpdate : handleSubmitStockTransfer} disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Processing...
+                      </div>
+                    ) : "Submit Selection"}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -29,17 +29,14 @@ import {
 
 const menuItems = [
   { href: "/sales", label: "Sales", icon: Warehouse, pageAccess: "Sales" },
-  { href: "/sales-location-update", label: "Sales Location Update", icon: Warehouse, pageAccess: "Sales" },
+  { href: "/sales-location-update", label: "Sales Location Update", icon: Warehouse, pageAccess: "Sales Update Location" },
   { href: "/transporting", label: "Transporting", icon: Truck, pageAccess: "Transporting" },
   { href: "/packaging", label: "Packaging", icon: Package, pageAccess: "Packaging" },
   { href: "/bilty-upload", label: "Bilty Upload", icon: FileSpreadsheet, pageAccess: "Bilty Upload" },
   { href: "/purchase", label: "Purchase", icon: PackageCheck, pageAccess: "Purchase" },
-  { href: "/purchase-location-update", label: "Purchase Location Update", icon: PackageCheck, pageAccess: "Purchase" }, // Added after Purchase
+  { href: "/purchase-location-update", label: "Purchase Location Update", icon: PackageCheck, pageAccess: "Purchase Update Location" }, // Added after Purchase
   { href: "/ims", label: "IMS", icon: Award, pageAccess: "IMS" },
   { href: "/PR_SR_DR_form", label: "PR_SR_DR Form", icon: Bell, pageAccess: "PR_SR_DR Form" },
-  // { href: "/order-cancel", label: "Order Cancel", icon: XOctagon, pageAccess: "Order Cancel" },
-  // { href: "/credit-note", label: "Credit Note", icon: ReceiptText, pageAccess: "Credit Note" },
-  // { href: "/settings", label: "Settings", icon: Settings, pageAccess: "Settings" },
 ]
 
 export function Sidebar() {

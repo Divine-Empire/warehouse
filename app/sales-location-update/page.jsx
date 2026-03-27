@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { format, parse } from "date-fns";
 import { MainLayout } from "@/components/layout/main-layout";
+import { useAuth } from "@/components/auth-provider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function SalesLocationUpdatePage() {
+  const { currentUser } = useAuth();
   const [salesData, setSalesData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -121,19 +123,24 @@ export default function SalesLocationUpdatePage() {
       const locationItemsResult = await locationItemsRes.json();
 
       let combinedData = [];
+      const dispatchMap = new Map();
 
       // 1. Process DISPATCH-DELIVERY for Pending
       if (dispatchResult.success && dispatchResult.data) {
         dispatchResult.data.slice(7).forEach((row, index) => {
           const rowIndex = index + 8;
+          const warehouseLoc = row[103] ?? "";
+          const dispatchNo = String(row[105] || "").trim();
+          
+          if (dispatchNo) {
+            dispatchMap.set(dispatchNo, warehouseLoc);
+          }
           // User specified: col-DE (108) and DF (109) for planned and Actual
           const planned = row[108];
           const actual = row[109];
 
           const hasPlanned = planned !== undefined && planned !== null && String(planned).trim() !== "" && String(planned).trim() !== "-";
           const hasActual = actual !== undefined && actual !== null && String(actual).trim() !== "" && String(actual).trim() !== "-" && String(actual).trim().toLowerCase() !== "n/a";
-
-          const dispatchNo = String(row[105] || "").trim(); // Col DB (index 105)
 
           combinedData.push({
             id: `sale-${rowIndex}`,
@@ -146,6 +153,7 @@ export default function SalesLocationUpdatePage() {
             actual: formatDate(actual),
             source: "DISPATCH-DELIVERY",
             rowIndex: rowIndex,
+            warehouseLocation: warehouseLoc,
             isPending: hasPlanned && !hasActual,
             isHistory: false,
           });
@@ -168,6 +176,7 @@ export default function SalesLocationUpdatePage() {
             rowIndex: index + 3,
             isPending: false,
             isHistory: true,
+            warehouseLocation: dispatchMap.get(String(row[3] || "").trim()) || "",
             recLocation: row[4] || "",
           });
         });
@@ -211,6 +220,22 @@ export default function SalesLocationUpdatePage() {
       activeTab === "pending" ? item.isPending : item.isHistory
     );
 
+    // Helper to normalize location strings for robust matching
+    // Helper to normalize location strings for robust matching
+    const normalizeLoc = (loc) => String(loc || "").toLowerCase().replace(/^by\s*/i, "").replace(/[^a-z0-9]/g, "").trim();
+
+    // Apply user location-based filtering
+    if (currentUser && currentUser.role !== "super_admin") {
+      const userLocations = currentUser.location || ["None"];
+      const isAllLocations = userLocations.some(l => l.toLowerCase() === "all");
+      if (!isAllLocations) {
+        data = data.filter(item => {
+          const itemLocNormalized = normalizeLoc(item.warehouseLocation);
+          return userLocations.some(l => normalizeLoc(l) === itemLocNormalized);
+        });
+      }
+    }
+
     if (searchTerm) {
       data = data.filter(item =>
         Object.values(item).some(val =>
@@ -220,7 +245,7 @@ export default function SalesLocationUpdatePage() {
     }
 
     return data;
-  }, [salesData, activeTab, searchTerm]);
+  }, [salesData, activeTab, searchTerm, currentUser]);
 
   const [itemSearchTerm, setItemSearchTerm] = useState("");
   const uniqueItemNames = useMemo(() => {
@@ -334,7 +359,7 @@ export default function SalesLocationUpdatePage() {
       return;
     }
 
-    if (selectedStatus === "Received") {
+    if (selectedStatus === "Dispatch") {
       const invalid = selectedIds.some(id => !modalEdits[id]?.receivedLocation || !modalEdits[id]?.qty);
       if (invalid) {
         alert("Please fill all required fields (Location and Quantity) for all selected items.");
@@ -612,16 +637,16 @@ export default function SalesLocationUpdatePage() {
                 <div className="p-8 flex flex-col items-center justify-center gap-6">
                   <div className="grid grid-cols-2 gap-4 w-full max-w-md">
                     <div
-                      className={`p-6 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center gap-3 ${selectedStatus === "Received" ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-100 hover:border-blue-200 hover:bg-blue-50/30"}`}
+                      className={`p-6 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center gap-3 ${selectedStatus === "Dispatch" ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-100 hover:border-blue-200 hover:bg-blue-50/30"}`}
                       onClick={() => {
-                        setSelectedStatus("Received");
+                        setSelectedStatus("Dispatch");
                         setModalStep("search");
                       }}
                     >
                       <div className="bg-blue-100 p-3 rounded-full text-blue-600">
                         <Box className="h-6 w-6" />
                       </div>
-                      <span className="font-semibold text-gray-700">Received</span>
+                      <span className="font-semibold text-gray-700">Dispatch</span>
                     </div>
                     <div
                       className={`p-6 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center gap-3 ${selectedStatus === "Stock Transfer" ? "border-purple-500 bg-purple-50 shadow-md" : "border-gray-100 hover:border-purple-200 hover:bg-purple-50/30"}`}

@@ -254,14 +254,15 @@ export default function WarehousePage() {
                 companyName: row.c[3] ? row.c[3].v : "",
                 contactPersonName: row.c[4] ? row.c[4].v : "", // Fix field name to match column definition
                 contactNumber: row.c[5] ? row.c[5].v : "",
+                warehouseLocation: row.c[103] ? row.c[103].v : "",
                 billingAddress: row.c[6] ? row.c[6].v : "",
                 shippingAddress: row.c[7] ? row.c[7].v : "",
                 paymentMode: row.c[8] ? row.c[8].v : "",
                 paymentTerms: row.c[10] ? row.c[10].v : "",
                 qty: row.c[19] ? row.c[19].v : "", // Map to qty field for column definition
-                transportMode: row.c[11] ? row.c[11].v : "",
+                transportMode: row.c[12] ? row.c[12].v : "",
                 transportid: row.c[25] ? row.c[25].v : "",
-                freightType: row.c[12] ? row.c[12].v : "",
+                freightType: row.c[11] ? row.c[11].v : "",
                 destination: row.c[13] ? row.c[13].v : "",
                 poNumber: row.c[14] ? row.c[14].v : "",
                 offer: row.c[17] ? row.c[17].v : "",
@@ -439,6 +440,7 @@ export default function WarehousePage() {
               afterPhoto: row.c[4] ? row.c[4].v : "",            // Column E
               biltyUpload: row.c[5] ? row.c[5].v : "",           // Column F
               transporterName: row.c[6] ? row.c[6].v : "",      // Column G
+              warehouseLocation: row.c[103] ? row.c[103].v : "", // Column CZ (index 103)
               transporterContact: row.c[7] ? row.c[7].v : "",   // Column H
               biltyNumber: row.c[8] ? row.c[8].v : "",          // Column I
               totalCharges: row.c[9] ? row.c[9].v : "",         // Column J
@@ -486,8 +488,21 @@ export default function WarehousePage() {
       return orders;
     }
 
-    // Admin and regular users only see data where CRE Name matches their username
-    return orders.filter((order) => order.creName === currentUser.username);
+    // Filter by location
+    const userLocations = currentUser.location || ["None"];
+    const isAllLocations = userLocations.some(l => l.toLowerCase() === "all");
+
+    // Helper to normalize location strings for robust matching
+    const normalizeLoc = (loc) => String(loc || "").toLowerCase().replace(/^by\s*/i, "").replace(/[^a-z0-9]/g, "").trim();
+
+    return orders.filter((order) => {
+      // Check warehouse access
+      const orderLocNormalized = normalizeLoc(order.warehouseLocation);
+      const matchWarehouse = isAllLocations || 
+                            userLocations.some(l => normalizeLoc(l) === orderLocNormalized);
+      
+      return matchWarehouse;
+    });
   };
 
   const getUniqueCompanyNames = () => {
@@ -1177,9 +1192,9 @@ export default function WarehousePage() {
       if (editedData.paymentTerms !== undefined)
         rowData[10] = editedData.paymentTerms; // Column K
       if (editedData.transportMode !== undefined)
-        rowData[11] = editedData.transportMode; // Column L
+        rowData[12] = editedData.transportMode; // Column M
       if (editedData.freightType !== undefined)
-        rowData[12] = editedData.freightType; // Column M
+        rowData[11] = editedData.freightType; // Column L
       if (editedData.destination !== undefined)
         rowData[13] = editedData.destination; // Column N
       if (editedData.poNumber !== undefined) rowData[14] = editedData.poNumber; // Column O

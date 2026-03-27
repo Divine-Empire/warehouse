@@ -138,6 +138,7 @@ export default function PackagingPage() {
                         warehouseRemarks: row.c[80]?.v || "",  // CC
                         dispatchStatus: row.c[131]?.v || "okay", // EB
                         notOkReason: row.c[132]?.v || "",        // EC
+                        warehouseLocation: row.c[103]?.v || "", // CZ
                     }
 
                     order.id = dSrNumber
@@ -309,8 +310,20 @@ export default function PackagingPage() {
     const filteredOrders = useMemo(() => {
         let result = orders
 
-        if (user?.role !== "admin" && user?.role !== "super_admin") {
-            result = result.filter(order => order.creName === user?.username)
+        // Helper to normalize location strings for robust matching
+        // Helper to normalize location strings for robust matching
+        const normalizeLoc = (loc) => String(loc || "").toLowerCase().replace(/^by\s*/i, "").replace(/[^a-z0-9]/g, "").trim();
+
+        if (user && user.role !== "super_admin") {
+            const userLocations = user.location || ["None"];
+            const isAllLocations = userLocations.some(l => l.toLowerCase() === "all");
+            
+            if (!isAllLocations) {
+                result = result.filter(order => {
+                    const orderLocNormalized = normalizeLoc(order.warehouseLocation);
+                    return userLocations.some(l => normalizeLoc(l) === orderLocNormalized);
+                });
+            }
         }
 
         if (searchTerm) {

@@ -155,6 +155,7 @@ export default function BiltyUploadPage() {
                     notOkReason: whInfo.notOkReason || "",
                     transporterByName: byColumn,
                     invoiceCreatedDate: row.c[63]?.v || "-", // Column BL (index 63)
+                    warehouseLocation: row.c[103]?.v || "", // Column CZ (index 103)
                     bvColumn,
                     bxColumn
                 };
@@ -193,6 +194,20 @@ export default function BiltyUploadPage() {
                 }
                 return match;
             });
+        }
+
+        // Warehouse-based filtering
+        const normalizeLoc = (loc) => String(loc || "").toLowerCase().replace(/^by\s*/i, "").replace(/[^a-z0-9]/g, "").trim();
+        if (user && user.role !== "super_admin") {
+            const userLocations = user.location || ["None"];
+            const isAllLocations = userLocations.some(l => l.toLowerCase() === "all");
+
+            if (!isAllLocations) {
+                userFiltered = userFiltered.filter(order => {
+                    const orderLocNormalized = normalizeLoc(order.warehouseLocation);
+                    return userLocations.some(l => normalizeLoc(l) === orderLocNormalized);
+                });
+            }
         }
 
         // 2. Filter by tab status (BX - Bilty Uploaded)

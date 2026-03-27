@@ -12,6 +12,7 @@ import {
   Eye,
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/main-layout";
+import { useAuth } from "@/components/auth-provider";
 
 import { Settings } from "lucide-react";
 
@@ -28,6 +29,7 @@ import {
 
 export default function PurchasePage() {
   const [purchaseData, setPurchaseData] = useState([]);
+  const { currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -237,8 +239,22 @@ export default function PurchasePage() {
     try {
       const scriptUrl = "https://script.google.com/macros/s/AKfycbxJx1_BgbqaUCUouG3EpUdHePfnBU8W699ztF1w9T9YtvBk1U8df-g305i4O1imRrYSIw/exec";
       const fetchUrl = `${scriptUrl}?sheet=${SHEET_NAME}&action=fetch`;
-      const response = await fetch(fetchUrl);
+      const [response, indentResponse] = await Promise.all([
+        fetch(fetchUrl),
+        fetch(`${scriptUrl}?sheet=INDENT-LIFT&action=fetch`)
+      ]);
       const result = await response.json();
+      const indentResult = await indentResponse.json();
+
+      // Build Indent No -> Warehouse Map
+      const indentMap = new Map();
+      if (indentResult.success && indentResult.data) {
+        indentResult.data.forEach(row => {
+          if (row && row[1] && row[6]) {
+            indentMap.set(String(row[1]).trim(), String(row[6]).trim());
+          }
+        });
+      }
 
       if (result.success && result.data) {
         const items = [];
@@ -246,6 +262,9 @@ export default function PurchasePage() {
         // result.data is an array of arrays (rows)
         result.data.slice(7).forEach((row, index) => {
           if (row && row.length > 0) {
+            const indentNo = String(row[1] ?? "").trim();
+            const warehouseLocation = indentMap.get(indentNo) || "";
+
             // Filter: Column T index 19, Column U index 20
             const colT = row[19];
             const colU = row[20];
@@ -253,12 +272,13 @@ export default function PurchasePage() {
             // Store colT and colU for filtering in UI
             items.push({
               id: index + 1,
-              indentNo: row[1] ?? "",
+              indentNo: indentNo,
               liftNo: row[2] ?? "",
               vendorName: row[3] ?? "",
               poNo: row[4] ?? "",
               nextFollowUpDate: row[5] ?? "",
               remarks: row[6] ?? "",
+              warehouseLocation: warehouseLocation,
               itemName: row[7] ?? "",
               liftingQty: row[8] ?? "",
               transporterName: row[9] ?? "",
@@ -314,14 +334,26 @@ export default function PurchasePage() {
     try {
       const scriptUrl = "https://script.google.com/macros/s/AKfycbxJx1_BgbqaUCUouG3EpUdHePfnBU8W699ztF1w9T9YtvBk1U8df-g305i4O1imRrYSIw/exec";
 
-      // Fetch both sheets in parallel
-      const [accountsResponse, warehouseResponse] = await Promise.all([
+      // Fetch all required sheets in parallel
+      const [accountsResponse, warehouseResponse, indentResponse] = await Promise.all([
         fetch(`${scriptUrl}?sheet=${SHEET_NAME}&action=fetch`),
-        fetch(`${scriptUrl}?sheet=Warehouse&action=fetch`)
+        fetch(`${scriptUrl}?sheet=Warehouse&action=fetch`),
+        fetch(`${scriptUrl}?sheet=INDENT-LIFT&action=fetch`)
       ]);
 
       const accountsResult = await accountsResponse.json();
       const warehouseResult = await warehouseResponse.json();
+      const indentResult = await indentResponse.json();
+
+      // Build Indent No -> Warehouse Map
+      const indentMap = new Map();
+      if (indentResult.success && indentResult.data) {
+        indentResult.data.forEach(row => {
+          if (row && row[1] && row[6]) {
+            indentMap.set(String(row[1]).trim(), String(row[6]).trim());
+          }
+        });
+      }
 
       if (accountsResult.success && accountsResult.data) {
         const items = [];
@@ -361,33 +393,34 @@ export default function PurchasePage() {
                 unit: row[7] ?? "",
                 rate: row[8] ?? "",
                 qty: row[25] ?? "",
-                qcRequirement: wData[23] || row[28] || "", // From Warehouse Col X (index 23)
+                qcRequirement: wData[23] || row[28] || "", 
                 supplierInvoiceNo: row[10] ?? "",
                 supplierInvoiceDate: row[11] ?? "",
                 lrNo: row[12] ?? "",
                 lrDate: row[13] ?? "",
-                lrAmount: wData[4] || row[14] || "", // From Warehouse Col E or Accounts Col O
-                checklist: wData[6] || row[15] || "", // From Warehouse Col G
-                transportName: wData[7] || row[9] || "", // From Warehouse Col H
-                transportationCost: wData[8] || row[18] || "", // From Warehouse Col I
-                localConveyanceDispatch: wData[9] || row[19] || "", // From Warehouse Col J
-                localConveyanceDestination: wData[10] || row[20] || "", // From Warehouse Col K
-                lrDoc: wData[11] || row[21] || "", // From Warehouse Col L
+                lrAmount: wData[4] || row[14] || "", 
+                checklist: wData[6] || row[15] || "", 
+                transportName: wData[7] || row[9] || "", 
+                transportationCost: wData[8] || row[18] || "", 
+                localConveyanceDispatch: wData[9] || row[19] || "", 
+                localConveyanceDestination: wData[10] || row[20] || "", 
+                lrDoc: wData[11] || row[21] || "", 
                 invoiceType: row[22] ?? "",
-                invoiceDate: wData[2] || row[23] || "", // From Warehouse Col C (index 2)
-                invoiceDoc: wData[12] || row[22] || "", // From Warehouse Col M
-                weightSlip: wData[13] || "", // From Warehouse Col N
+                invoiceDate: wData[2] || row[23] || "", 
+                invoiceDoc: wData[12] || row[22] || "", 
+                weightSlip: wData[13] || "", 
                 invoiceNo: invoiceNo,
                 receivedQty: row[25] ?? "",
-                receivedItemImage: wData[18] || row[26] || "", // From Warehouse Col S
+                receivedItemImage: wData[18] || row[26] || "", 
                 srn: row[27] ?? "",
-                qcRequired: wData[23] || row[28] || "", // From Warehouse Col X (index 23)
-                billAttachment: wData[19] || row[29] || "", // From Warehouse Col T
-                hydraAmt: wData[14] || row[30] || "", // From Warehouse Col O
-                labourAmt: wData[15] || row[31] || "", // From Warehouse Col P
-                autoCharge: wData[16] || row[32] || "", // From Warehouse Col Q
+                qcRequired: wData[23] || row[28] || "", 
+                billAttachment: wData[19] || row[29] || "", 
+                hydraAmt: wData[14] || row[30] || "", 
+                labourAmt: wData[15] || row[31] || "", 
+                autoCharge: wData[16] || row[32] || "", 
                 remarks: row[33] ?? "",
-                expDate: wData[17] || row[34] || "", // From Warehouse Col R
+                warehouseLocation: indentMap.get(String(row[1] ?? "").trim()) || "",
+                expDate: wData[17] || row[34] || "", 
                 pkgFwd: wData[20] || row[99] || "", // From Warehouse Col U
                 gstPkgFwd: wData[21] || row[100] || "", // From Warehouse Col V
                 totalPkgFwd: wData[28] || row[102] || "", // From Warehouse Col AC
@@ -611,6 +644,22 @@ export default function PurchasePage() {
       ? purchaseData.filter(item => item.isPending)
       : historyData;
 
+    // Helper to normalize location strings for robust matching
+    // Helper to normalize location strings for robust matching
+    const normalizeLoc = (loc) => String(loc || "").toLowerCase().replace(/^by\s*/i, "").replace(/[^a-z0-9]/g, "").trim();
+
+    // Apply user location-based filtering
+    if (currentUser && currentUser.role !== "super_admin") {
+      const userLocations = currentUser.location || ["None"];
+      const isAllLocations = userLocations.some(l => l.toLowerCase() === "all");
+      if (!isAllLocations) {
+        baseData = baseData.filter(item => {
+          const itemLocNormalized = normalizeLoc(item.warehouseLocation);
+          return userLocations.some(l => normalizeLoc(l) === itemLocNormalized);
+        });
+      }
+    }
+
     let filtered = [...baseData];
 
     // 2. Apply search filter
@@ -652,7 +701,7 @@ export default function PurchasePage() {
     }
 
     return filtered;
-  }, [purchaseData, historyData, activeTab, searchTerm, statusFilter, vendorFilter]);
+  }, [purchaseData, historyData, activeTab, searchTerm, statusFilter, vendorFilter, currentUser]);
 
   const totalPages = useMemo(() => {
     return Math.ceil(filteredData.length / itemsPerPage);
