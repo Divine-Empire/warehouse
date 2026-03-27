@@ -325,10 +325,10 @@ export default function WarehousePage() {
                 totalQtyHistory: row.c[68] ? row.c[68].v : "",
                 totalBillAmount: row.c[69] ? row.c[69].v : "",
                 creName: row.c[106] ? row.c[106].v : "", // Column CD (index 81) - CRE Name
-                invoiceCreatedDate: row.c[63] ? row.c[63].v : "", // Column BL (index 63) - Invoice Created Date
+                invoiceCreatedDate: row.c[111] ? row.c[111].v : "", // Column DH (index 111) - Invoice date
 
                 planned5: row.c[62] ? row.c[62].v : "",
-                actual5: row.c[63] ? row.c[63].v : "",
+                actual5: row.c[111] ? row.c[111].v : "",
                 actual6: row.c[71] ? row.c[71] : "",
 
                 // Additional Warehouse columns from DISPATCH-DELIVERY to preserve state
