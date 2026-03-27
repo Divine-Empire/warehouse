@@ -11,6 +11,7 @@ interface User {
   role: "super_admin" | "admin" | "user"
   assignedSteps: string[]
   pageAccess: string[]
+  location: string[]
 }
 
 interface AuthContextType {
@@ -94,13 +95,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const rowRole = row.c[3]?.v || "user"
             const rowAssignedSteps = row.c[4]?.v || ""
             const rowPageAccess = row.c[6]?.v || ""
+            const rowLocation = row.c[7]?.v || ""
 
             // Check if username and password match
             if (rowUsername === username && rowPassword === password) {
               // Parse assigned steps from comma-separated string
-              const assignedSteps = rowAssignedSteps.split(",").map((step: string) => step.trim())
+              const assignedSteps = rowAssignedSteps.split(",").map((step: string) => step.trim()).filter(Boolean)
               // Parse page access from comma-separated string
-              const pageAccess = rowPageAccess.split(",").map((page: string) => page.trim())
+              const pageAccess = rowPageAccess.split(",").map((page: string) => page.trim()).filter(Boolean)
+              // Parse location from comma-separated string
+              const location = rowLocation ? String(rowLocation).split(",").map((loc: string) => loc.trim()).filter(Boolean) : []
 
               // Determine role - support super_admin, admin, user
               let userRole: "super_admin" | "admin" | "user" = "user"
@@ -114,6 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 role: userRole,
                 assignedSteps: assignedSteps.length > 0 ? assignedSteps : ["all"],
                 pageAccess: pageAccess.length > 0 ? pageAccess : ["all"],
+                location: location.length > 0 ? location : ["None"], // Default to "None" to prevent "All" access if empty
               }
 
               setUser(userData)
