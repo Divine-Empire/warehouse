@@ -35,7 +35,7 @@
     ".next/types/**/*.ts",
     "components/layout/sidebar.tsx",
     ".next/dev/types/**/*.ts",
-    "app/sales/page.jsx"
+    "app/dispatch/page.jsx"
   ],
   "exclude": [
     "node_modules"

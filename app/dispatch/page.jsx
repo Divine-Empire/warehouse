@@ -39,9 +39,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Eye, RefreshCw, Search, Settings, Edit, Save, X, FileText, CloudUpload, Trash2 } from "lucide-react";
+import { Eye, RefreshCw, Search, Settings, Edit, Save, X, FileText, CloudUpload, Trash2, MapPin } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import ProcessDialog from "@/components/process-dialog";
+import { LocationUpdateModal } from "./location-update-modal";
 
 // Column definitions for Pending tab (B to BJ) - Defined before component to avoid temporal dead zone
 const pendingColumns = [
@@ -109,6 +110,7 @@ export default function WarehousePage() {
   const [editedData, setEditedData] = useState({});
   const [editedFiles, setEditedFiles] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isLocationUpdateModalOpen, setIsLocationUpdateModalOpen] = useState(false);
 
   const [companyNameFilter, setCompanyNameFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -221,125 +223,129 @@ export default function WarehousePage() {
     setError(null);
 
     try {
-      const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
-      const response = await fetch(sheetUrl);
-      const text = await response.text();
+      // Use the authorized Apps Script proxy to bypass CORS/Auth issues
+      const fetchUrl = `${APPS_SCRIPT_URL}?sheet=${encodeURIComponent(SHEET_NAME)}&action=fetch`;
+      const response = await fetch(fetchUrl);
+      const result = await response.json();
 
-      const jsonStart = text.indexOf("{");
-      const jsonEnd = text.lastIndexOf("}") + 1;
-      const jsonData = text.substring(jsonStart, jsonEnd);
-
-      const data = JSON.parse(jsonData);
-
-      if (data && data.table && data.table.rows) {
+      if (result.success && Array.isArray(result.data)) {
         const ordersMap = new Map();
 
-        data.table.rows.slice(6).forEach((row, index) => {
-          if (row.c && row.c[105] && row.c[105].v) {
-            const dSrNumber = String(row.c[105].v).trim();
+        // Assuming headers are in rows 1-6, so we start processing from index 6 (7th row)
+        result.data.slice(6).forEach((row, index) => {
+          if (row && row[105]) { // D-Sr Number at index 105
+            const dSrNumber = String(row[105]).trim();
             if (!dSrNumber) return;
 
-            const actualRowIndex = index + 2;
-            const planned5 = row.c[62] ? row.c[62].v : null;
-            const actual6 = row.c[71] ? row.c[71].v : null;
+            const actualRowIndex = index + 7; // Accounting for slice(6)
+            const planned5 = row[62] || null; // Column BK
+            const actual6 = row[71] || null;  // Column BT
 
-            if (planned5 && !actual6) {
+            // Dispatch Pending logic: planned5 && !actual6
+            const hasPlanned5 = !!planned5 && String(planned5).trim() !== "" && String(planned5).trim() !== "-";
+            const noActual6 = !actual6 || String(actual6).trim() === "" || String(actual6).trim() === "-" || String(actual6).trim().toLowerCase() === "n/a";
+
+            if (hasPlanned5 && noActual6) {
               const order = {
                 rowIndex: actualRowIndex,
                 id: dSrNumber,
                 dSrNumber: dSrNumber,
-                timeStamp: row.c[0] ? row.c[0].v : "",
-                orderNo: row.c[1] ? row.c[1].v : "", // Column B - Order No
-                quotationNo: row.c[2] ? row.c[2].v : "", // Column C
-                companyName: row.c[3] ? row.c[3].v : "",
-                contactPersonName: row.c[4] ? row.c[4].v : "", // Fix field name to match column definition
-                contactNumber: row.c[5] ? row.c[5].v : "",
-                warehouseLocation: row.c[103] ? row.c[103].v : "",
-                billingAddress: row.c[6] ? row.c[6].v : "",
-                shippingAddress: row.c[7] ? row.c[7].v : "",
-                paymentMode: row.c[8] ? row.c[8].v : "",
-                paymentTerms: row.c[10] ? row.c[10].v : "",
-                qty: row.c[19] ? row.c[19].v : "", // Map to qty field for column definition
-                transportMode: row.c[12] ? row.c[12].v : "",
-                transportid: row.c[25] ? row.c[25].v : "",
-                freightType: row.c[11] ? row.c[11].v : "",
-                destination: row.c[13] ? row.c[13].v : "",
-                poNumber: row.c[14] ? row.c[14].v : "",
-                offer: row.c[17] ? row.c[17].v : "",
-                amount: row.c[20] ? Number.parseFloat(row.c[20].v) || 0 : 0,
-                invoiceNumber: row.c[65] ? row.c[65].v : "", // Column BO (invoice number)
-                // Keep existing fields for backward compatibility
-                contactPerson: row.c[4] ? row.c[4].v : "",
-                quantity: row.c[10] ? row.c[10].v : "",
-                totalQty: row.c[19] ? row.c[19].v : "",
-                quotationCopy: row.c[9] ? row.c[9].v : "",
-                dSrNumber: row.c[105] ? row.c[105].v : "",
-                fullRowData: row.c,
-                conveyedForRegistration: row.c[18] ? row.c[18].v : "",
-                approvedName: row.c[21] ? row.c[21].v : "",
-                calibrationCertRequired: row.c[22] ? row.c[22].v : "",
-                certificateCategory: row.c[23] ? row.c[23].v : "",
-                installationRequired: row.c[24] ? row.c[24].v : "",
-                ewayBillDetails: row.c[25] ? row.c[25].v : "",
-                ewayBillAttachment: row.c[26] ? row.c[26].v : "",
-                srnNumber: row.c[27] ? row.c[27].v : "",
-                srnNumberAttachment: row.c[28] ? row.c[28].v : "",
-                attachment: row.c[29] ? row.c[29].v : "",
-                itemName1: row.c[30] ? row.c[30].v : "",
-                quantity1: row.c[31] ? row.c[31].v : "",
-                itemName2: row.c[32] ? row.c[32].v : "",
-                quantity2: row.c[33] ? row.c[33].v : "",
-                itemName3: row.c[34] ? row.c[34].v : "",
-                quantity3: row.c[35] ? row.c[35].v : "",
-                itemName4: row.c[36] ? row.c[36].v : "",
-                quantity4: row.c[37] ? row.c[37].v : "",
-                itemName5: row.c[38] ? row.c[38].v : "",
-                quantity5: row.c[39] ? row.c[39].v : "",
-                itemName6: row.c[40] ? row.c[40].v : "",
-                quantity6: row.c[41] ? row.c[41].v : "",
-                itemName7: row.c[42] ? row.c[42].v : "",
-                quantity7: row.c[43] ? row.c[43].v : "",
-                itemName8: row.c[44] ? row.c[44].v : "",
-                quantity8: row.c[45] ? row.c[45].v : "",
-                itemName9: row.c[46] ? row.c[46].v : "",
-                quantity9: row.c[47] ? row.c[47].v : "",
-                itemName10: row.c[48] ? row.c[48].v : "",
-                quantity10: row.c[49] ? row.c[49].v : "",
-                itemName11: row.c[50] ? row.c[50].v : "",
-                quantity11: row.c[51] ? row.c[51].v : "",
-                itemName12: row.c[52] ? row.c[52].v : "",
-                quantity12: row.c[53] ? row.c[53].v : "",
-                itemName13: row.c[54] ? row.c[54].v : "",
-                quantity13: row.c[55] ? row.c[55].v : "",
-                itemName14: row.c[56] ? row.c[56].v : "",
-                quantity14: row.c[57] ? row.c[57].v : "",
+                timeStamp: row[0] || "",
+                orderNo: row[1] || "",
+                quotationNo: row[2] || "",
+                companyName: row[3] || "",
+                contactPersonName: row[4] || "",
+                contactNumber: row[5] || "",
+                warehouseLocation: row[103] || "",
+                billingAddress: row[6] || "",
+                shippingAddress: row[7] || "",
+                paymentMode: row[8] || "",
+                paymentTerms: row[10] || "",
+                qty: row[19] || "",
+                transportMode: row[12] || "",
+                transportid: row[25] || "",
+                freightType: row[11] || "",
+                destination: row[13] || "",
+                poNumber: row[14] || "",
+                offer: row[17] || "",
+                amount: Number.parseFloat(row[20]) || 0,
+                invoiceNumber: row[65] || "",
+                contactPerson: row[4] || "",
+                quantity: row[10] || "",
+                totalQty: row[19] || "",
+                quotationCopy: row[9] || "",
+                fullRowData: row,
+                conveyedForRegistration: row[18] || "",
+                approvedName: row[21] || "",
+                calibrationCertRequired: row[22] || "",
+                certificateCategory: row[23] || "",
+                installationRequired: row[24] || "",
+                ewayBillDetails: row[25] || "",
+                ewayBillAttachment: row[26] || "",
+                srnNumber: row[27] || "",
+                srnNumberAttachment: row[28] || "",
+                attachment: row[29] || "",
+                
+                // Item columns indices 30-57
+                itemName1: row[30] || "",
+                quantity1: row[31] || "",
+                itemName2: row[32] || "",
+                quantity2: row[33] || "",
+                itemName3: row[34] || "",
+                quantity3: row[35] || "",
+                itemName4: row[36] || "",
+                quantity4: row[37] || "",
+                itemName5: row[38] || "",
+                quantity5: row[39] || "",
+                itemName6: row[40] || "",
+                quantity6: row[41] || "",
+                itemName7: row[42] || "",
+                quantity7: row[43] || "",
+                itemName8: row[44] || "",
+                quantity8: row[45] || "",
+                itemName9: row[46] || "",
+                quantity9: row[47] || "",
+                itemName10: row[48] || "",
+                quantity10: row[49] || "",
+                itemName11: row[50] || "",
+                quantity11: row[51] || "",
+                itemName12: row[52] || "",
+                quantity12: row[53] || "",
+                itemName13: row[54] || "",
+                quantity13: row[55] || "",
+                itemName14: row[56] || "",
+                quantity14: row[57] || "",
 
-                itemQtyJson: row.c[58] ? row.c[58].v : null,
-                remarks: row.c[60] ? row.c[60].v : "",
-                quotationCopy2: row.c[15] ? row.c[15].v : "",
-                acceptanceCopy: row.c[16] ? row.c[16].v : "",
-                vehicleNo: row.c[26] ? row.c[26].v : "",
-                invoiceNumber: row.c[65] ? row.c[65].v : "",
-                invoiceUpload: row.c[66] ? row.c[66].v : "",
-                ewayBillUpload: row.c[67] ? row.c[67].v : "",
-                totalQtyHistory: row.c[68] ? row.c[68].v : "",
-                totalBillAmount: row.c[69] ? row.c[69].v : "",
-                creName: row.c[106] ? row.c[106].v : "", // Column CD (index 81) - CRE Name
-                invoiceCreatedDate: row.c[111] ? row.c[111].v : "", // Column DH (index 111) - Invoice date
+                itemQtyJson: row[58] || null,
+                remarks: row[60] || "",
+                quotationCopy2: row[15] || "",
+                acceptanceCopy: row[16] || "",
+                vehicleNo: row[26] || "",
+                invoiceNumber: row[65] || "",
+                invoiceUpload: row[66] || "",
+                ewayBillUpload: row[67] || "",
+                totalQtyHistory: row[68] || "",
+                totalBillAmount: row[69] || "",
+                creName: row[106] || "",
+                invoiceCreatedDate: row[111] || "",
 
-                planned5: row.c[62] ? row.c[62].v : "",
-                actual5: row.c[111] ? row.c[111].v : "",
-                actual6: row.c[71] ? row.c[71] : "",
+                planned5: planned5,
+                actual5: row[111] || "",
+                actual6: actual6,
 
-                // Additional Warehouse columns from DISPATCH-DELIVERY to preserve state
-                beforePhoto: row.c[73] ? row.c[73].v : "",      // BV
-                afterPhoto: row.c[74] ? row.c[74].v : "",       // BW
-                biltyUpload: row.c[75] ? row.c[75].v : "",      // BX
-                transporterName: row.c[76] ? row.c[76].v : "",   // BY
-                transporterContact: row.c[77] ? row.c[77].v : "",// BZ
-                biltyNumber: row.c[78] ? row.c[78].v : "",       // CA
-                totalCharges: row.c[79] ? row.c[79].v : "",      // CB
-                warehouseRemarks: row.c[80] ? row.c[80].v : "",  // CC
+                beforePhoto: row[73] || "",
+                afterPhoto: row[74] || "",
+                biltyUpload: row[75] || "",
+                transporterName: row[76] || "",
+                transporterContact: row[77] || "",
+                biltyNumber: row[78] || "",
+                totalCharges: row[79] || "",
+                warehouseRemarks: row[80] || "",
+                
+                // Serial Code Components from DI, DJ, DK (Indices 112, 113, 114)
+                serialNumbers: row[112] || "",
+                serialDates: row[113] || "",
+                serialLocations: row[114] || "",
               };
               ordersMap.set(dSrNumber, order);
             }
@@ -348,22 +354,14 @@ export default function WarehousePage() {
 
         const pendingOrders = Array.from(ordersMap.values());
 
-        const parseItemQtyJson = (jsonString) => {
-          if (!jsonString) return null;
-          try {
-            return JSON.parse(jsonString);
-          } catch (error) {
-            console.error("Error parsing JSON:", error);
-            return null;
-          }
-        };
-
         // Sort pending orders by Column BK date (planned5) - most recent first
         pendingOrders.sort((a, b) => {
           return parseFlexibleDate(b.planned5) - parseFlexibleDate(a.planned5);
         });
 
         setPendingOrders(pendingOrders);
+      } else {
+        throw new Error(result.message || "Failed to fetch data from script");
       }
     } catch (err) {
       console.error("Error fetching pending orders:", err);
@@ -379,77 +377,67 @@ export default function WarehousePage() {
     setError(null);
 
     try {
-      // Parse sheet JSON helper
-      const parseSheetJson = (txt) => {
-        const jsonStart = txt.indexOf("{");
-        const jsonEnd = txt.lastIndexOf("}") + 1;
-        const jsonData = txt.substring(jsonStart, jsonEnd);
-        return JSON.parse(jsonData);
-      };
+      // Fetch ONLY Warehouse sheet for history section via proxy to bypass CORS
+      const fetchUrl = `${APPS_SCRIPT_URL}?sheet=Warehouse&action=fetch`;
+      const whResponse = await fetch(fetchUrl);
+      const result = await whResponse.json();
 
-      // Fetch ONLY Warehouse sheet for history section as requested
-      const warehouseSheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Warehouse`;
-
-      const whResponse = await fetch(warehouseSheetUrl);
-      const whText = await whResponse.text();
-      const whData = parseSheetJson(whText);
-
-      if (whData && whData.table && whData.table.rows) {
+      if (result.success && Array.isArray(result.data)) {
         const ordersMap = new Map();
 
-        whData.table.rows.forEach((row, index) => {
-          if (row.c && row.c[1] && row.c[1].v) {
-            const dSrNumber = row.c[105] && row.c[105].v ? String(row.c[105].v).trim() : "";
+        result.data.forEach((row, index) => {
+          if (row && row[1]) { // Order No. at index 1
+            const dSrNumber = row[105] ? String(row[105]).trim() : "";
             const actualRowIndex = index + 1;
 
             const order = {
               rowIndex: actualRowIndex,
               id: dSrNumber || `WH-${index}`,
               dSrNumber: dSrNumber,
-              orderNo: row.c[1] ? String(row.c[1].v).trim() : "", // Column B (index 1)
-              quotationNo: row.c[2] ? row.c[2].v : "",           // Column C (index 2)
+              orderNo: row[1] ? String(row[1]).trim() : "", // Column B (index 1)
+              quotationNo: row[2] || "",           // Column C (index 2)
 
               // NEW MAPPINGS FOR WAREHOUSE SHEET
-              companyName: row.c[133] ? row.c[133].v : "",       // Column ED (index 133)
-              contactPersonName: row.c[4] ? row.c[4].v : "",     // Column E (index 4)
-              contactNumber: row.c[135] ? row.c[135].v : "",     // Column EF (index 135)
-              billingAddress: row.c[136] ? row.c[136].v : "",    // Column EG (index 136)
-              shippingAddress: row.c[137] ? row.c[137].v : "",   // Column EH (index 137)
+              companyName: row[133] || "",       // Column ED (index 133)
+              contactPersonName: row[4] || "",     // Column E (index 4)
+              contactNumber: row[135] || "",     // Column EF (index 135)
+              billingAddress: row[136] || "",    // Column EG (index 136)
+              shippingAddress: row[137] || "",   // Column EH (index 137)
 
               // Items (L/M, N/O, P/Q)
-              itemName1: row.c[11] ? row.c[11].v : "",           // Column L
-              quantity1: row.c[12] ? row.c[12].v : "",           // Column M
-              itemName2: row.c[13] ? row.c[13].v : "",           // Column N
-              quantity2: row.c[14] ? row.c[14].v : "",           // Column O
-              itemName3: row.c[15] ? row.c[15].v : "",           // Column P
-              quantity3: row.c[16] ? row.c[16].v : "",           // Column Q
+              itemName1: row[11] || "",           // Column L
+              quantity1: row[12] || "",           // Column M
+              itemName2: row[13] || "",           // Column N
+              quantity2: row[14] || "",           // Column O
+              itemName3: row[15] || "",           // Column P
+              quantity3: row[16] || "",           // Column Q
 
-              invoiceNumber: row.c[138] ? row.c[138].v : "",     // Column EI (index 138)
-              invoiceCreatedDate: row.c[139] ? row.c[139].v : "", // Assuming EJ (index 139) for now
-              invoiceUpload: row.c[140] ? row.c[140].v : "",      // Assuming EK (index 140) for now
-              quotationCopy: row.c[141] ? row.c[141].v : "",      // Assuming EL (index 141) for now
-              creName: row.c[142] ? row.c[142].v : "",           // Column EM (index 142)
-              transportMode: row.c[143] ? row.c[143].v : "",     // Assuming EN (index 143) for now
+              invoiceNumber: row[138] || "",     // Column EI (index 138)
+              invoiceCreatedDate: row[139] || "", // Assuming EJ (index 139) for now
+              invoiceUpload: row[140] || "",      // Assuming EK (index 140) for now
+              quotationCopy: row[141] || "",      // Assuming EL (index 141) for now
+              creName: row[142] || "",           // Column EM (index 142)
+              transportMode: row[143] || "",     // Assuming EN (index 143) for now
 
               // Processed info
-              dispatchStatus: row.c[131] ? row.c[131].v : "okay", // Column EB (index 131)
-              notOkReason: row.c[132] ? row.c[132].v : "",        // Column EC (index 132)
+              dispatchStatus: row[131] || "okay", // Column EB (index 131)
+              notOkReason: row[132] || "",        // Column EC (index 132)
 
               // Photos and transporter info from Warehouse sheet (first columns)
-              beforePhoto: row.c[3] ? row.c[3].v : "",           // Column D
-              afterPhoto: row.c[4] ? row.c[4].v : "",            // Column E
-              biltyUpload: row.c[5] ? row.c[5].v : "",           // Column F
-              transporterName: row.c[6] ? row.c[6].v : "",      // Column G
-              warehouseLocation: row.c[103] ? row.c[103].v : "", // Column CZ (index 103)
-              transporterContact: row.c[7] ? row.c[7].v : "",   // Column H
-              biltyNumber: row.c[8] ? row.c[8].v : "",          // Column I
-              totalCharges: row.c[9] ? row.c[9].v : "",         // Column J
-              warehouseRemarks: row.c[10] ? row.c[10].v : "",    // Column K
+              beforePhoto: row[3] || "",           // Column D
+              afterPhoto: row[4] || "",            // Column E
+              biltyUpload: row[5] || "",           // Column F
+              transporterName: row[6] || "",      // Column G
+              warehouseLocation: row[103] || "", // Column CZ (index 103)
+              transporterContact: row[7] || "",   // Column H
+              biltyNumber: row[8] || "",          // Column I
+              totalCharges: row[9] || "",         // Column J
+              warehouseRemarks: row[10] || "",    // Column K
 
               // Timestamp for sorting
-              planned5: row.c[0] ? row.c[0].v : "",             // Column A (TimeStamp)
+              planned5: row[0] || "",             // Column A (TimeStamp)
               warehouseData: {
-                processedAt: row.c[0] ? row.c[0].v : "",
+                processedAt: row[0] || "",
                 processedBy: "Warehouse Team",
               }
             };
@@ -662,6 +650,9 @@ export default function WarehousePage() {
         dispatchStatus,
         notOkReason,
         itemQuantities,
+        serialNumbers,   // Included from dialog
+        serialDates,     // Included from dialog
+        serialLocations, // Included from dialog
         fileUrls, // Pre-uploaded file URLs from the dialog
       } = dialogData;
 
@@ -827,7 +818,8 @@ export default function WarehousePage() {
       formData2.append("totalItems", allItems.length.toString());
 
       // Prepare Warehouse sheet data with fixed columns EB (index 131) and EC (index 132)
-      const warehouseRowData = new Array(133).fill("");
+      // and Serial components at EQ (146), ER (147), ES (148)
+      const warehouseRowData = new Array(149).fill("");
       warehouseRowData[0] = formattedDate; // 1. Time Stamp
       warehouseRowData[1] = order.orderNo; // 2. Order No.
       warehouseRowData[2] = order.quotationNo; // 3. Quotation No.
@@ -862,7 +854,30 @@ export default function WarehousePage() {
       // Preserve existing if not provided
       warehouseRowData[131] = dispatchStatus || order.dispatchStatus || "okay";
       warehouseRowData[132] = dispatchStatus === "notokay" ? notOkReason : (order.notOkReason || "");
-      // Index 133 (ED) and 134 (EE) are left empty
+      
+      // Handle S-Code splitting for Warehouse columns EQ, ER, ES
+      let finalSNs = [];
+      let finalDates = [];
+      let finalLocs = [];
+
+      if (dialogData.itemSCodes && Array.isArray(dialogData.itemSCodes)) {
+        dialogData.itemSCodes.forEach(code => {
+          if (!code) {
+            finalSNs.push("");
+            finalDates.push("");
+            finalLocs.push("");
+            return;
+          }
+          const parts = code.split("-");
+          finalSNs.push(parts[0] || "");
+          finalDates.push(parts[1] || "");
+          finalLocs.push(parts[2] || "");
+        });
+      }
+
+      warehouseRowData[146] = finalSNs.length > 0 ? finalSNs.join(", ") : (serialNumbers || order.serialNumbers || ""); // EQ
+      warehouseRowData[147] = finalDates.length > 0 ? finalDates.join(", ") : (serialDates || order.serialDates || "");     // ER
+      warehouseRowData[148] = finalLocs.length > 0 ? finalLocs.join(", ") : (serialLocations || order.serialLocations || ""); // ES
 
       formData2.append("rowData", JSON.stringify(warehouseRowData));
 
@@ -1780,16 +1795,6 @@ export default function WarehousePage() {
     setViewDialogOpen(true);
   };
 
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-64">
-          <RefreshCw className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading orders from Google Sheets...</span>
-        </div>
-      </MainLayout>
-    );
-  }
 
   if (error) {
     return (
@@ -1841,10 +1846,19 @@ export default function WarehousePage() {
               </p>
             )}
           </div>
-          <Button onClick={handleRefresh} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setIsLocationUpdateModalOpen(true)} 
+              className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-md transition-all active:scale-95"
+            >
+              <MapPin className="h-4 w-4 mr-2" />
+              Location Update
+            </Button>
+            <Button onClick={handleRefresh} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         {/* Search and Filter Controls */}
@@ -1979,34 +1993,8 @@ export default function WarehousePage() {
                         style={{ maxHeight: "500px" }}
                       >
                         <Table>
-                          <TableBody>
-                            {filteredPendingOrders.map((order) => (
-                              <TableRow
-                                key={order.id}
-                                className="hover:bg-gray-50"
-                              >
-                                {pendingColumns
-                                  .filter(
-                                    (col) => visiblePendingColumns[col.key]
-                                  )
-                                  .map((column) => (
-                                    <TableCell
-                                      key={column.key}
-                                      className="border-b px-4 py-3 align-top"
-                                      style={{
-                                        width: getColumnWidth(column.key),
-                                        minWidth: getColumnWidth(column.key),
-                                        maxWidth: getColumnWidth(column.key),
-                                      }}
-                                    >
-                                      <div className="break-words whitespace-normal leading-relaxed">
-                                        {renderCellContent(order, column.key)}
-                                      </div>
-                                    </TableCell>
-                                  ))}
-                              </TableRow>
-                            ))}
-                            {filteredPendingOrders.length === 0 && (
+                         <TableBody>
+                            {loadingPending ? (
                               <TableRow>
                                 <TableCell
                                   colSpan={
@@ -2014,13 +2002,62 @@ export default function WarehousePage() {
                                       (col) => visiblePendingColumns[col.key]
                                     ).length
                                   }
-                                  className="text-center text-muted-foreground h-32"
+                                  className="h-64 text-center"
                                 >
-                                  {searchTerm
-                                    ? "No orders match your search criteria"
-                                    : "No pending orders found"}
+                                  <div className="flex flex-col items-center justify-center space-y-3">
+                                    <RefreshCw className="h-10 w-10 animate-spin text-violet-600" />
+                                    <div className="flex flex-col items-center">
+                                      <p className="text-base font-medium text-gray-900">Fetching records...</p>
+                                      <p className="text-xs text-gray-500">Connecting to Google Sheets</p>
+                                    </div>
+                                  </div>
                                 </TableCell>
                               </TableRow>
+                            ) : (
+                              <>
+                                {filteredPendingOrders.map((order) => (
+                                  <TableRow
+                                    key={order.id}
+                                    className="hover:bg-gray-50"
+                                  >
+                                    {pendingColumns
+                                      .filter(
+                                        (col) => visiblePendingColumns[col.key]
+                                      )
+                                      .map((column) => (
+                                        <TableCell
+                                          key={column.key}
+                                          className="border-b px-4 py-3 align-top"
+                                          style={{
+                                            width: getColumnWidth(column.key),
+                                            minWidth: getColumnWidth(column.key),
+                                            maxWidth: getColumnWidth(column.key),
+                                          }}
+                                        >
+                                          <div className="break-words whitespace-normal leading-relaxed text-xs">
+                                            {renderCellContent(order, column.key)}
+                                          </div>
+                                        </TableCell>
+                                      ))}
+                                  </TableRow>
+                                ))}
+                                {filteredPendingOrders.length === 0 && (
+                                  <TableRow>
+                                    <TableCell
+                                      colSpan={
+                                        pendingColumns.filter(
+                                          (col) => visiblePendingColumns[col.key]
+                                        ).length
+                                      }
+                                      className="text-center text-muted-foreground h-32"
+                                    >
+                                      {searchTerm
+                                        ? "No orders match your search criteria"
+                                        : "No pending orders found"}
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+                              </>
                             )}
                           </TableBody>
                         </Table>
@@ -2129,41 +2166,7 @@ export default function WarehousePage() {
                       >
                         <Table>
                           <TableBody>
-                            {filteredHistoryOrders.map((order) => (
-                              <TableRow
-                                key={order.id}
-                                className={
-                                  order.dispatchStatus?.toLowerCase() === "not okay" ||
-                                    order.dispatchStatus?.toLowerCase() === "notokay"
-                                    ? "bg-orange-100 hover:bg-orange-200 border-orange-200"
-                                    : "hover:bg-gray-50"
-                                }
-                              >
-                                {historyColumns
-                                  .filter(
-                                    (col) => visibleHistoryColumns[col.key]
-                                  )
-                                  .map((column) => (
-                                    <TableCell
-                                      key={column.key}
-                                      className="border-b px-4 py-3 align-top"
-                                      style={{
-                                        width: getColumnWidth(column.key),
-                                        minWidth: getColumnWidth(column.key),
-                                        maxWidth: getColumnWidth(column.key),
-                                      }}
-                                    >
-                                      <div className="break-words whitespace-normal leading-relaxed">
-                                        {renderHistoryCellContent(
-                                          order,
-                                          column.key
-                                        )}
-                                      </div>
-                                    </TableCell>
-                                  ))}
-                              </TableRow>
-                            ))}
-                            {filteredHistoryOrders.length === 0 && (
+                            {loadingHistory ? (
                               <TableRow>
                                 <TableCell
                                   colSpan={
@@ -2171,13 +2174,70 @@ export default function WarehousePage() {
                                       (col) => visibleHistoryColumns[col.key]
                                     ).length
                                   }
-                                  className="text-center text-muted-foreground h-32"
+                                  className="h-64 text-center"
                                 >
-                                  {searchTerm
-                                    ? "No orders match your search criteria"
-                                    : "No history orders found"}
+                                  <div className="flex flex-col items-center justify-center space-y-3">
+                                    <RefreshCw className="h-10 w-10 animate-spin text-indigo-600" />
+                                    <div className="flex flex-col items-center">
+                                      <p className="text-base font-medium text-gray-900">Loading history...</p>
+                                      <p className="text-xs text-gray-500">Retrieving past operations</p>
+                                    </div>
+                                  </div>
                                 </TableCell>
                               </TableRow>
+                            ) : (
+                              <>
+                                {filteredHistoryOrders.map((order) => (
+                                  <TableRow
+                                    key={order.id}
+                                    className={
+                                      order.dispatchStatus?.toLowerCase() === "not okay" ||
+                                        order.dispatchStatus?.toLowerCase() === "notokay"
+                                        ? "bg-orange-100 hover:bg-orange-200 border-orange-200"
+                                        : "hover:bg-gray-50"
+                                    }
+                                  >
+                                    {historyColumns
+                                      .filter(
+                                        (col) => visibleHistoryColumns[col.key]
+                                      )
+                                      .map((column) => (
+                                        <TableCell
+                                          key={column.key}
+                                          className="border-b px-4 py-3 align-top"
+                                          style={{
+                                            width: getColumnWidth(column.key),
+                                            minWidth: getColumnWidth(column.key),
+                                            maxWidth: getColumnWidth(column.key),
+                                          }}
+                                        >
+                                          <div className="break-words whitespace-normal leading-relaxed text-xs">
+                                            {renderHistoryCellContent(
+                                              order,
+                                              column.key
+                                            )}
+                                          </div>
+                                        </TableCell>
+                                      ))}
+                                  </TableRow>
+                                ))}
+                                {filteredHistoryOrders.length === 0 && (
+                                  <TableRow>
+                                    <TableCell
+                                      colSpan={
+                                        historyColumns.filter(
+                                          (col) => visibleHistoryColumns[col.key]
+                                        ).length
+                                      }
+                                      className="text-center text-muted-foreground h-32"
+                                    >
+                                      {searchTerm
+                                        ? "No orders match your search criteria"
+                                        : "No history orders found"}
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+                              </>
                             )}
                           </TableBody>
                         </Table>
@@ -2522,6 +2582,12 @@ export default function WarehousePage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      <LocationUpdateModal
+        isOpen={isLocationUpdateModalOpen}
+        onClose={() => setIsLocationUpdateModalOpen(false)}
+        onRefreshData={handleRefresh}
+      />
     </MainLayout>
   );
 }

@@ -16,8 +16,12 @@ import {
   CheckCircle2,
   FileEdit,
   ArrowUpDown,
-  MoreHorizontal
+  MoreHorizontal,
+  Camera,
+  QrCode,
+  X
 } from "lucide-react";
+import { Html5QrcodeScanner } from "html5-qrcode";
 import { format, parse } from "date-fns";
 import { MainLayout } from "@/components/layout/main-layout";
 import { useAuth } from "@/components/auth-provider";
@@ -50,9 +54,12 @@ export default function PurchaseLocationUpdatePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [extraRows, setExtraRows] = useState([]); // Duplicated rows for splitting
   const [stockItems, setStockItems] = useState([]); // From Dropdown Col-E
+  const [selectedRows, setSelectedRows] = useState({});
   const [stockTransferRows, setStockTransferRows] = useState([
     { id: Date.now(), fromLoc: "", item: "", qty: "", toLoc: "", itemTo: "", qtyTo: "" }
   ]);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannerTarget, setScannerTarget] = useState(null); // { id, field }
 
   const SHEET_ID = "1_KAokqi4ZxBGj2xA7TOdUMj6H44szaf4CQMI_OINdAo";
   // Unified URL used for both READ and WRITE operations
@@ -324,8 +331,6 @@ export default function PurchaseLocationUpdatePage() {
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  const [selectedRows, setSelectedRows] = useState({});
   const toggleRow = (id, checked) => {
     setSelectedRows(prev => ({
       ...prev,
@@ -396,6 +401,47 @@ export default function PurchaseLocationUpdatePage() {
     }));
   };
 
+  // Scanner Logic
+  useEffect(() => {
+    let scanner = null;
+    if (isScannerOpen) {
+      const timer = setTimeout(() => {
+        const scannerElement = document.getElementById("qr-reader");
+        if (!scannerElement) return;
+
+        scanner = new Html5QrcodeScanner(
+          "qr-reader",
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          false
+        );
+
+        const onScanSuccess = (decodedText) => {
+          if (scannerTarget) {
+            handleStockEdit(scannerTarget.id, scannerTarget.field, decodedText);
+            setIsScannerOpen(false);
+            setScannerTarget(null);
+          }
+          if (scanner) {
+            scanner.clear().catch(e => console.error("Error clearing scanner:", e));
+          }
+        };
+
+        scanner.render(onScanSuccess, (err) => { });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+    return () => {
+      if (scanner) {
+        scanner.clear().catch(e => console.error("Error clearing scanner on cleanup:", e));
+      }
+    };
+  }, [isScannerOpen, scannerTarget]);
+
+  const openScanner = (id, field) => {
+    setScannerTarget({ id, field });
+    setIsScannerOpen(true);
+  };
+
   const itemRecords = useMemo(() => {
     if (!selectedItemName) return [];
     const originals = uniqueItemsGrouped[selectedItemName] || [];
@@ -410,8 +456,8 @@ export default function PurchaseLocationUpdatePage() {
       return;
     }
 
-    // Basic validation for "Received" status
-    if (selectedStatus === "Dispatch") {
+    // Basic validation for "Receive" status
+    if (selectedStatus === "Receive") {
       const invalid = selectedIds.some(id => !modalEdits[id]?.receivedLocation || !modalEdits[id]?.qty);
       if (invalid) {
         alert("Please fill all required fields (Location and Quantity) for all selected items.");
@@ -703,16 +749,16 @@ export default function PurchaseLocationUpdatePage() {
                 <div className="p-8 flex flex-col items-center justify-center gap-6">
                   <div className="grid grid-cols-2 gap-4 w-full max-w-md">
                     <div
-                      className={`p-6 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center gap-3 ${selectedStatus === "Dispatch" ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-100 hover:border-blue-200 hover:bg-blue-50/30"}`}
+                      className={`p-6 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center gap-3 ${selectedStatus === "Receive" ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-100 hover:border-blue-200 hover:bg-blue-50/30"}`}
                       onClick={() => {
-                        setSelectedStatus("Dispatch");
+                        setSelectedStatus("Receive");
                         setModalStep("search");
                       }}
                     >
                       <div className="bg-blue-100 p-3 rounded-full text-blue-600">
                         <Box className="h-6 w-6" />
                       </div>
-                      <span className="font-semibold text-gray-700">Dispatch</span>
+                      <span className="font-semibold text-gray-700">Receive</span>
                     </div>
                     <div
                       className={`p-6 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center gap-3 ${selectedStatus === "Stock Transfer" ? "border-purple-500 bg-purple-50 shadow-md" : "border-gray-100 hover:border-purple-200 hover:bg-purple-50/30"}`}
@@ -792,14 +838,23 @@ export default function PurchaseLocationUpdatePage() {
                         {stockTransferRows.map((row) => (
                           <tr key={row.id}>
                             <td className="p-2 w-[16%]">
-                              <select
-                                className="w-full h-9 text-xs border border-gray-200 rounded px-1 outline-none focus:border-blue-400"
-                                value={row.fromLoc}
-                                onChange={(e) => handleStockEdit(row.id, "fromLoc", e.target.value)}
-                              >
-                                <option value="">Select</option>
-                                {locations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
-                              </select>
+                              <div className="flex items-center gap-1">
+                                <input
+                                  list="purchase-locations"
+                                  className="w-full h-9 text-[11px] border border-gray-200 rounded px-2 outline-none focus:border-blue-400"
+                                  value={row.fromLoc}
+                                  placeholder="Loc..."
+                                  onChange={(e) => handleStockEdit(row.id, "fromLoc", e.target.value)}
+                                />
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 text-blue-600 hover:bg-blue-50 shrink-0"
+                                  onClick={() => openScanner(row.id, "fromLoc")}
+                                >
+                                  <Camera className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </td>
                             <td className="p-2 w-[22%]">
                               <input
@@ -822,14 +877,23 @@ export default function PurchaseLocationUpdatePage() {
                               />
                             </td>
                             <td className="p-2 w-[16%]">
-                              <select
-                                className="w-full h-9 text-xs border border-gray-200 rounded px-1 outline-none focus:border-blue-400"
-                                value={row.toLoc}
-                                onChange={(e) => handleStockEdit(row.id, "toLoc", e.target.value)}
-                              >
-                                <option value="">Select</option>
-                                {locations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
-                              </select>
+                              <div className="flex items-center gap-1">
+                                <input
+                                  list="purchase-locations"
+                                  className="w-full h-9 text-[11px] border border-gray-200 rounded px-2 outline-none focus:border-blue-400"
+                                  value={row.toLoc}
+                                  placeholder="Loc..."
+                                  onChange={(e) => handleStockEdit(row.id, "toLoc", e.target.value)}
+                                />
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 text-purple-600 hover:bg-purple-50 shrink-0"
+                                  onClick={() => openScanner(row.id, "toLoc")}
+                                >
+                                  <Camera className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </td>
                             <td className="p-2 w-[22%]">
                               <input
@@ -948,27 +1012,69 @@ export default function PurchaseLocationUpdatePage() {
                   if (modalStep === "search" || modalStep === "stockTransfer") setModalStep("status");
                   else if (modalStep === "selection") setModalStep("search");
                 }}
-                disabled={modalStep === "status"}
+                disabled={modalStep === "status" || loading || isSubmitting}
               >
+                <ChevronLeft className="h-4 w-4 mr-1" />
                 Back
               </Button>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={resetModal}>Cancel</Button>
+
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="sm" onClick={resetModal} disabled={isSubmitting}>
+                  Cancel
+                </Button>
                 {(modalStep === "selection" || modalStep === "stockTransfer") && (
-                  <Button size="sm" onClick={modalStep === "selection" ? handleSubmitUpdate : handleSubmitStockTransfer} disabled={isSubmitting}>
+                  <Button
+                    size="sm"
+                    onClick={modalStep === "selection" ? handleSubmitUpdate : handleSubmitStockTransfer}
+                    disabled={isSubmitting || loading}
+                    className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px]"
+                  >
                     {isSubmitting ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         Processing...
-                      </div>
-                    ) : "Submit Selection"}
+                      </>
+                    ) : (
+                      "Submit Selection"
+                    )}
                   </Button>
                 )}
               </div>
             </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        <datalist id="purchase-locations">
+          {locations.map(loc => <option key={loc} value={loc} />)}
+        </datalist>
+
+        {isScannerOpen && (
+          <div className="fixed inset-0 z-[100] bg-black/80 flex flex-col items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-sm relative">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="absolute right-4 top-4"
+                onClick={() => setIsScannerOpen(false)}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+              <div className="mb-6 text-center">
+                <h3 className="text-lg font-bold text-gray-800">Scan Location</h3>
+                <p className="text-sm text-gray-500">Position the barcode inside the frame</p>
+              </div>
+              <div id="qr-reader" className="overflow-hidden rounded-xl border-4 border-blue-100 mb-6 shadow-2xl"></div>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => setIsScannerOpen(false)}
+              >
+                Cancel Scan
+              </Button>
+            </div>
+          </div>
+        )}
     </MainLayout>
   );
 }

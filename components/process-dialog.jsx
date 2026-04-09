@@ -20,6 +20,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 
 export default function ProcessDialog({
     isOpen,
@@ -36,15 +44,19 @@ export default function ProcessDialog({
     const [beforePhotos, setBeforePhotos] = useState([]);
     const [afterPhotos, setAfterPhotos] = useState([]);
     const [biltyUploads, setBiltyUploads] = useState([]);
+    const [itemQuantities, setItemQuantities] = useState({});
+    const [itemSCodes, setItemSCodes] = useState([]);
+    const [serialNumbers, setSerialNumbers] = useState("");
+    const [serialDates, setSerialDates] = useState("");
+    const [serialLocations, setSerialLocations] = useState("");
+    const [dispatchStatus, setDispatchStatus] = useState("okay");
+    const [notOkReason, setNotOkReason] = useState("");
     const [transporterName, setTransporterName] = useState("");
     const [transporterContact, setTransporterContact] = useState("");
     const [biltyNumber, setBiltyNumber] = useState("");
     const [totalCharges, setTotalCharges] = useState("");
     const [warehouseRemarks, setWarehouseRemarks] = useState("");
-    const [dispatchStatus, setDispatchStatus] = useState("okay");
-    const [notOkReason, setNotOkReason] = useState("");
     const [driverCharges, setDriverCharges] = useState("");
-    const [itemQuantities, setItemQuantities] = useState({});
     const [drivers, setDrivers] = useState([]); // Dynamic drivers from CRE sheet
 
     // Upload progress state
@@ -52,9 +64,12 @@ export default function ProcessDialog({
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadStatus, setUploadStatus] = useState("");
 
-    // Google Apps Script URL for file uploads
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyzW8-RldYx917QpAfO4kY-T8_ntg__T0sbr7Yup2ZTVb1FC5H1g6TYuJgAU6wTquVM/exec";
+    const IMS_URL = "https://script.google.com/macros/s/AKfycbxkB72Tu0iDEEyQ5cdkYUTdJq7Ifj80hgqbXpwc9WnF3ruWs1Yppe3Z1TJce4yr9Gg/exec";
     const DRIVE_FOLDER_ID = "1ZGfbiQHFnVdMyoLv5s8y3gVTIlnQzW2e";
+
+    const [imsLookup, setImsLookup] = useState({});
+    const [isFetchingIms, setIsFetchingIms] = useState(false);
 
     // Reset form when dialog opens with new order
     useEffect(() => {
@@ -70,14 +85,19 @@ export default function ProcessDialog({
             setDispatchStatus("okay");
             setNotOkReason("");
             setDriverCharges("");
+            setSerialNumbers(selectedOrder.serialNumbers || "");
+            setSerialDates(selectedOrder.serialDates || "");
+            setSerialLocations(selectedOrder.serialLocations || "");
 
-            // Initialize item quantities
+            // Initialize item quantities and S-Codes
             const initialQuantities = {};
+            const tempAllItems = [];
 
             // Process column items (1 to 14)
             for (let i = 1; i <= 14; i++) {
                 if (selectedOrder[`itemName${i}`] || selectedOrder[`quantity${i}`]) {
                     initialQuantities[`column-${i}`] = selectedOrder[`quantity${i}`] || "0";
+                    tempAllItems.push({ id: `column-${i}` });
                 }
             }
 
@@ -85,7 +105,6 @@ export default function ProcessDialog({
             try {
                 if (selectedOrder.itemQtyJson) {
                     let jsonItems = [];
-
                     if (typeof selectedOrder.itemQtyJson === "string" &&
                         selectedOrder.itemQtyJson.trim() !== "" &&
                         selectedOrder.itemQtyJson !== "Item/Qty" &&
@@ -98,6 +117,7 @@ export default function ProcessDialog({
                     jsonItems.forEach((item, idx) => {
                         if (item.name || item.quantity) {
                             initialQuantities[`json-${idx}`] = item.quantity || "0";
+                            tempAllItems.push({ id: `json-${idx}` });
                         }
                     });
                 }
@@ -106,8 +126,68 @@ export default function ProcessDialog({
             }
 
             setItemQuantities(initialQuantities);
+
+            // Initialize S-Codes
+            const cleanSplit = (str) => {
+                if (!str) return [];
+                const cleaned = String(str).replace(/[\[\]]/g, "");
+                return cleaned.split(",").map(s => s.trim());
+            };
+
+            const sns = cleanSplit(selectedOrder.serialNumbers || "");
+            const dates = cleanSplit(selectedOrder.serialDates || "");
+            const locs = cleanSplit(selectedOrder.serialLocations || "");
+            
+            const initialSCodes = tempAllItems.map((_, i) => {
+                const sn = sns[i] || "";
+                const dt = dates[i] || "";
+                const lc = locs[i] || "";
+                if (!sn && !dt && !lc) return "";
+                return `${sn}${dt ? "-" + dt : ""}${lc ? "-" + lc : ""}`;
+            });
+            setItemSCodes(initialSCodes);
+            
+            // Fetch IMS data when dialog opens
+            fetchImsData();
         }
     }, [selectedOrder]);
+
+    const fetchImsData = async () => {
+        try {
+            setIsFetchingIms(true);
+            const response = await fetch(`${IMS_URL}?action=fetch&sheet=IMS`);
+            const result = await response.json();
+            
+            if (result.success && result.data) {
+                const lookup = {};
+                // Starting from index 1 to skip headers
+                result.data.slice(1).forEach(row => {
+                    const itemName = row[3] ? String(row[3]).trim() : ""; // Col D (index 3)
+                    if (itemName) {
+                        const snStr = row[76] || ""; // BY
+                        const dtStr = row[77] || ""; // BZ
+                        const lcStr = row[78] || ""; // CA
+                        
+                        const sns = String(snStr).split(",").map(s => s.trim());
+                        const dts = String(dtStr).split(",").map(d => d.trim());
+                        const lcs = String(lcStr).split(",").map(l => l.trim());
+                        
+                        const options = sns.map((sn, i) => {
+                            if (!sn && !dts[i] && !lcs[i]) return null;
+                            return `${sn}${dts[i] ? "-" + dts[i] : ""}${lcs[i] ? "-" + lcs[i] : ""}`;
+                        }).filter(Boolean);
+                        
+                        lookup[itemName] = options;
+                    }
+                });
+                setImsLookup(lookup);
+            }
+        } catch (error) {
+            console.error("Error fetching IMS data:", error);
+        } finally {
+            setIsFetchingIms(false);
+        }
+    };
 
     // Fetch drivers from CRE sheet (Col I, index 8)
     const fetchDrivers = useCallback(async () => {
@@ -368,6 +448,11 @@ export default function ProcessDialog({
                 notOkReason,
                 driverCharges,
                 itemQuantities,
+                // Include serial components
+                serialNumbers: itemSCodes.join(", "), // Pass joined S-Codes as serialNumbers
+                serialDates: "", // Clear components as we now use concatenated S-Codes
+                serialLocations: "",
+                itemSCodes, // Also pass the raw array
                 // Include uploaded file URLs
                 fileUrls,
             });
@@ -460,51 +545,66 @@ export default function ProcessDialog({
             );
         }
 
-        return (
-            <>
-                <div className="space-y-3 max-h-80 overflow-y-auto p-1 custom-scrollbar">
-                    {allItems.map((item) => {
-                        const currentQuantity =
-                            itemQuantities[item.id] !== undefined
-                                ? itemQuantities[item.id]
-                                : item.quantity || "";
+        // Helper to parse comma-separated serial data and remove brackets if present
+        const cleanSplit = (str) => {
+            if (!str) return [];
+            // Remove literal [ and ] if they wrap the entire string or items
+            const cleaned = String(str).replace(/[\[\]]/g, "");
+            return cleaned.split(",").map(s => s.trim());
+        };
 
-                        return (
-                            <div
-                                key={item.id}
-                                className="grid grid-cols-2 gap-3 border p-3 rounded-lg bg-white hover:border-violet-200 transition-all shadow-sm"
-                            >
-                                <div className="space-y-1">
-                                    <div className="flex items-center justify-between">
-                                        <Label className="text-sm font-medium text-slate-600">
-                                            Item {item.index}
-                                        </Label>
-                                        <div className="flex items-center gap-2">
+        const snArray = cleanSplit(serialNumbers);
+        const dateArray = cleanSplit(serialDates);
+        const locArray = cleanSplit(serialLocations);
+
+        // Function to get paired S-Code for an item index
+        const getSCode = (idx) => {
+            const sn = snArray[idx] || "";
+            const date = dateArray[idx] || "";
+            const loc = locArray[idx] || "";
+            if (!sn && !date && !loc) return "-";
+            return `${sn}${date ? "-" + date : ""}${loc ? "-" + loc : ""}`;
+        };
+
+        return (
+            <div className="border rounded-xl overflow-hidden bg-white shadow-sm">
+                <Table>
+                    <TableHeader className="bg-slate-50/80">
+                        <TableRow className="hover:bg-transparent border-b">
+                            <TableHead className="w-[10%] text-center font-bold text-slate-600">No.</TableHead>
+                            <TableHead className="w-[45%] font-bold text-slate-600">Item Name</TableHead>
+                            <TableHead className="w-[15%] text-center font-bold text-slate-600">Qty</TableHead>
+                            <TableHead className="w-[30%] font-bold text-slate-600">S-Code</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {allItems.map((item, idx) => {
+                            const currentQuantity =
+                                itemQuantities[item.id] !== undefined
+                                    ? itemQuantities[item.id]
+                                    : item.quantity || "";
+
+                            return (
+                                <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors border-b last:border-0">
+                                    <TableCell className="text-center font-medium text-slate-400">
+                                        {item.index}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col gap-1">
+                                            <span className="font-semibold text-slate-800">{item.name}</span>
                                             {item.type === "json" && (
-                                                <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase">
-                                                    JSON
+                                                <span className="text-[9px] font-bold text-blue-500 bg-blue-50 w-fit px-1 rounded border border-blue-100 uppercase">
+                                                    EXTENDED
                                                 </span>
                                             )}
                                         </div>
-                                    </div>
-                                    <Input
-                                        value={item.name}
-                                        disabled
-                                        className="bg-slate-50 font-medium border-slate-100"
-                                        placeholder="Item name"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label className="text-sm font-medium text-slate-600">
-                                        Quantity
-                                    </Label>
-                                    <div className="flex items-center space-x-2">
+                                    </TableCell>
+                                    <TableCell>
                                         <Input
                                             type="number"
                                             min="0"
                                             value={currentQuantity}
-                                            className="bg-white font-bold text-right focus:border-violet-400 focus:ring-violet-400"
-                                            placeholder="Enter quantity"
+                                            className="h-8 w-20 mx-auto bg-white font-bold text-center border-slate-200 focus:border-violet-400 focus:ring-violet-400"
                                             onChange={(e) => {
                                                 const newValue = e.target.value;
                                                 setItemQuantities((prev) => ({
@@ -513,46 +613,76 @@ export default function ProcessDialog({
                                                 }));
                                             }}
                                         />
-                                    </div>
-                                    <div className="flex justify-between items-center mt-1">
-                                        <div className="text-[10px] text-slate-400 font-medium">
-                                            INITIAL: {item.quantity || "0"}
-                                        </div>
-                                        {currentQuantity !== item.quantity && (
-                                            <div className="text-[10px] text-green-600 font-bold bg-green-50 px-1.5 rounded">
-                                                UPDATED
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col gap-1.5">
+                                            <div className="flex items-center gap-1">
+                                                <Input
+                                                    value={itemSCodes[idx] || ""}
+                                                    className="h-8 w-full bg-white font-mono text-[10px] border-slate-200 focus:border-violet-400 focus:ring-violet-400"
+                                                    placeholder="S-D-L"
+                                                    onChange={(e) => {
+                                                        const newValue = e.target.value;
+                                                        setItemSCodes((prev) => {
+                                                            const newCodes = [...prev];
+                                                            newCodes[idx] = newValue;
+                                                            return newCodes;
+                                                        });
+                                                    }}
+                                                />
+                                                {imsLookup[item.name] && imsLookup[item.name].length > 0 && (
+                                                    <Select
+                                                        onValueChange={(val) => {
+                                                            setItemSCodes((prev) => {
+                                                                const newCodes = [...prev];
+                                                                newCodes[idx] = val;
+                                                                return newCodes;
+                                                            });
+                                                        }}
+                                                    >
+                                                        <SelectTrigger className="w-8 h-8 p-0 flex items-center justify-center border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors">
+                                                            <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                                                        </SelectTrigger>
+                                                        <SelectContent align="end" className="max-h-[200px]">
+                                                            <div className="p-2 border-b text-[10px] font-bold text-slate-500 bg-slate-50 uppercase tracking-wider">
+                                                                IMS Suggestions
+                                                            </div>
+                                                            {imsLookup[item.name].map((opt, oIdx) => (
+                                                                <SelectItem key={oIdx} value={opt} className="text-[10px] font-mono">
+                                                                    {opt}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                                            {isFetchingIms && idx === 0 && (
+                                                <span className="text-[9px] text-slate-400 animate-pulse flex items-center gap-1">
+                                                    <RefreshCw className="h-3 w-3 animate-spin" /> Fetching IMS...
+                                                </span>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
 
-                {/* Total Quantity */}
-                <div className="mt-4 pt-3 border-t border-slate-200">
-                    <div className="flex justify-between items-center bg-violet-50 p-3 rounded-lg border border-violet-100">
-                        <span className="text-sm font-bold text-violet-700">
-                            Total Quantity Verified:
-                        </span>
-                        <span className="text-xl font-black text-violet-800">
-                            {(() => {
-                                let total = 0;
-                                Object.values(itemQuantities).forEach((qty) => {
-                                    if (qty !== null && qty !== undefined && qty !== "") {
-                                        const qtyStr = String(qty);
-                                        if (qtyStr.trim() !== "") {
-                                            total += parseInt(qtyStr) || 0;
-                                        }
-                                    }
-                                });
-                                return total;
-                            })()}
-                        </span>
-                    </div>
+                {/* Total Quantity Footer */}
+                <div className="bg-violet-50/50 p-3 flex justify-between items-center border-t">
+                    <span className="text-sm font-bold text-violet-700">Total Quantity:</span>
+                    <span className="text-lg font-black text-violet-800">
+                        {(() => {
+                            let total = 0;
+                            Object.values(itemQuantities).forEach((qty) => {
+                                if (qty) total += parseInt(qty) || 0;
+                            });
+                            return total;
+                        })()}
+                    </span>
                 </div>
-            </>
+            </div>
         );
     };
 

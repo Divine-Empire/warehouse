@@ -23,7 +23,7 @@ export default function LoginPage() {
     if (!isLoading && isAuthenticated) {
       // Define menu items in the same order as sidebar
       const menuItems = [
-        { href: "/sales", pageAccess: "Sales" },
+        { href: "/dispatch", pageAccess: "Dispatch" },
         { href: "/transporting", pageAccess: "Transporting" },
         { href: "/packaging", pageAccess: "Packaging" },
         { href: "/bilty-upload", pageAccess: "Bilty Upload" },
@@ -41,7 +41,7 @@ export default function LoginPage() {
 
         // Super admin and admin can access all pages - redirect to first page
         if (userRole === "super_admin" || userRole === "admin" || userPageAccess.includes("all")) {
-          router.push("/sales")
+          router.push("/dispatch")
           return
         }
 
@@ -53,11 +53,11 @@ export default function LoginPage() {
         if (firstAccessiblePage) {
           router.push(firstAccessiblePage.href)
         } else {
-          // Default to sales if no specific access
-          router.push("/sales")
+          // Default to dispatch if no specific access
+          router.push("/dispatch")
         }
       } else {
-        router.push("/sales")
+        router.push("/dispatch")
       }
     }
   }, [isAuthenticated, isLoading, router])
@@ -79,7 +79,7 @@ export default function LoginPage() {
 
           // Define menu items in the same order as sidebar
           const menuItems = [
-            { href: "/sales", pageAccess: "Sales" },
+            { href: "/dispatch", pageAccess: "Dispatch" },
             { href: "/transporting", pageAccess: "Transporting" },
             { href: "/packaging", pageAccess: "Packaging" },
             { href: "/bilty-upload", pageAccess: "Bilty Upload" },
@@ -90,7 +90,7 @@ export default function LoginPage() {
 
           // Super admin and admin can access all pages - redirect to first page
           if (userRole === "super_admin" || userRole === "admin" || userPageAccess.includes("all")) {
-            router.push("/sales")
+            router.push("/dispatch")
             return
           }
 
@@ -102,10 +102,10 @@ export default function LoginPage() {
           if (firstAccessiblePage) {
             router.push(firstAccessiblePage.href)
           } else {
-            router.push("/sales")
+            router.push("/dispatch")
           }
         } else {
-          router.push("/sales")
+          router.push("/dispatch")
         }
       } else {
         setError("Invalid username or password")

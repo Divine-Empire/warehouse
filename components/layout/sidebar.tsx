@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
+import { useCounts } from "@/components/counts-provider"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -28,8 +29,7 @@ import {
 } from "lucide-react"
 
 const menuItems = [
-  { href: "/sales", label: "Sales", icon: Warehouse, pageAccess: "Sales" },
-  { href: "/sales-location-update", label: "Sales Location Update", icon: Warehouse, pageAccess: "Sales Update Location" },
+  { href: "/dispatch", label: "Dispatch", icon: Warehouse, pageAccess: "Dispatch" },
   { href: "/transporting", label: "Transporting", icon: Truck, pageAccess: "Transporting" },
   { href: "/packaging", label: "Packaging", icon: Package, pageAccess: "Packaging" },
   { href: "/bilty-upload", label: "Bilty Upload", icon: FileSpreadsheet, pageAccess: "Bilty Upload" },
@@ -42,6 +42,7 @@ const menuItems = [
 export function Sidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
+  const { counts } = useCounts()
   const [open, setOpen] = useState(false)
 
   const filteredMenuItems = menuItems.filter((item) => {
@@ -49,6 +50,19 @@ export function Sidebar() {
     if (!user?.pageAccess) return false
     return user.pageAccess.includes(item.pageAccess) || user.pageAccess.includes("all")
   })
+
+  // Map href to counts key
+  const getCount = (href: string) => {
+    const map: Record<string, keyof typeof counts> = {
+      "/dispatch": "dispatch",
+      "/transporting": "transporting",
+      "/packaging": "packaging",
+      "/bilty-upload": "bilty",
+      "/purchase": "purchase",
+      "/purchase-location-update": "purchaseUpdate",
+    }
+    return counts[map[href]] || 0
+  }
 
   const SidebarContent = () => (
     // <div className="flex flex-col h-full from-blue-50 to-purple-500 border-r border-gray-200">
@@ -62,16 +76,24 @@ export function Sidebar() {
           {filteredMenuItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
+            const count = getCount(item.href)
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-gray-100 ${isActive ? "bg-gradient-to-b from-blue-50 to-purple-100  text-blue-700 border-r-2 border-blue-700" : "text-gray-700"
+                className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all hover:bg-gray-100 ${isActive ? "bg-gradient-to-b from-blue-50 to-purple-100  text-blue-700 border-r-2 border-blue-700" : "text-gray-700"
                   }`}
               >
-                <Icon className="h-4 w-4" />
-                {item.label}
+                <div className="flex items-center gap-3">
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </div>
+                {count > 0 && (
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+                    {count}
+                  </span>
+                )}
               </Link>
             )
           })}

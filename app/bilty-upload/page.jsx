@@ -75,42 +75,39 @@ export default function BiltyUploadPage() {
         try {
             setLoading(true);
 
-            // 1. Fetch DISPATCH-DELIVERY sheet
-            const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
-            const response = await fetch(sheetUrl);
-            const text = await response.text();
-            const jsonStart = text.indexOf("{");
-            const jsonEnd = text.lastIndexOf("}") + 1;
-            const data = JSON.parse(text.substring(jsonStart, jsonEnd));
-            if (!data || !data.table || !data.table.rows) return;
+            // 1. Fetch DISPATCH-DELIVERY sheet via Proxy
+            const dispatchFetchUrl = `${APPS_SCRIPT_URL}?sheet=${encodeURIComponent(SHEET_NAME)}&action=fetch`;
+            const dispatchResponse = await fetch(dispatchFetchUrl);
+            const dispatchResult = await dispatchResponse.json();
+            
+            if (!dispatchResult.success || !Array.isArray(dispatchResult.data)) {
+                throw new Error(dispatchResult.message || "Failed to fetch DISPATCH-DELIVERY data");
+            }
 
-            // 2. Fetch Warehouse sheet for Driver Charges (Column EN = index 143)
-            const whUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${WAREHOUSE_SHEET_NAME}`;
-            const whResponse = await fetch(whUrl);
-            const whText = await whResponse.text();
-            const whJsonStart = whText.indexOf("{");
-            const whJsonEnd = whText.lastIndexOf("}") + 1;
-            const whData = JSON.parse(whText.substring(whJsonStart, whJsonEnd));
+            // 2. Fetch Warehouse sheet via Proxy for supplementary data
+            const whFetchUrl = `${APPS_SCRIPT_URL}?sheet=${encodeURIComponent(WAREHOUSE_SHEET_NAME)}&action=fetch`;
+            const whResponse = await fetch(whFetchUrl);
+            const whResult = await whResponse.json();
 
             // Build a map of orderNo -> detailed data from Warehouse sheet
             const whDataMap = new Map();
-            if (whData && whData.table && whData.table.rows) {
-                whData.table.rows.slice(1).forEach((row) => {
-                    if (!row.c) return;
-                    const orderNo = row.c[1] ? String(row.c[1].v || "").trim() : "";
+            if (whResult.success && Array.isArray(whResult.data)) {
+                whResult.data.slice(1).forEach((row) => {
+                    if (!row || row.length < 2) return;
+                    const orderNo = row[1] ? String(row[1]).trim() : "";
                     if (orderNo) {
                         whDataMap.set(orderNo, {
-                            beforePhoto: row.c[3]?.v || "",
-                            afterPhoto: row.c[4]?.v || "",
-                            biltyUpload: row.c[5]?.v || "",
-                            transporterName: row.c[6]?.v || "",
-                            transporterContact: row.c[7]?.v || "",
-                            biltyNumber: row.c[8]?.v || "",
-                            totalCharges: row.c[9]?.v || "",
-                            warehouseRemarks: row.c[10]?.v || "",
-                            dispatchStatus: row.c[131]?.v || "okay",
-                            notOkReason: row.c[132]?.v || "",
-                            driverCharges: row.c[143]?.v || ""
+                            beforePhoto: row[3] || "",
+                            afterPhoto: row[4] || "",
+                            biltyUpload: row[5] || "",
+                            transporterName: row[6] || "",
+                            transporterContact: row[7] || "",
+                            biltyNumber: row[8] || "",
+                            totalCharges: row[9] || "",
+                            warehouseRemarks: row[10] || "",
+                            dispatchStatus: row[131] || "okay",
+                            notOkReason: row[132] || "",
+                            driverCharges: row[143] || ""
                         });
                     }
                 });
@@ -118,35 +115,38 @@ export default function BiltyUploadPage() {
 
             const ordersMap = new Map();
 
-            data.table.rows.slice(6).forEach((row, index) => {
-                if (!row.c) return;
+            // Process DISPATCH-DELIVERY rows (slice(6) to skip headers)
+            dispatchResult.data.slice(6).forEach((row, index) => {
+                if (!row || !row[105]) return; // D-Sr Number at index 105
 
-                if (!row.c[105] || !row.c[105].v) return;
+                const dSrNumber = String(row[105]).trim();
+                const bvColumn = row[73] || null; // Column BV
+                const bxColumn = row[75] || null; // Column BX
+                const byColumn = row[76] ? String(row[76]).trim() : ""; // Column BY (Index 76)
 
-                const dSrNumber = String(row.c[105].v).trim();
-                const bvColumn = row.c[73] ? row.c[73].v : null; // BV
-                const bxColumn = row.c[75] ? row.c[75].v : null; // BX
-                const byColumn = row.c[76] ? String(row.c[76].v || "").trim() : ""; // BY
-
-                const orderNo = row.c[1] ? String(row.c[1].v).trim() : "";
+                const orderNo = row[1] ? String(row[1]).trim() : "";
                 const whInfo = whDataMap.get(orderNo) || {};
+                
                 const order = {
                     rowIndex: index + 7,
                     id: dSrNumber,
                     dSrNumber: dSrNumber,
                     orderNo,
-                    quotationNo: row.c[2] ? row.c[2].v : "",
-                    companyName: row.c[3] ? row.c[3].v : "",
-                    shippingAddress: row.c[7] ? row.c[7].v : "",
-                    transportMode: row.c[11] ? row.c[11].v : "",
-                    transporterName: whInfo.transporterName || (row.c[6] ? row.c[6].v : ""),
+                    quotationNo: row[2] || "",
+                    companyName: row[3] || "",
+                    shippingAddress: row[7] || "",
+                    transportMode: row[11] || "",
+                    
+                    // Exclusive source from Column BY (index 76) with NO FALLBACK as requested
+                    transporterName: byColumn, 
+                    
                     transporterContact: whInfo.transporterContact || "",
                     biltyNumber: whInfo.biltyNumber || "",
                     totalCharges: whInfo.totalCharges || "",
                     warehouseRemarks: whInfo.warehouseRemarks || "",
-                    invoiceNumber: row.c[65]?.v || "",
-                    invoiceUpload: row.c[66]?.v || "",
-                    attachment: row.c[29]?.v || "",
+                    invoiceNumber: row[65] || "",
+                    invoiceUpload: row[66] || "",
+                    attachment: row[29] || "",
                     beforePhoto: whInfo.beforePhoto || "",
                     afterPhoto: whInfo.afterPhoto || "",
                     biltyUpload: bxColumn || whInfo.biltyUpload || "",
@@ -154,8 +154,8 @@ export default function BiltyUploadPage() {
                     dispatchStatus: whInfo.dispatchStatus || "okay",
                     notOkReason: whInfo.notOkReason || "",
                     transporterByName: byColumn,
-                    invoiceCreatedDate: row.c[63]?.v || "-", // Column BL (index 63)
-                    warehouseLocation: row.c[103]?.v || "", // Column CZ (index 103)
+                    invoiceCreatedDate: row[63] || "-", 
+                    warehouseLocation: row[103] || "", 
                     bvColumn,
                     bxColumn
                 };
