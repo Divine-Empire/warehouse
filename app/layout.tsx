@@ -11,7 +11,10 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Warehouse System",
   description: "Complete Warehouse System",
-    generator: 'v0.dev'
+  generator: 'v0.dev',
+  icons: {
+    icon: '/divine-logo.svg',
+  },
 }
 
 export default function RootLayout({

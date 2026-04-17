@@ -69,18 +69,7 @@ export default function PurchasePage() {
   const [commonFormData, setCommonFormData] = useState({
     supplierInvoiceNo: "",
     supplierInvoiceDate: "",
-    lrNo: "",
-    lrDate: "",
-    lrAmount: "",
-    checklist: "",
-    transportName: "",
-    transportationCost: "",
-    localConveyanceDispatch: "",
-    localConveyanceDestination: "",
-    lrDoc: "",
     invoiceDoc: "",
-    weightSlip: "",
-    invoiceType: "",
     invoiceDate: "",
     invoiceNo: "",
     receivedItemImage: "",
@@ -88,7 +77,6 @@ export default function PurchasePage() {
     hydraAmt: "",
     labourAmt: "",
     autoCharge: "",
-    expDate: "",
     pkgFwd: "",
     gst: "",
     totalPkgFwd: "",
@@ -892,14 +880,8 @@ export default function PurchasePage() {
 
         let functionName = "";
         switch (field) {
-          case "lrDoc":
-            functionName = "handleFileUpload1";
-            break;
           case "invoiceDoc":
             functionName = "handleFileUpload2";
-            break;
-          case "weightSlip":
-            functionName = "handleFileUpload3";
             break;
         }
 
@@ -1107,21 +1089,6 @@ export default function PurchasePage() {
       return;
     }
 
-    if (!commonFormData.checklist) {
-      alert("Please fill Checklist!");
-      return;
-    }
-
-    if (
-      !commonFormData.transportName ||
-      !commonFormData.transportationCost ||
-      !commonFormData.localConveyanceDispatch ||
-      !commonFormData.localConveyanceDestination
-    ) {
-      alert("Please fill all Transport and Local Conveyance details!");
-      return;
-    }
-
     // Validation for row-specific fields
     const invalidRows = selectedIds.filter((id) => {
       const form = formData[id] || {};
@@ -1164,18 +1131,7 @@ export default function PurchasePage() {
         // Common fields
         supplierInvoiceNo: commonFormData.supplierInvoiceNo,
         supplierInvoiceDate: commonFormData.supplierInvoiceDate,
-        lrNo: commonFormData.lrNo,
-        lrDate: commonFormData.lrDate,
-        lrAmount: commonFormData.lrAmount,
-        checklist: commonFormData.checklist,
-        transportName: commonFormData.transportName,
-        transportationCost: commonFormData.transportationCost,
-        localConveyanceDispatch: commonFormData.localConveyanceDispatch,
-        localConveyanceDestination: commonFormData.localConveyanceDestination,
-        lrDoc: commonFormData.lrDoc,
         invoiceDoc: commonFormData.invoiceDoc,
-        weightSlip: commonFormData.weightSlip,
-        invoiceType: commonFormData.invoiceType,
         invoiceDate: commonFormData.supplierInvoiceDate, // Consolidated
         invoiceNo: commonFormData.supplierInvoiceNo, // Consolidated
         receivedItemImage: commonFormData.receivedItemImage,
@@ -1254,21 +1210,21 @@ export default function PurchasePage() {
         data.timestamp,            // A: Timestamp
         data.invoiceNo,            // B: Invoice No.
         data.invoiceDate,          // C: Invoice Date
-        data.lrNo,                 // D: LR No.
-        data.lrAmount,             // E: LR Amount
-        data.invoiceType,          // F: Invoice Type
-        data.checklist,            // G: Checklist
-        data.transportName,        // H: Transport Name
-        data.transportationCost,   // I: Transportation Cost
-        data.localConveyanceDispatch, // J: Local Conveyance (Dispatch)
-        data.localConveyanceDestination, // K: Local Conveyance (Destination)
-        data.lrDoc,                // L: LR Document
+        "",                        // D: LR No. (Removed)
+        "",                        // E: LR Amount (Removed)
+        "",                        // F: Invoice Type (Removed)
+        "",                        // G: Checklist (Removed)
+        "",                        // H: Transport Name (Removed)
+        "",                        // I: Transportation Cost (Removed)
+        "",                        // J: Local Conveyance (Dispatch) (Removed)
+        "",                        // K: Local Conveyance (Destination) (Removed)
+        "",                        // L: LR Document (Removed)
         data.invoiceDoc,           // M: Invoice Document
-        data.weightSlip,           // N: Weight Slip
+        "",                        // N: Weight Slip (Removed)
         data.hydraAmt,             // O: Hydra Amt.
         data.labourAmt,            // P: Labour Amt.
         data.autoCharge,           // Q: Auto Charge
-        data.expDate,              // R: Exp. Date
+        "",                        // R: Exp. Date (Removed)
         data.receivedItemImage,    // S: Received Item Image
         data.billAttachment,       // T: Bill Attachment
         data.pkgFwd,               // U: Pkg/Fwd
@@ -1308,26 +1264,12 @@ export default function PurchasePage() {
         setCommonFormData({
           supplierInvoiceNo: "",
           supplierInvoiceDate: "",
-          lrNo: "",
-          lrDate: "",
-          lrAmount: "",
-          checklist: "",
-          transportName: "",
-          transportationCost: "",
-          localConveyanceDispatch: "",
-          localConveyanceDestination: "",
-          lrDoc: "",
           invoiceDoc: "",
-          weightSlip: "",
-          invoiceType: "",
-          invoiceDate: "",
-          invoiceNo: "",
           receivedItemImage: "",
           billAttachment: "",
           hydraAmt: "",
           labourAmt: "",
           autoCharge: "",
-          expDate: "",
           pkgFwd: "",
           gst: "",
           totalPkgFwd: "",
@@ -3275,19 +3217,13 @@ export default function PurchasePage() {
                       {/* Supplier Invoice No */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Supplier Invoice No.{" "}
-                          <span className="text-red-500">*</span>
+                          Supplier Invoice No. <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                           value={commonFormData.supplierInvoiceNo}
-                          onChange={(e) =>
-                            handleCommonFormChange(
-                              "supplierInvoiceNo",
-                              e.target.value
-                            )
-                          }
+                          onChange={(e) => handleCommonFormChange("supplierInvoiceNo", e.target.value)}
                           placeholder="Enter invoice number"
                         />
                       </div>
@@ -3295,342 +3231,14 @@ export default function PurchasePage() {
                       {/* Supplier Invoice Date */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Supplier Invoice Date{" "}
-                          <span className="text-red-500">*</span>
+                          Supplier Invoice Date <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="date"
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                           value={commonFormData.supplierInvoiceDate}
-                          onChange={(e) =>
-                            handleCommonFormChange(
-                              "supplierInvoiceDate",
-                              e.target.value
-                            )
-                          }
+                          onChange={(e) => handleCommonFormChange("supplierInvoiceDate", e.target.value)}
                         />
-                      </div>
-
-                      {/* LR No */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          LR No.
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                          value={commonFormData.lrNo}
-                          onChange={(e) =>
-                            handleCommonFormChange("lrNo", e.target.value)
-                          }
-                          placeholder="Enter LR number"
-                        />
-                      </div>
-
-                      {/* LR Date */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          LR Date
-                        </label>
-                        <input
-                          type="date"
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                          value={commonFormData.lrDate}
-                          onChange={(e) =>
-                            handleCommonFormChange("lrDate", e.target.value)
-                          }
-                        />
-                      </div>
-
-                      {/* LR Amount */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          LR Amount
-                        </label>
-                        <input
-                          type="number"
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                          value={commonFormData.lrAmount}
-                          onChange={(e) =>
-                            handleCommonFormChange("lrAmount", e.target.value)
-                          }
-                          placeholder="Enter amount"
-                        />
-                      </div>
-
-                      {/* Invoice Type */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Invoice Type
-                        </label>
-                        <select
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                          value={commonFormData.invoiceType}
-                          onChange={(e) =>
-                            handleCommonFormChange("invoiceType", e.target.value)
-                          }
-                        >
-                          <option value="">Select Type</option>
-                          <option value="Regular">Regular</option>
-                          <option value="Debit Note">Debit Note</option>
-                          <option value="Credit Note">Credit Note</option>
-                        </select>
-                      </div>
-
-                      {/* Checklist */}
-
-                      <div className="md:col-span-2 lg:col-span-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Checklist
-                          <span className="text-red-500">*</span>
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 border border-gray-300 rounded-lg bg-gray-50">
-                          {[
-                            {
-                              id: "checklist-1",
-                              value: "If so, have you informed the purchasing and accounts department?",
-                              label:
-                                "If so, have you informed the purchasing and accounts department?",
-                            },
-                            {
-                              id: "checklist-2",
-                              value: "If any problem is found during inspection, can the machine be repaired at our premises or does it have to be sent back to the seller?",
-                              label:
-                                "If any problem is found during inspection, can the machine be repaired at our premises or does it have to be sent back to the seller?",
-                            },
-                            {
-                              id: "checklist-3",
-                              value: "When inspecting the machine, do you notice any defects as per its external visibility?",
-                              label:
-                                "When inspecting the machine, do you notice any defects as per its external visibility?",
-                            },
-                            {
-                              id: "checklist-4",
-                              value: "While checking the quality of the product, did you find any defects in it?",
-                              label:
-                                "While checking the quality of the product, did you find any defects in it?",
-                            },
-                            {
-                              id: "checklist-5",
-                              value: "Is the quantity in the bill and the material received quantity are same?",
-                              label:
-                                "Is the quantity in the bill and the material received quantity are same?",
-                            },
-                            {
-                              id: "checklist-6",
-                              value: "Do all the materials we procure match the standard quality as per our requirements?",
-                              label:
-                                "Do all the materials we procure match the standard quality as per our requirements?",
-                            },
-                          ].map((item) => {
-                            // Safely check if item.value exists in checklist
-                            const checklistArray = commonFormData.checklist
-                              ? commonFormData.checklist
-                                .split("|")
-                                .filter(Boolean)
-                              : [];
-                            const isChecked = checklistArray.includes(
-                              item.value
-                            );
-
-                            return (
-                              <div
-                                key={item.id}
-                                className="flex items-start gap-2 hover:bg-gray-100 p-2 rounded"
-                              >
-                                <input
-                                  type="checkbox"
-                                  id={item.id}
-                                  checked={isChecked}
-                                  onChange={(e) => {
-                                    const currentValues = checklistArray;
-                                    let newValues;
-
-                                    if (e.target.checked) {
-                                      newValues = [
-                                        ...currentValues,
-                                        item.value,
-                                      ];
-                                    } else {
-                                      newValues = currentValues.filter(
-                                        (v) => v !== item.value
-                                      );
-                                    }
-
-                                    handleCommonFormChange(
-                                      "checklist",
-                                      newValues.join("|")
-                                    );
-                                  }}
-                                  className="mt-1 w-4 h-4 text-violet-600 border-gray-300 rounded focus:ring-violet-500 cursor-pointer"
-                                />
-                                <label
-                                  htmlFor={item.id}
-                                  className="text-sm text-gray-700 cursor-pointer select-none flex-1"
-                                >
-                                  {item.label}
-                                </label>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        {commonFormData.checklist && (
-                          <p className="text-xs text-gray-500 mt-2">
-                            Selected:{" "}
-                            {
-                              commonFormData.checklist
-                                .split("|")
-                                .filter(Boolean).length
-                            }{" "}
-                            items
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Transport Name */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Transport Name
-                          <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                          value={commonFormData.transportName}
-                          onChange={(e) =>
-                            handleCommonFormChange(
-                              "transportName",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Enter transport name"
-                        />
-                      </div>
-
-                      {/* Transportation Cost */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Transportation Cost{" "}
-                          <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                          value={commonFormData.transportationCost}
-                          onChange={(e) =>
-                            handleCommonFormChange(
-                              "transportationCost",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Enter cost"
-                        />
-                      </div>
-
-                      {/* Local Conveyance (Dispatch) */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Local Conveyance (Dispatch)
-                          <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                          value={commonFormData.localConveyanceDispatch}
-                          onChange={(e) =>
-                            handleCommonFormChange(
-                              "localConveyanceDispatch",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Enter amount"
-                        />
-                      </div>
-
-                      {/* Local Conveyance (Destination) */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Local Conveyance (Destination)
-                          <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                          value={commonFormData.localConveyanceDestination}
-                          onChange={(e) =>
-                            handleCommonFormChange(
-                              "localConveyanceDestination",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Enter amount"
-                        />
-                      </div>
-
-                      {/* LR Doc */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          LR Document
-                        </label>
-                        <input
-                          type="file"
-                          className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                          onChange={(e) =>
-                            handleCommonFileUpload("lrDoc", e.target.files[0])
-                          }
-                          accept=".pdf,.jpg,.jpeg,.png"
-                        />
-                        {commonFormData.lrDoc && (
-                          <p className="text-xs text-green-600 mt-1">
-                            ✓ File uploaded
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Invoice Doc */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Invoice Document
-                        </label>
-                        <input
-                          type="file"
-                          className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                          onChange={(e) =>
-                            handleCommonFileUpload(
-                              "invoiceDoc",
-                              e.target.files[0]
-                            )
-                          }
-                          accept=".pdf,.jpg,.jpeg,.png"
-                        />
-                        {commonFormData.invoiceDoc && (
-                          <p className="text-xs text-green-600 mt-1">
-                            ✓ File uploaded
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Weight Slip */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Weight Slip
-                        </label>
-                        <input
-                          type="file"
-                          className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                          onChange={(e) =>
-                            handleCommonFileUpload(
-                              "weightSlip",
-                              e.target.files[0]
-                            )
-                          }
-                          accept=".pdf,.jpg,.jpeg,.png"
-                        />
-                        {commonFormData.weightSlip && (
-                          <p className="text-xs text-green-600 mt-1">
-                            ✓ File uploaded
-                          </p>
-                        )}
                       </div>
 
                       {/* Hydra Amt. */}
@@ -3642,9 +3250,7 @@ export default function PurchasePage() {
                           type="number"
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                           value={commonFormData.hydraAmt}
-                          onChange={(e) =>
-                            handleCommonFormChange("hydraAmt", e.target.value)
-                          }
+                          onChange={(e) => handleCommonFormChange("hydraAmt", e.target.value)}
                           placeholder="Enter amount"
                         />
                       </div>
@@ -3658,9 +3264,7 @@ export default function PurchasePage() {
                           type="number"
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                           value={commonFormData.labourAmt}
-                          onChange={(e) =>
-                            handleCommonFormChange("labourAmt", e.target.value)
-                          }
+                          onChange={(e) => handleCommonFormChange("labourAmt", e.target.value)}
                           placeholder="Enter amount"
                         />
                       </div>
@@ -3673,9 +3277,7 @@ export default function PurchasePage() {
                         <select
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                           value={commonFormData.warrantyClaim}
-                          onChange={(e) =>
-                            handleCommonFormChange("warrantyClaim", e.target.value)
-                          }
+                          onChange={(e) => handleCommonFormChange("warrantyClaim", e.target.value)}
                         >
                           <option value="">Select</option>
                           <option value="Yes">Yes</option>
@@ -3692,9 +3294,7 @@ export default function PurchasePage() {
                           type="text"
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                           value={commonFormData.duration}
-                          onChange={(e) =>
-                            handleCommonFormChange("duration", e.target.value)
-                          }
+                          onChange={(e) => handleCommonFormChange("duration", e.target.value)}
                           placeholder="Enter duration"
                         />
                       </div>
@@ -3708,9 +3308,7 @@ export default function PurchasePage() {
                           type="date"
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                           value={commonFormData.warrantyExpiry}
-                          onChange={(e) =>
-                            handleCommonFormChange("warrantyExpiry", e.target.value)
-                          }
+                          onChange={(e) => handleCommonFormChange("warrantyExpiry", e.target.value)}
                         />
                       </div>
 
@@ -3723,9 +3321,7 @@ export default function PurchasePage() {
                           type="date"
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                           value={commonFormData.productExpiry}
-                          onChange={(e) =>
-                            handleCommonFormChange("productExpiry", e.target.value)
-                          }
+                          onChange={(e) => handleCommonFormChange("productExpiry", e.target.value)}
                         />
                       </div>
 
@@ -3738,25 +3334,8 @@ export default function PurchasePage() {
                           type="number"
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                           value={commonFormData.autoCharge}
-                          onChange={(e) =>
-                            handleCommonFormChange("autoCharge", e.target.value)
-                          }
+                          onChange={(e) => handleCommonFormChange("autoCharge", e.target.value)}
                           placeholder="Enter amount"
-                        />
-                      </div>
-
-                      {/* Exp. Date */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Exp. Date
-                        </label>
-                        <input
-                          type="date"
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                          value={commonFormData.expDate}
-                          onChange={(e) =>
-                            handleCommonFormChange("expDate", e.target.value)
-                          }
                         />
                       </div>
 
@@ -3768,18 +3347,27 @@ export default function PurchasePage() {
                         <input
                           type="file"
                           className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                          onChange={(e) =>
-                            handleCommonFileUpload(
-                              "receivedItemImage",
-                              e.target.files[0]
-                            )
-                          }
+                          onChange={(e) => handleCommonFileUpload("receivedItemImage", e.target.files[0])}
                           accept=".jpg,.jpeg,.png"
                         />
                         {commonFormData.receivedItemImage && (
-                          <p className="text-xs text-green-600 mt-1">
-                            ✓ Image uploaded
-                          </p>
+                          <p className="text-xs text-green-600 mt-1">✓ Image uploaded</p>
+                        )}
+                      </div>
+
+                      {/* Invoice Document */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Invoice Document
+                        </label>
+                        <input
+                          type="file"
+                          className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                          onChange={(e) => handleCommonFileUpload("invoiceDoc", e.target.files[0])}
+                          accept=".pdf,.jpg,.jpeg,.png"
+                        />
+                        {commonFormData.invoiceDoc && (
+                          <p className="text-xs text-green-600 mt-1">✓ File uploaded</p>
                         )}
                       </div>
 
@@ -3791,18 +3379,11 @@ export default function PurchasePage() {
                         <input
                           type="file"
                           className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                          onChange={(e) =>
-                            handleCommonFileUpload(
-                              "billAttachment",
-                              e.target.files[0]
-                            )
-                          }
+                          onChange={(e) => handleCommonFileUpload("billAttachment", e.target.files[0])}
                           accept=".pdf,.jpg,.jpeg,.png"
                         />
                         {commonFormData.billAttachment && (
-                          <p className="text-xs text-green-600 mt-1">
-                            ✓ Document uploaded
-                          </p>
+                          <p className="text-xs text-green-600 mt-1">✓ Document uploaded</p>
                         )}
                       </div>
 
@@ -3815,9 +3396,7 @@ export default function PurchasePage() {
                           type="number"
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                           value={commonFormData.pkgFwd}
-                          onChange={(e) =>
-                            handleCommonFormChange("pkgFwd", e.target.value)
-                          }
+                          onChange={(e) => handleCommonFormChange("pkgFwd", e.target.value)}
                           placeholder="Enter amount"
                         />
                       </div>
@@ -3831,9 +3410,7 @@ export default function PurchasePage() {
                           type="number"
                           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                           value={commonFormData.gst}
-                          onChange={(e) =>
-                            handleCommonFormChange("gst", e.target.value)
-                          }
+                          onChange={(e) => handleCommonFormChange("gst", e.target.value)}
                           placeholder="Enter GST%"
                         />
                       </div>
