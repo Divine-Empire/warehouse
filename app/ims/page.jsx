@@ -111,6 +111,19 @@ export default function MisPage() {
               totalSales: row[80] || 0,
               targetQty: row[84] || 0,
               reOrderQty: row[88] || 0,
+            },
+            "Head-Office": {
+              openingQty: row[15] || 0,
+              leadTime: row[28] || "",
+              liveStock: row[52] || 0,
+              indentRaised: row[57] || 0,
+              poQty: row[61] || 0,
+              materialTransit: row[65] || 0,
+              pendingPO: row[69] || 0,
+              totalReceived: row[73] || 0,
+              totalSales: row[81] || 0,
+              targetQty: row[85] || 0,
+              reOrderQty: row[89] || 0,
             }
           };
         });
@@ -310,6 +323,7 @@ export default function MisPage() {
                 <TabsTrigger value="CG" className="px-6">CG</TabsTrigger>
                 <TabsTrigger value="NE" className="px-6">NE</TabsTrigger>
                 <TabsTrigger value="Maniquip" className="px-6">Maniquip</TabsTrigger>
+                <TabsTrigger value="Head-Office" className="px-6">Head-Office</TabsTrigger>
               </TabsList>
             </Tabs>
 
