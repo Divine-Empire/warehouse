@@ -19,6 +19,7 @@ export default function MisPage() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [itemNameFilter, setItemNameFilter] = useState("all");
+  const [stockFilter, setStockFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("CG");
 
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxkB72Tu0iDEEyQ5cdkYUTdJq7Ifj80hgqbXpwc9WnF3ruWs1Yppe3Z1TJce4yr9Gg/exec";
@@ -34,16 +35,17 @@ export default function MisPage() {
   ];
 
   const tabColumns = [
-    { key: "openingQty", label: "Opening Qty" },
-    { key: "leadTime", label: "Lead-Time" },
     { key: "liveStock", label: "Live Stock" },
+    { key: "maxLevel", label: "Max-Level" },
     { key: "indentRaised", label: "Indent Raised" },
     { key: "poQty", label: "PO Qty" },
     { key: "materialTransit", label: "Material Transit" },
     { key: "pendingPO", label: "Pending PO" },
-    { key: "totalReceived", label: "Total Received" },
-    { key: "totalSales", label: "Total Sales" },
     { key: "targetQty", label: "Target Qty" },
+    { key: "openingQty", label: "Opening Qty" },
+    { key: "leadTime", label: "Lead-Time" },
+    { key: "totalSales", label: "Total Sales" },
+    { key: "totalReceived", label: "Total Received" },
     { key: "reOrderQty", label: "Re-Order Qty" },
   ];
 
@@ -77,6 +79,7 @@ export default function MisPage() {
               openingQty: row[12] || 0,
               leadTime: row[25] || "",
               liveStock: row[49] || 0,
+              maxLevel: row[37] || 0,
               indentRaised: row[54] || 0,
               poQty: row[58] || 0,
               materialTransit: row[62] || 0,
@@ -90,6 +93,7 @@ export default function MisPage() {
               openingQty: row[13] || 0,
               leadTime: row[26] || "",
               liveStock: row[50] || 0,
+              maxLevel: row[38] || 0,
               indentRaised: row[55] || 0,
               poQty: row[59] || 0,
               materialTransit: row[63] || 0,
@@ -103,6 +107,7 @@ export default function MisPage() {
               openingQty: row[14] || 0,
               leadTime: row[27] || "",
               liveStock: row[51] || 0,
+              maxLevel: row[39] || 0,
               indentRaised: row[56] || 0,
               poQty: row[60] || 0,
               materialTransit: row[64] || 0,
@@ -116,6 +121,7 @@ export default function MisPage() {
               openingQty: row[15] || 0,
               leadTime: row[28] || "",
               liveStock: row[52] || 0,
+              maxLevel: row[40] || 0,
               indentRaised: row[57] || 0,
               poQty: row[61] || 0,
               materialTransit: row[65] || 0,
@@ -193,8 +199,17 @@ export default function MisPage() {
       filtered = filtered.filter((item) => item.group === itemNameFilter);
     }
 
+    if (stockFilter !== "all") {
+      filtered = filtered.filter((item) => {
+        const liveStock = item[activeTab]?.liveStock || 0;
+        if (stockFilter === "zero") return liveStock === 0;
+        if (stockFilter === "non-zero") return liveStock > 0;
+        return true;
+      });
+    }
+
     return filtered;
-  }, [inventoryData, searchTerm, itemNameFilter]);
+  }, [inventoryData, searchTerm, itemNameFilter, stockFilter, activeTab]);
 
   const renderCellContent = (item, columnKey) => {
     if (commonColumns.find(c => c.key === columnKey)) {
@@ -270,6 +285,16 @@ export default function MisPage() {
             </div>
 
             <div className="flex items-center gap-4">
+              <select
+                value={stockFilter}
+                onChange={(e) => setStockFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white"
+              >
+                <option value="all">All Stock</option>
+                <option value="zero">Zero</option>
+                <option value="non-zero">Non-Zero</option>
+              </select>
+
               <select
                 value={itemNameFilter}
                 onChange={(e) => setItemNameFilter(e.target.value)}
