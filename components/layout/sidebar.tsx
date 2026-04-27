@@ -32,11 +32,11 @@ const menuItems = [
   { href: "/dispatch", label: "Dispatch", icon: Warehouse, pageAccess: "Dispatch" },
   { href: "/transporting", label: "Transporting", icon: Truck, pageAccess: "Transporting" },
   { href: "/packaging", label: "Packaging", icon: Package, pageAccess: "Packaging" },
-  { href: "/bilty-upload", label: "Bilty Upload", icon: FileSpreadsheet, pageAccess: "Bilty Upload" },
+  { href: "/bilty-upload", label: "Bilty-Upload", icon: FileSpreadsheet, pageAccess: "Bilty-Upload" },
   { href: "/purchase", label: "Purchase", icon: PackageCheck, pageAccess: "Purchase" },
-  { href: "/purchase-location-update", label: "Purchase Location Update", icon: PackageCheck, pageAccess: "Purchase Update Location" }, // Added after Purchase
+  { href: "/purchase-location-update", label: "Purchase-Update-Location", icon: PackageCheck, pageAccess: "Purchase-Update-Location" },
   { href: "/ims", label: "IMS", icon: Award, pageAccess: "IMS" },
-  { href: "/PR_SR_DR_form", label: "PR_SR_DR Form", icon: Bell, pageAccess: "PR_SR_DR Form" },
+  { href: "/PR_SR_DR_form", label: "PR-DR-SR-Form", icon: Bell, pageAccess: "PR-DR-SR-Form" },
 ]
 
 export function Sidebar() {
@@ -48,7 +48,10 @@ export function Sidebar() {
   const filteredMenuItems = menuItems.filter((item) => {
     if (user?.role === "admin" || user?.role === "super_admin") return true
     if (!user?.pageAccess) return false
-    return user.pageAccess.includes(item.pageAccess) || user.pageAccess.includes("all")
+    return user.pageAccess.some(p => 
+      p.toLowerCase() === item.pageAccess.toLowerCase() || 
+      p.toLowerCase() === "all"
+    )
   })
 
   // Map href to counts key

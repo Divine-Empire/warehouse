@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
+import { useAuth } from "@/components/auth-provider";
 import { RefreshCw, Search, Settings } from "lucide-react";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,17 +15,50 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function MisPage() {
+  const { user } = useAuth();
   const [inventoryData, setInventoryData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [itemNameFilter, setItemNameFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
-  const [activeTab, setActiveTab] = useState("CG");
 
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxkB72Tu0iDEEyQ5cdkYUTdJq7Ifj80hgqbXpwc9WnF3ruWs1Yppe3Z1TJce4yr9Gg/exec";
   const SHEET_ID = "1O-fEA6iQvlJhSP6xcn2G-n0XxWE5LUX2kg2z6BVQLJw";
   const SHEET_NAME = "IMS";
+
+  const LOCATION_TABS = [
+    { key: "CG", label: "CG", normalized: "cgwarehouse" },
+    { key: "NE", label: "NE", normalized: "newarehouse" },
+    { key: "Maniquip", label: "Maniquip", normalized: "maniquipstore" },
+    { key: "Head-Office", label: "Head-Office", normalized: "headoffice" },
+  ];
+
+  const availableTabs = useMemo(() => {
+    if (!user) return [];
+    if (user.role === "admin" || user.role === "super_admin") return LOCATION_TABS;
+    
+    const userLocations = user.location || [];
+    const isAll = userLocations.some(l => l.toLowerCase() === "all");
+    if (isAll) return LOCATION_TABS;
+
+    const normalize = (loc) => String(loc || "").toLowerCase().replace(/^by\s*/i, "").replace(/[^a-z0-9]/g, "").trim();
+    const normalizedUserLocs = userLocations.map(normalize);
+
+    return LOCATION_TABS.filter(tab => 
+      normalizedUserLocs.includes(tab.normalized) || 
+      normalizedUserLocs.includes(tab.key.toLowerCase())
+    );
+  }, [user]);
+
+  const [activeTab, setActiveTab] = useState("CG");
+
+  // Set initial active tab when availableTabs are loaded
+  useEffect(() => {
+    if (availableTabs.length > 0 && !availableTabs.find(t => t.key === activeTab)) {
+      setActiveTab(availableTabs[0].key);
+    }
+  }, [availableTabs]);
 
   const commonColumns = [
     { key: "group", label: "Group" },
@@ -215,7 +249,15 @@ export default function MisPage() {
     if (commonColumns.find(c => c.key === columnKey)) {
       return item[columnKey] || "";
     }
-    return item[activeTab]?.[columnKey] ?? "";
+    
+    const value = item[activeTab]?.[columnKey] ?? "";
+    
+    // Format Max-Level and Re-Order Qty to 0 decimal places if they are numbers
+    if ((columnKey === "maxLevel" || columnKey === "reOrderQty") && value !== "" && !isNaN(value)) {
+      return Number(value).toFixed(0);
+    }
+    
+    return value;
   };
 
   if (loading) {
@@ -345,10 +387,11 @@ export default function MisPage() {
           <div className="px-6 py-4">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="bg-gray-100 p-1 mb-4">
-                <TabsTrigger value="CG" className="px-6">CG</TabsTrigger>
-                <TabsTrigger value="NE" className="px-6">NE</TabsTrigger>
-                <TabsTrigger value="Maniquip" className="px-6">Maniquip</TabsTrigger>
-                <TabsTrigger value="Head-Office" className="px-6">Head-Office</TabsTrigger>
+                {availableTabs.map((tab) => (
+                  <TabsTrigger key={tab.key} value={tab.key} className="px-6">
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </Tabs>
 
@@ -361,12 +404,15 @@ export default function MisPage() {
                         .filter((col) => visibleColumns[col.key])
                         .map((column) => {
                           const isWrapped = ["itemName", "group"].includes(column.key);
+                          const isTabColumn = tabColumns.some(c => c.key === column.key);
                           const width = column.key === "itemName" ? "200px" : column.key === "group" ? "120px" : "150px";
                           
                           return (
                             <th
                               key={column.key}
-                              className={`bg-gray-50 font-semibold text-gray-900 border-b border-gray-200 px-4 py-3 text-left text-sm ${
+                              className={`bg-gray-50 font-semibold text-gray-900 border-b border-gray-200 px-4 py-3 ${
+                                isTabColumn ? "text-center" : "text-left"
+                              } text-sm ${
                                 isWrapped ? "whitespace-normal" : "whitespace-nowrap"
                               }`}
                               style={{ minWidth: width, width: isWrapped ? width : "auto" }}
@@ -384,12 +430,15 @@ export default function MisPage() {
                           .filter((col) => visibleColumns[col.key])
                           .map((column) => {
                             const isWrapped = ["itemName", "group"].includes(column.key);
+                            const isTabColumn = tabColumns.some(c => c.key === column.key);
                             const width = column.key === "itemName" ? "200px" : column.key === "group" ? "120px" : null;
 
                             return (
                               <td
                                 key={column.key}
                                 className={`px-4 py-3 align-top text-sm text-gray-700 ${
+                                  isTabColumn ? "text-center" : "text-left"
+                                } ${
                                   isWrapped ? "whitespace-normal break-words" : "whitespace-nowrap"
                                 }`}
                                 style={isWrapped ? { maxWidth: width } : {}}
