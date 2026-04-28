@@ -855,6 +855,10 @@ export default function WarehousePage() {
       warehouseRowData[131] = dispatchStatus || order.dispatchStatus || "okay";
       warehouseRowData[132] = dispatchStatus === "notokay" ? notOkReason : (order.notOkReason || "");
       
+      // New mappings for Warehouse sheet EO and EP
+      warehouseRowData[144] = order.dSrNumber || ""; // EO: D-Sr No.
+      warehouseRowData[145] = order.warehouseLocation || ""; // EP: Dispatch Location
+      
       // Handle S-Code splitting for Warehouse columns EQ, ER, ES
       let finalSNs = [];
       let finalDates = [];
