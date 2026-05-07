@@ -35,6 +35,7 @@ const menuItems = [
   { href: "/bilty-upload", label: "Bilty-Upload", icon: FileSpreadsheet, pageAccess: "Bilty-Upload" },
   { href: "/purchase", label: "Purchase", icon: PackageCheck, pageAccess: "Purchase" },
   { href: "/purchase-location-update", label: "Purchase-Update-Location", icon: PackageCheck, pageAccess: "Purchase-Update-Location" },
+  { href: "/transporter-mode", label: "Transporter mode", icon: Truck, pageAccess: "Transporter-mode" },
   { href: "/ims", label: "IMS", icon: Award, pageAccess: "IMS" },
   { href: "/PR_SR_DR_form", label: "PR-DR-SR-Form", icon: Bell, pageAccess: "PR-DR-SR-Form" },
 ]

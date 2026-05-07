@@ -649,6 +649,7 @@ export default function WarehousePage() {
         warehouseRemarks,
         dispatchStatus,
         notOkReason,
+        expenseAmount,
         itemQuantities,
         serialNumbers,   // Included from dialog
         serialDates,     // Included from dialog
@@ -734,6 +735,7 @@ export default function WarehousePage() {
       rowData[78] = biltyNumber;        // Column CA
       rowData[79] = totalCharges;       // Column CB
       rowData[80] = warehouseRemarks;   // Column CC
+      rowData[115] = expenseAmount;      // Column DL
 
       // Note: Columns EB (131) and EC (132) are intentionally NOT written to on DISPATCH-DELIVERY sheet
 
@@ -840,6 +842,7 @@ export default function WarehousePage() {
       warehouseRowData[8] = biltyNumber || order.biltyNumber || ""; // 9. Bilty No.
       warehouseRowData[9] = totalCharges || order.totalCharges || ""; // 10. Total Charges
       warehouseRowData[10] = warehouseRemarks || order.warehouseRemarks || ""; // 11. Warehouse Remarks
+      warehouseRowData[115] = expenseAmount; // 116. Expense Amount
 
       // Add ALL items to warehouse sheet starting from index 11
       // Items: Column L onwards (index 11 = Item Name 1, index 12 = Qty 1, etc.)

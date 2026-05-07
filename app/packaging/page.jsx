@@ -168,6 +168,7 @@ export default function PackagingPage() {
                 fileUrls,
                 dispatchStatus,
                 notOkReason,
+                expenseAmount,
             } = dialogData
 
             const formData = new FormData()
@@ -190,6 +191,7 @@ export default function PackagingPage() {
                 rowData[74] = fileUrls.afterPhotoUrl || ""
                 rowData[75] = fileUrls.biltyUrl || ""
             }
+            rowData[115] = expenseAmount
 
             formData.append("rowData", JSON.stringify(rowData))
 
@@ -227,6 +229,7 @@ export default function PackagingPage() {
             warehouseRowData[7] = order.transporterContact || ""
             warehouseRowData[8] = order.biltyNumber || ""
             warehouseRowData[9] = order.totalCharges || ""
+            warehouseRowData[115] = expenseAmount
 
             warehouseRowData[10] = dispatchStatus === "notokay" ? `Packaging issue: ${notOkReason}` : (order.warehouseRemarks || "Packaging completed")
             warehouseRowData[131] = dispatchStatus || order.dispatchStatus || "okay"

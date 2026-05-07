@@ -272,7 +272,7 @@ export default function BiltyUploadPage() {
     const handleProcessBilty = async (dialogData) => {
         try {
             setUploading(true);
-            const { order, driverCharges, fileUrls, transporterContact, biltyNumber, totalCharges, warehouseRemarks } = dialogData;
+            const { order, driverCharges, expenseAmount, fileUrls, transporterContact, biltyNumber, totalCharges, warehouseRemarks } = dialogData;
 
             // 1. Update DISPATCH-DELIVERY (Main Sheet)
             // BX (index 75), BZ (index 77), CA (index 78), CB (index 79), CC (index 80)
@@ -287,6 +287,7 @@ export default function BiltyUploadPage() {
             rowData[78] = biltyNumber || ""; // Column CA - Bilty Number
             rowData[79] = totalCharges || ""; // Column CB - Total Charges
             rowData[80] = warehouseRemarks || ""; // Column CC - Warehouse Remarks
+            rowData[115] = expenseAmount || ""; // Column DL - Expense Amount
             formData.append("rowData", JSON.stringify(rowData));
 
             // 2. Update Warehouse Sheet
@@ -301,6 +302,7 @@ export default function BiltyUploadPage() {
             warehouseRowData[8] = biltyNumber || "";
             warehouseRowData[9] = totalCharges || "";
             warehouseRowData[10] = warehouseRemarks || "";
+            warehouseRowData[115] = expenseAmount || "";
             warehouseRowData[143] = driverCharges;
             warehouseRowData[105] = order.dSrNumber;
             formData2.append("rowData", JSON.stringify(warehouseRowData));

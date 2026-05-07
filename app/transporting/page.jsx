@@ -169,6 +169,7 @@ export default function TransportingPage() {
                 transporterContact,
                 biltyNumber,
                 totalCharges,
+                expenseAmount,
                 warehouseRemarks,
                 dispatchStatus,
                 notOkReason,
@@ -203,6 +204,7 @@ export default function TransportingPage() {
             rowData[78] = biltyNumber
             rowData[79] = totalCharges
             rowData[80] = warehouseRemarks
+            rowData[115] = expenseAmount
 
             formData.append("rowData", JSON.stringify(rowData))
 
@@ -256,6 +258,7 @@ export default function TransportingPage() {
             warehouseRowData[8] = biltyNumber || order.biltyNumber || ""
             warehouseRowData[9] = totalCharges || order.totalCharges || ""
             warehouseRowData[10] = warehouseRemarks || order.warehouseRemarks || ""
+            warehouseRowData[115] = expenseAmount
 
             let itemIndex = 11
             allItems.forEach((item) => {
@@ -441,6 +444,7 @@ export default function TransportingPage() {
                                 <TableHead className="font-bold text-slate-700 h-10 min-w-[130px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Quotation No.</TableHead>
                                 <TableHead className="font-bold text-slate-700 h-10 min-w-[200px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Company Name</TableHead>
                                 <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Invoice Number</TableHead>
+                                <TableHead className="font-bold text-slate-700 h-10 min-w-[180px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Transporter Name</TableHead>
                                 <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Invoice Upload</TableHead>
                                 <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Invoice Created Date</TableHead>
                                 {itemHeaderCols}
@@ -448,7 +452,6 @@ export default function TransportingPage() {
                                 <TableHead className="font-bold text-slate-700 h-10 min-w-[200px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Remarks</TableHead>
                                 {!showActions && (
                                     <>
-                                        <TableHead className="font-bold text-slate-700 h-10 min-w-[180px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Transporter Name</TableHead>
                                         <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Transporter Contact</TableHead>
                                         <TableHead className="font-bold text-slate-700 h-10 min-w-[150px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Bilty/Docket No.</TableHead>
                                         <TableHead className="font-bold text-slate-700 h-10 min-w-[120px] sticky top-0 z-10 bg-slate-50 border-b border-r border-slate-200">Total Charges</TableHead>
@@ -513,6 +516,7 @@ export default function TransportingPage() {
                                             <TableCell className="font-medium text-slate-600 border-b border-r border-slate-100">{order.quotationNo}</TableCell>
                                             <TableCell className="font-medium text-slate-800 border-b border-r border-slate-100">{order.companyName}</TableCell>
                                             <TableCell className="font-medium text-slate-600 border-b border-r border-slate-100">{order.invoiceNumber || "-"}</TableCell>
+                                                <TableCell className="text-slate-800 font-medium border-b border-r border-slate-100">{order.transporterName || <span className="text-slate-300">-</span>}</TableCell>
                                             <TableCell className="border-b border-r border-slate-100">
                                                 {order.invoiceUpload ? (
                                                     <a href={order.invoiceUpload} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-2 py-1 rounded text-[10px] font-bold border border-green-100">
@@ -528,7 +532,6 @@ export default function TransportingPage() {
                                             </TableCell>
                                             {!showActions && (
                                                 <>
-                                                    <TableCell className="text-slate-800 font-medium border-b border-r border-slate-100">{order.transporterName || <span className="text-slate-300">-</span>}</TableCell>
                                                     <TableCell className="text-slate-600 border-b border-r border-slate-100">{order.transporterContact || <span className="text-slate-300">-</span>}</TableCell>
                                                     <TableCell className="text-slate-700 font-bold border-b border-r border-slate-100">{order.biltyNumber || <span className="text-slate-300">-</span>}</TableCell>
                                                     <TableCell className="text-slate-700 font-bold border-b border-r border-slate-100">{order.totalCharges ? `₹${order.totalCharges}` : <span className="text-slate-300">-</span>}</TableCell>

@@ -57,6 +57,7 @@ export default function ProcessDialog({
     const [totalCharges, setTotalCharges] = useState("");
     const [warehouseRemarks, setWarehouseRemarks] = useState("");
     const [driverCharges, setDriverCharges] = useState("");
+    const [expenseAmount, setExpenseAmount] = useState("");
     const [drivers, setDrivers] = useState([]); // Dynamic drivers from CRE sheet
 
     // Upload progress state
@@ -85,6 +86,7 @@ export default function ProcessDialog({
             setDispatchStatus("okay");
             setNotOkReason("");
             setDriverCharges("");
+            setExpenseAmount("");
             setSerialNumbers(selectedOrder.serialNumbers || "");
             setSerialDates(selectedOrder.serialDates || "");
             setSerialLocations(selectedOrder.serialLocations || "");
@@ -447,6 +449,7 @@ export default function ProcessDialog({
                 dispatchStatus,
                 notOkReason,
                 driverCharges,
+                expenseAmount,
                 itemQuantities,
                 // Include serial components
                 serialNumbers: itemSCodes.join(", "), // Pass joined S-Codes as serialNumbers
@@ -827,6 +830,20 @@ export default function ProcessDialog({
                                         onChange={(e) => setWarehouseRemarks(e.target.value)}
                                         placeholder="Enter additional warehouse/dispatch remarks..."
                                         rows={3}
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="expenseAmount" className="text-indigo-700 font-medium">
+                                        Expense Amount
+                                    </Label>
+                                    <Input
+                                        id="expenseAmount"
+                                        value={expenseAmount}
+                                        className="bg-white border-indigo-100"
+                                        onChange={(e) => setExpenseAmount(e.target.value)}
+                                        placeholder="Enter expense amount"
+                                        type="number"
                                     />
                                 </div>
                             </div>
