@@ -58,7 +58,7 @@ export default function TransportingPage() {
 
                     const order = {
                         rowIndex: index + 2,
-                        timeStamp: row.c[0]?.v || "",
+                        timeStamp: row.c[0]?.f || row.c[0]?.v || "",
                         orderNo: row.c[1]?.v || "",
                         quotationNo: row.c[2]?.v || "",
                         companyName: row.c[3]?.v || "",
@@ -119,8 +119,8 @@ export default function TransportingPage() {
                         invoiceUpload: row.c[66]?.v || "",
 
                         bsColumn: row.c[70]?.v || null,
-                        btColumn: row.c[71]?.v || null,
-                        blColumn: row.c[63]?.v || null, // Column BL (index 63)
+                        btColumn: row.c[71]?.f || row.c[71]?.v || null,
+                        blColumn: row.c[63]?.f || row.c[63]?.v || null, // Column BL (index 63)
                         bvColumn: row.c[73]?.v || null,
                         byColumn: row.c[76]?.v || null,
 
@@ -389,6 +389,12 @@ export default function TransportingPage() {
         if (!dateVal || dateVal === "" || dateVal === "-") return "-";
         const s = String(dateVal);
 
+        // If it's already a formatted date string, return it exactly as is from the sheet.
+        // We exclude ISO strings (containing 'T' or 'Z') so they can be parsed and localized.
+        if (!s.startsWith("Date(") && !s.includes("T") && !s.includes("Z") && (s.includes("/") || s.includes("-"))) {
+            return s.split(" ")[0]; // Return the date part
+        }
+
         let d;
         if (s.startsWith("Date(")) {
             const match = s.match(/Date\((\d+),(\d+),(\d+)(?:,(\d+),(\d+),(\d+))?\)/);
@@ -398,18 +404,6 @@ export default function TransportingPage() {
                     parseInt(match[2]),
                     parseInt(match[3])
                 );
-            }
-        } else {
-            const datePart = s.split(" ")[0];
-            const parts = datePart.split(/[/-]/);
-            if (parts.length === 3) {
-                if (parts[2].length === 4) {
-                    // DD/MM/YYYY
-                    d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-                } else if (parts[0].length === 4) {
-                    // YYYY/MM/DD
-                    d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                }
             }
         }
 
@@ -422,7 +416,8 @@ export default function TransportingPage() {
         const mm = (d.getMonth() + 1).toString().padStart(2, "0");
         const dd = d.getDate().toString().padStart(2, "0");
         const yyyy = d.getFullYear();
-        return `${mm}/${dd}/${yyyy}`;
+        // Default to DD/MM/YYYY if we had to parse a non-string date
+        return `${dd}/${mm}/${yyyy}`;
     };
 
     const OrderTable = ({ data, showActions = true }) => {
