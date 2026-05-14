@@ -56,10 +56,10 @@ const FormDataPage = () => {
 
   // Temporary input for adding new items
   const [tempItemInput, setTempItemInput] = useState({
-    sales: { item: "", quantity: "" },
-    purchase: { item: "", quantity: "" },
-    delivery: { item: "", quantity: "" },
-    damage: { item: "", quantity: "", damageIdentifiedAt: "" },
+    sales: { item: "", quantity: "", store: "" },
+    purchase: { item: "", quantity: "", store: "" },
+    delivery: { item: "", quantity: "", store: "" },
+    damage: { item: "", quantity: "", damageIdentifiedAt: "", store: "" },
   });
 
   const [masterData, setMasterData] = useState({
@@ -199,6 +199,7 @@ const FormDataPage = () => {
             reason,
             itemData.damageIdentifiedAt || damageAt,
             approved,
+            itemData.store,
           ]);
         });
       };
@@ -285,10 +286,10 @@ const FormDataPage = () => {
       });
 
       setTempItemInput({
-        sales: { item: "", quantity: "" },
-        purchase: { item: "", quantity: "" },
-        delivery: { item: "", quantity: "" },
-        damage: { item: "", quantity: "", damageIdentifiedAt: "" },
+        sales: { item: "", quantity: "", store: "" },
+        purchase: { item: "", quantity: "", store: "" },
+        delivery: { item: "", quantity: "", store: "" },
+        damage: { item: "", quantity: "", damageIdentifiedAt: "", store: "" },
       });
 
       setFormData({
@@ -428,6 +429,7 @@ const FormDataPage = () => {
         {
           item: input.item.trim(),
           quantity: input.quantity,
+          store: input.store,
           damageIdentifiedAt: section === "damage" ? input.damageIdentifiedAt : "",
         },
       ],
@@ -437,8 +439,8 @@ const FormDataPage = () => {
     setTempItemInput((prev) => ({
       ...prev,
       [section]: section === "damage"
-        ? { item: "", quantity: "", damageIdentifiedAt: "" }
-        : { item: "", quantity: "" }
+        ? { item: "", quantity: "", damageIdentifiedAt: "", store: "" }
+        : { item: "", quantity: "", store: "" }
     }));
   };
 
@@ -618,7 +620,7 @@ const FormDataPage = () => {
                       {/* Item and Quantity Input */}
                       <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-blue-50">
                         <h4 className="font-medium text-blue-700 mb-3">Add Items</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Item Name
@@ -677,6 +679,22 @@ const FormDataPage = () => {
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                           </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Location
+                            </label>
+                            <select
+                              value={tempItemInput.sales.store}
+                              onChange={(e) => handleTempItemChange("sales", "store", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="">Select location</option>
+                              <option value="By C.G.Warehouse">By C.G.Warehouse</option>
+                              <option value="By N.E Warehouse">By N.E Warehouse</option>
+                              <option value="By Head office">By Head office</option>
+                              <option value="Maniquip store">Maniquip store</option>
+                            </select>
+                          </div>
                           <div className="flex items-end">
                             <button
                               onClick={() => addItem("sales")}
@@ -697,6 +715,7 @@ const FormDataPage = () => {
                                   <tr className="bg-blue-100">
                                     <th className="px-3 py-2 border text-left">Item Name</th>
                                     <th className="px-3 py-2 border text-left">Quantity</th>
+                                    <th className="px-3 py-2 border text-left">Location</th>
                                     <th className="px-3 py-2 border text-left">Action</th>
                                   </tr>
                                 </thead>
@@ -705,6 +724,7 @@ const FormDataPage = () => {
                                     <tr key={idx} className="hover:bg-blue-50">
                                       <td className="px-3 py-2 border">{item.item}</td>
                                       <td className="px-3 py-2 border">{item.quantity}</td>
+                                      <td className="px-3 py-2 border">{item.store}</td>
                                       <td className="px-3 py-2 border">
                                         <button
                                           onClick={() => removeItem("sales", idx)}
@@ -831,7 +851,7 @@ const FormDataPage = () => {
                       {/* Item and Quantity Input */}
                       <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-green-50">
                         <h4 className="font-medium text-green-700 mb-3">Add Items</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Item Name
@@ -890,6 +910,22 @@ const FormDataPage = () => {
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                             />
                           </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Location
+                            </label>
+                            <select
+                              value={tempItemInput.purchase.store}
+                              onChange={(e) => handleTempItemChange("purchase", "store", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                            >
+                              <option value="">Select location</option>
+                              <option value="By C.G.Warehouse">By C.G.Warehouse</option>
+                              <option value="By N.E Warehouse">By N.E Warehouse</option>
+                              <option value="By Head office">By Head office</option>
+                              <option value="Maniquip store">Maniquip store</option>
+                            </select>
+                          </div>
                           <div className="flex items-end">
                             <button
                               onClick={() => addItem("purchase")}
@@ -910,6 +946,7 @@ const FormDataPage = () => {
                                   <tr className="bg-green-100">
                                     <th className="px-3 py-2 border text-left">Item Name</th>
                                     <th className="px-3 py-2 border text-left">Quantity</th>
+                                    <th className="px-3 py-2 border text-left">Location</th>
                                     <th className="px-3 py-2 border text-left">Action</th>
                                   </tr>
                                 </thead>
@@ -918,6 +955,7 @@ const FormDataPage = () => {
                                     <tr key={idx} className="hover:bg-green-50">
                                       <td className="px-3 py-2 border">{item.item}</td>
                                       <td className="px-3 py-2 border">{item.quantity}</td>
+                                      <td className="px-3 py-2 border">{item.store}</td>
                                       <td className="px-3 py-2 border">
                                         <button
                                           onClick={() => removeItem("purchase", idx)}
@@ -1032,7 +1070,7 @@ const FormDataPage = () => {
                       {/* Item and Quantity Input */}
                       <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-purple-50">
                         <h4 className="font-medium text-purple-700 mb-3">Add Items</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Item Name
@@ -1091,6 +1129,22 @@ const FormDataPage = () => {
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
                           </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Location
+                            </label>
+                            <select
+                              value={tempItemInput.delivery.store}
+                              onChange={(e) => handleTempItemChange("delivery", "store", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                              <option value="">Select location</option>
+                              <option value="By C.G.Warehouse">By C.G.Warehouse</option>
+                              <option value="By N.E Warehouse">By N.E Warehouse</option>
+                              <option value="By Head office">By Head office</option>
+                              <option value="Maniquip store">Maniquip store</option>
+                            </select>
+                          </div>
                           <div className="flex items-end">
                             <button
                               onClick={() => addItem("delivery")}
@@ -1111,6 +1165,7 @@ const FormDataPage = () => {
                                   <tr className="bg-purple-100">
                                     <th className="px-3 py-2 border text-left">Item Name</th>
                                     <th className="px-3 py-2 border text-left">Quantity</th>
+                                    <th className="px-3 py-2 border text-left">Location</th>
                                     <th className="px-3 py-2 border text-left">Action</th>
                                   </tr>
                                 </thead>
@@ -1119,6 +1174,7 @@ const FormDataPage = () => {
                                     <tr key={idx} className="hover:bg-purple-50">
                                       <td className="px-3 py-2 border">{item.item}</td>
                                       <td className="px-3 py-2 border">{item.quantity}</td>
+                                      <td className="px-3 py-2 border">{item.store}</td>
                                       <td className="px-3 py-2 border">
                                         <button
                                           onClick={() => removeItem("delivery", idx)}
@@ -1192,7 +1248,7 @@ const FormDataPage = () => {
                       {/* Item, Quantity, and Damage Identified At Input */}
                       <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-red-50">
                         <h4 className="font-medium text-red-700 mb-3">Add Damage Items</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-3">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Item Name
@@ -1266,6 +1322,22 @@ const FormDataPage = () => {
                               <option value="Customer Site">Customer Site</option>
                             </select>
                           </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Location
+                            </label>
+                            <select
+                              value={tempItemInput.damage.store}
+                              onChange={(e) => handleTempItemChange("damage", "store", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                            >
+                              <option value="">Select location</option>
+                              <option value="By C.G.Warehouse">By C.G.Warehouse</option>
+                              <option value="By N.E Warehouse">By N.E Warehouse</option>
+                              <option value="By Head office">By Head office</option>
+                              <option value="Maniquip store">Maniquip store</option>
+                            </select>
+                          </div>
                           <div className="flex items-end">
                             <button
                               onClick={() => addItem("damage")}
@@ -1287,6 +1359,7 @@ const FormDataPage = () => {
                                     <th className="px-3 py-2 border text-left">Item Name</th>
                                     <th className="px-3 py-2 border text-left">Quantity</th>
                                     <th className="px-3 py-2 border text-left">Damage Identified At</th>
+                                    <th className="px-3 py-2 border text-left">Location</th>
                                     <th className="px-3 py-2 border text-left">Action</th>
                                   </tr>
                                 </thead>
@@ -1296,6 +1369,7 @@ const FormDataPage = () => {
                                       <td className="px-3 py-2 border">{item.item}</td>
                                       <td className="px-3 py-2 border">{item.quantity}</td>
                                       <td className="px-3 py-2 border">{item.damageIdentifiedAt}</td>
+                                      <td className="px-3 py-2 border">{item.store}</td>
                                       <td className="px-3 py-2 border">
                                         <button
                                           onClick={() => removeItem("damage", idx)}
