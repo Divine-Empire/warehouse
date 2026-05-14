@@ -164,6 +164,7 @@ const FormDataPage = () => {
         reasonForDamage: row.c[8]?.v || "",
         damageIdentifiedAt: row.c[9]?.v || "",
         approvedBy: row.c[10]?.v || "",
+        location: row.c[11]?.v || "",
       }));
 
       setTableData(rows);
@@ -1463,13 +1464,16 @@ const FormDataPage = () => {
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
                         Approved By
                       </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
+                        Location
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {tableData.length === 0 ? (
                       <tr>
                         <td
-                          colSpan="11"
+                          colSpan="12"
                           className="px-4 py-8 text-center text-gray-500"
                         >
                           No data available
@@ -1510,6 +1514,9 @@ const FormDataPage = () => {
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                             {row.approvedBy}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                            {row.location}
                           </td>
                         </tr>
                       ))
@@ -1589,6 +1596,12 @@ const FormDataPage = () => {
                               <div>
                                 <span className="text-sm text-gray-600">Approved By:</span>
                                 <div>{row.approvedBy}</div>
+                              </div>
+                            )}
+                            {row.location && (
+                              <div>
+                                <span className="text-sm text-gray-600">Location:</span>
+                                <div>{row.location}</div>
                               </div>
                             )}
                           </div>
