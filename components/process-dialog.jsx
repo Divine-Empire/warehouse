@@ -54,7 +54,9 @@ export default function ProcessDialog({
     const [transporterName, setTransporterName] = useState("");
     const [transporterContact, setTransporterContact] = useState("");
     const [biltyNumber, setBiltyNumber] = useState("");
-    const [totalCharges, setTotalCharges] = useState("");
+    const [freightCharge, setFreightCharge] = useState("");
+    const [hamaliCharge, setHamaliCharge] = useState("");
+    const [parkingCharge, setParkingCharge] = useState("");
     const [warehouseRemarks, setWarehouseRemarks] = useState("");
     const [driverCharges, setDriverCharges] = useState("");
     const [expenseAmount, setExpenseAmount] = useState("");
@@ -81,7 +83,9 @@ export default function ProcessDialog({
             setTransporterName("");
             setTransporterContact("");
             setBiltyNumber("");
-            setTotalCharges("");
+            setFreightCharge("");
+            setHamaliCharge("");
+            setParkingCharge("");
             setWarehouseRemarks("");
             setDispatchStatus("okay");
             setNotOkReason("");
@@ -357,8 +361,8 @@ export default function ProcessDialog({
                 alert("Please upload at least one 'Bilty / Docket' file.");
                 return;
             }
-            if (!totalCharges.trim()) {
-                alert("Please enter Driver Transporting Charges.");
+            if (!freightCharge.trim() && !hamaliCharge.trim() && !parkingCharge.trim()) {
+                alert("Please enter at least one charge (Freight, Hamali, or Parking).");
                 return;
             }
         }
@@ -444,7 +448,9 @@ export default function ProcessDialog({
                 transporterName,
                 transporterContact,
                 biltyNumber,
-                totalCharges,
+                freightCharge,
+                hamaliCharge,
+                parkingCharge,
                 warehouseRemarks,
                 dispatchStatus,
                 notOkReason,
@@ -890,18 +896,48 @@ export default function ProcessDialog({
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="totalCharges" className="text-indigo-700 font-medium">
-                                    Driver Transporting Charges <span className="text-red-500 font-bold">*</span>
-                                </Label>
-                                <Input
-                                    id="totalCharges"
-                                    value={totalCharges}
-                                    className="bg-white border-indigo-100"
-                                    onChange={(e) => setTotalCharges(e.target.value)}
-                                    placeholder="Enter charges"
-                                    type="number"
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="freightCharge" className="text-indigo-700 font-medium">
+                                        Freight Charge <span className="text-red-500 font-bold">*</span>
+                                    </Label>
+                                    <Input
+                                        id="freightCharge"
+                                        value={freightCharge}
+                                        className="bg-white border-indigo-100"
+                                        onChange={(e) => setFreightCharge(e.target.value)}
+                                        placeholder="Enter freight"
+                                        type="number"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="hamaliCharge" className="text-indigo-700 font-medium">
+                                        Hamali Charge
+                                    </Label>
+                                    <Input
+                                        id="hamaliCharge"
+                                        value={hamaliCharge}
+                                        className="bg-white border-indigo-100"
+                                        onChange={(e) => setHamaliCharge(e.target.value)}
+                                        placeholder="Enter hamali"
+                                        type="number"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="parkingCharge" className="text-indigo-700 font-medium">
+                                        Parking Charge
+                                    </Label>
+                                    <Input
+                                        id="parkingCharge"
+                                        value={parkingCharge}
+                                        className="bg-white border-indigo-100"
+                                        onChange={(e) => setParkingCharge(e.target.value)}
+                                        placeholder="Enter parking"
+                                        type="number"
+                                    />
+                                </div>
                             </div>
 
                             <div className="space-y-3">

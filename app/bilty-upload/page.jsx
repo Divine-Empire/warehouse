@@ -59,6 +59,9 @@ const historyColumns = [
     { key: "actions", label: "Status" },
     ...sharedColumns,
     { key: "biltyUpload", label: "Bilty Upload" },
+    { key: "freightCharge", label: "Freight Charge" },
+    { key: "hamaliCharge", label: "Hamali Charge" },
+    { key: "parkingCharge", label: "Parking Charge" },
 ];
 
 export default function BiltyUploadPage() {
@@ -104,6 +107,9 @@ export default function BiltyUploadPage() {
                             transporterContact: row[7] || "",
                             biltyNumber: row[8] || "",
                             totalCharges: row[9] || "",
+                            freightCharge: row[9] || "", // Using totalCharges as fallback for freight
+                            hamaliCharge: row[143] || "", // Using driverCharges as fallback if needed, or index if known
+                            parkingCharge: row[144] || "", 
                             warehouseRemarks: row[10] || "",
                             dispatchStatus: row[131] || "okay",
                             notOkReason: row[132] || "",
@@ -151,6 +157,9 @@ export default function BiltyUploadPage() {
                     afterPhoto: whInfo.afterPhoto || "",
                     biltyUpload: bxColumn || whInfo.biltyUpload || "",
                     driverCharges: whInfo.driverCharges || "",
+                    freightCharge: row[79] || whInfo.freightCharge || "",
+                    hamaliCharge: row[116] || whInfo.hamaliCharge || "",
+                    parkingCharge: row[117] || whInfo.parkingCharge || "",
                     dispatchStatus: whInfo.dispatchStatus || "okay",
                     notOkReason: whInfo.notOkReason || "",
                     transporterByName: byColumn,
@@ -267,7 +276,7 @@ export default function BiltyUploadPage() {
     const handleProcessBilty = async (dialogData) => {
         try {
             setUploading(true);
-            const { order, driverCharges, expenseAmount, fileUrls, transporterContact, biltyNumber, totalCharges, warehouseRemarks } = dialogData;
+            const { order, driverCharges, expenseAmount, fileUrls, transporterContact, biltyNumber, freightCharge, hamaliCharge, parkingCharge, warehouseRemarks, transporterName } = dialogData;
 
             // 1. Update DISPATCH-DELIVERY (Main Sheet)
             // BX (index 75), BZ (index 77), CA (index 78), CB (index 79), CC (index 80)
@@ -277,12 +286,17 @@ export default function BiltyUploadPage() {
             formData.append("dSrNumber", order.dSrNumber);
 
             const rowData = new Array(143).fill("");
+            rowData[73] = order.beforePhoto || ""; // Preserve Before Photo
+            rowData[74] = order.afterPhoto || "";  // Preserve After Photo
             rowData[75] = fileUrls.biltyUrl || ""; // Column BX - Bilty Upload
+            rowData[76] = transporterName || order.transporterName || ""; // Column BY - Transporter Name
             rowData[77] = transporterContact || ""; // Column BZ - Transporter Contact
             rowData[78] = biltyNumber || ""; // Column CA - Bilty Number
-            rowData[79] = totalCharges || ""; // Column CB - Total Charges
+            rowData[79] = freightCharge || ""; // Column CB - Freight Charge
             rowData[80] = warehouseRemarks || ""; // Column CC - Warehouse Remarks
             rowData[115] = expenseAmount || ""; // Column DL - Expense Amount
+            rowData[116] = hamaliCharge || ""; // Column DM - Hamali Charge
+            rowData[117] = parkingCharge || ""; // Column DN - Parking Charge
             formData.append("rowData", JSON.stringify(rowData));
 
             // 2. Update Warehouse Sheet
@@ -292,12 +306,17 @@ export default function BiltyUploadPage() {
             formData2.append("orderNo", order.orderNo);
 
             const warehouseRowData = new Array(145).fill("");
+            warehouseRowData[3] = order.beforePhoto || ""; // Preserve Before Photo
+            warehouseRowData[4] = order.afterPhoto || "";  // Preserve After Photo
             warehouseRowData[5] = fileUrls.biltyUrl || "";
+            warehouseRowData[6] = transporterName || order.transporterName || "";
             warehouseRowData[7] = transporterContact || "";
             warehouseRowData[8] = biltyNumber || "";
-            warehouseRowData[9] = totalCharges || "";
+            warehouseRowData[9] = freightCharge || "";
             warehouseRowData[10] = warehouseRemarks || "";
             warehouseRowData[115] = expenseAmount || "";
+            warehouseRowData[116] = hamaliCharge || "";
+            warehouseRowData[117] = parkingCharge || "";
             warehouseRowData[143] = driverCharges;
             warehouseRowData[105] = order.dSrNumber;
             formData2.append("rowData", JSON.stringify(warehouseRowData));
@@ -440,7 +459,7 @@ export default function BiltyUploadPage() {
                                                                 Upload Bilty
                                                             </Button>
                                                         </TableCell>
-                                                        <TableCell className="font-semibold text-slate-900 border-r border-slate-100">{order.companyName}</TableCell>
+                                                        <TableCell className="font-semibold text-slate-900 border-r border-slate-100 whitespace-normal break-words min-w-[150px]">{order.companyName}</TableCell>
                                                         <TableCell className="text-slate-600 font-medium border-r border-slate-100">{order.invoiceNumber || "-"}</TableCell>
                                                         <TableCell className="border-r border-slate-100">
                                                             {order.invoiceUpload ? (
@@ -451,9 +470,9 @@ export default function BiltyUploadPage() {
                                                         </TableCell>
                                                         <TableCell className="text-slate-600 font-medium border-r border-slate-100">{formatDateToMMDDYYYY(order.invoiceCreatedDate)}</TableCell>
                                                         <TableCell className="text-slate-600 border-r border-slate-100">{order.transportMode || "-"}</TableCell>
-                                                        <TableCell className="text-slate-600 max-w-[200px] truncate border-r border-slate-100" title={order.shippingAddress}>{order.shippingAddress || "-"}</TableCell>
+                                                        <TableCell className="text-slate-600 min-w-[200px] whitespace-normal break-words border-r border-slate-100" title={order.shippingAddress}>{order.shippingAddress || "-"}</TableCell>
                                                         <TableCell className="text-slate-800 font-medium border-r border-slate-100">{order.transporterName || "-"}</TableCell>
-                                                        <TableCell className="text-slate-600 border-r border-slate-100">
+                                                        <TableCell className="text-slate-600 border-r border-slate-100 whitespace-normal break-words min-w-[150px]">
                                                             {order.warehouseRemarks || <span className="text-slate-400 italic">No remarks</span>}
                                                         </TableCell>
                                                     </TableRow>
@@ -508,7 +527,7 @@ export default function BiltyUploadPage() {
                                                                 Uploaded
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="font-semibold text-slate-900 border-r border-slate-100">{order.companyName}</TableCell>
+                                                        <TableCell className="font-semibold text-slate-900 border-r border-slate-100 whitespace-normal break-words min-w-[150px]">{order.companyName}</TableCell>
                                                         <TableCell className="text-slate-600 font-medium border-r border-slate-100">{order.invoiceNumber || "-"}</TableCell>
                                                         <TableCell className="border-r border-slate-100">
                                                             {order.invoiceUpload ? (
@@ -519,12 +538,12 @@ export default function BiltyUploadPage() {
                                                         </TableCell>
                                                         <TableCell className="text-slate-600 font-medium border-r border-slate-100">{formatDateToMMDDYYYY(order.invoiceCreatedDate)}</TableCell>
                                                         <TableCell className="text-slate-600 border-r border-slate-100">{order.transportMode || "-"}</TableCell>
-                                                        <TableCell className="text-slate-600 max-w-[200px] truncate border-r border-slate-100" title={order.shippingAddress}>{order.shippingAddress || "-"}</TableCell>
+                                                        <TableCell className="text-slate-600 min-w-[200px] whitespace-normal break-words border-r border-slate-100" title={order.shippingAddress}>{order.shippingAddress || "-"}</TableCell>
                                                         <TableCell className="text-slate-800 font-medium border-r border-slate-100">{order.transporterName || "-"}</TableCell>
-                                                        <TableCell className="text-slate-600 border-r border-slate-100">
+                                                        <TableCell className="text-slate-600 border-r border-slate-100 whitespace-normal break-words min-w-[150px]">
                                                             {order.warehouseRemarks || <span className="text-slate-400 italic">No remarks</span>}
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="border-r border-slate-100">
                                                             {order.biltyUpload ? (
                                                                 <a
                                                                     href={order.biltyUpload}
@@ -542,6 +561,9 @@ export default function BiltyUploadPage() {
                                                                 </span>
                                                             )}
                                                         </TableCell>
+                                                        <TableCell className="text-slate-700 font-bold border-r border-slate-100">₹{order.freightCharge || "0"}</TableCell>
+                                                        <TableCell className="text-slate-700 font-bold border-r border-slate-100">₹{order.hamaliCharge || "0"}</TableCell>
+                                                        <TableCell className="text-slate-700 font-bold border-r border-slate-100">₹{order.parkingCharge || "0"}</TableCell>
                                                     </TableRow>
                                                 ))
                                             )}
