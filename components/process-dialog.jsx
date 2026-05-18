@@ -61,6 +61,7 @@ export default function ProcessDialog({
     const [driverCharges, setDriverCharges] = useState("");
     const [expenseAmount, setExpenseAmount] = useState("");
     const [drivers, setDrivers] = useState([]); // Dynamic drivers from CRE sheet
+    const [duplicateMap, setDuplicateMap] = useState({});
 
     // Upload progress state
     const [isUploading, setIsUploading] = useState(false);
@@ -98,12 +99,20 @@ export default function ProcessDialog({
             // Initialize item quantities and S-Codes
             const initialQuantities = {};
             const tempAllItems = [];
+            const newDuplicateMap = {};
+            const colItemsList = [];
 
             // Process column items (1 to 14)
             for (let i = 1; i <= 14; i++) {
                 if (selectedOrder[`itemName${i}`] || selectedOrder[`quantity${i}`]) {
                     initialQuantities[`column-${i}`] = selectedOrder[`quantity${i}`] || "0";
                     tempAllItems.push({ id: `column-${i}` });
+                    colItemsList.push({
+                        name: selectedOrder[`itemName${i}`] || "",
+                        quantity: selectedOrder[`quantity${i}`] || "",
+                        id: `column-${i}`,
+                        matched: false
+                    });
                 }
             }
 
@@ -122,8 +131,23 @@ export default function ProcessDialog({
 
                     jsonItems.forEach((item, idx) => {
                         if (item.name || item.quantity) {
-                            initialQuantities[`json-${idx}`] = item.quantity || "0";
-                            tempAllItems.push({ id: `json-${idx}` });
+                            const itemName = item.name || "";
+                            const itemQty = item.quantity || "";
+                            
+                            const dupIndex = colItemsList.findIndex(
+                                cItem => cItem.name === itemName && cItem.quantity == itemQty && !cItem.matched
+                            );
+                            
+                            if (dupIndex !== -1) {
+                                colItemsList[dupIndex].matched = true;
+                                const colId = colItemsList[dupIndex].id;
+                                if (!newDuplicateMap[colId]) newDuplicateMap[colId] = [];
+                                newDuplicateMap[colId].push(`json-${idx}`);
+                                initialQuantities[`json-${idx}`] = item.quantity || "0";
+                            } else {
+                                initialQuantities[`json-${idx}`] = item.quantity || "0";
+                                tempAllItems.push({ id: `json-${idx}` });
+                            }
                         }
                     });
                 }
@@ -132,6 +156,7 @@ export default function ProcessDialog({
             }
 
             setItemQuantities(initialQuantities);
+            setDuplicateMap(newDuplicateMap);
 
             // Initialize S-Codes
             const cleanSplit = (str) => {
@@ -495,6 +520,7 @@ export default function ProcessDialog({
 
         const allItems = [];
         let itemCounter = 0;
+        const renderColItemsList = [];
 
         // 1. Process Column Items (1 to 14)
         for (let i = 1; i <= 14; i++) {
@@ -510,6 +536,11 @@ export default function ProcessDialog({
                     quantity: quantity || "",
                     type: "column",
                     rowNum: i,
+                });
+                renderColItemsList.push({
+                    name: itemName || "",
+                    quantity: quantity || "",
+                    matched: false
                 });
             }
         }
@@ -530,15 +561,26 @@ export default function ProcessDialog({
 
                 jsonItems.forEach((item, idx) => {
                     if (item.name || item.quantity) {
-                        itemCounter++;
-                        allItems.push({
-                            id: `json-${idx}`,
-                            index: itemCounter,
-                            name: item.name || "",
-                            quantity: item.quantity || "",
-                            type: "json",
-                            jsonIndex: idx,
-                        });
+                        const itemName = item.name || "";
+                        const itemQty = item.quantity || "";
+                        
+                        const dupIndex = renderColItemsList.findIndex(
+                            cItem => cItem.name === itemName && cItem.quantity == itemQty && !cItem.matched
+                        );
+                        
+                        if (dupIndex !== -1) {
+                            renderColItemsList[dupIndex].matched = true;
+                        } else {
+                            itemCounter++;
+                            allItems.push({
+                                id: `json-${idx}`,
+                                index: itemCounter,
+                                name: itemName,
+                                quantity: itemQty,
+                                type: "json",
+                                jsonIndex: idx,
+                            });
+                        }
                     }
                 });
             }
@@ -616,10 +658,18 @@ export default function ProcessDialog({
                                             className="h-8 w-20 mx-auto bg-white font-bold text-center border-slate-200 focus:border-violet-400 focus:ring-violet-400"
                                             onChange={(e) => {
                                                 const newValue = e.target.value;
-                                                setItemQuantities((prev) => ({
-                                                    ...prev,
-                                                    [item.id]: newValue,
-                                                }));
+                                                setItemQuantities((prev) => {
+                                                    const updated = {
+                                                        ...prev,
+                                                        [item.id]: newValue,
+                                                    };
+                                                    if (duplicateMap[item.id]) {
+                                                        duplicateMap[item.id].forEach(dupId => {
+                                                            updated[dupId] = newValue;
+                                                        });
+                                                    }
+                                                    return updated;
+                                                });
                                             }}
                                         />
                                     </TableCell>
@@ -684,7 +734,8 @@ export default function ProcessDialog({
                     <span className="text-lg font-black text-violet-800">
                         {(() => {
                             let total = 0;
-                            Object.values(itemQuantities).forEach((qty) => {
+                            allItems.forEach((item) => {
+                                const qty = itemQuantities[item.id] !== undefined ? itemQuantities[item.id] : item.quantity;
                                 if (qty) total += parseInt(qty) || 0;
                             });
                             return total;
