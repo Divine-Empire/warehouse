@@ -73,6 +73,10 @@ export function CountsProvider({ children }: { children: React.ReactNode }) {
         dispatchRows.slice(6).forEach((row: any[]) => {
           if (!row || row.length === 0) return;
 
+          // Align with page logic: skip rows without a valid D-Sr Number in Column DB (Index 105)
+          const dSrNumber = row[105] ? String(row[105]).trim() : "";
+          if (!dSrNumber) return;
+
           const bk = row[62]; // planned5 (Dispatch)
           const bt = row[71]; // actual6 / btColumn (Transporting)
           const by = row[76]; // byColumn (Packaging / Transporter)
@@ -95,10 +99,9 @@ export function CountsProvider({ children }: { children: React.ReactNode }) {
           const noActual6 = !bt || String(bt).trim() === "" || String(bt).trim() === "-" || String(bt).trim().toLowerCase() === "n/a";
           if (hasPlanned5 && noActual6) dispatchCount++;
 
-          // Transporting Pending: btColumn && !byColumn
-          const hasBt = !!bt && String(bt).trim() !== "" && String(bt).trim() !== "-";
+          // Transporting Pending: !byColumn (only check if Transporter name is empty)
           const noBy = !by || String(by).trim() === "" || String(by).trim() === "-" || String(by).trim().toLowerCase() === "n/a";
-          if (hasBt && noBy) transportingCount++;
+          if (noBy) transportingCount++;
 
           // Packaging Pending: byColumn && (!bv || !bw)
           const hasBy = !!by && String(by).trim() !== "" && String(by).trim() !== "-";

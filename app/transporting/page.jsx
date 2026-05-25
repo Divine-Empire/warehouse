@@ -378,11 +378,11 @@ export default function TransportingPage() {
     }, [orders, searchTerm, user])
 
     const pendingOrders = useMemo(() =>
-        filteredOrders.filter(order => !!order.btColumn && !order.byColumn),
+        filteredOrders.filter(order => !order.byColumn),
         [filteredOrders])
 
     const historyOrders = useMemo(() =>
-        filteredOrders.filter(order => !!order.btColumn && !!order.byColumn),
+        filteredOrders.filter(order => !!order.byColumn),
         [filteredOrders])
 
     const formatDateToMMDDYYYY = (dateVal) => {
