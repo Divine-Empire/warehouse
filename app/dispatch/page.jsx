@@ -467,7 +467,7 @@ export default function WarehousePage() {
     if (!currentUser) return orders;
 
     // Super admin sees all data
-    if (currentUser.role === "super_admin") {
+    if (currentUser.role === "admin") {
       return orders;
     }
 

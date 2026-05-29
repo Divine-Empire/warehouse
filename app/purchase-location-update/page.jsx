@@ -278,7 +278,7 @@ export default function PurchaseLocationUpdatePage() {
     const normalizeLoc = (loc) => String(loc || "").toLowerCase().replace(/^by\s*/i, "").replace(/[^a-z0-9]/g, "").trim();
 
     // Apply user location-based filtering
-    if (currentUser && currentUser.role !== "super_admin") {
+    if (currentUser && currentUser.role !== "admin") {
       const userLocations = currentUser.location || ["None"];
       const isAllLocations = userLocations.some(l => l.toLowerCase() === "all");
       if (!isAllLocations) {

@@ -212,7 +212,7 @@ export function LocationUpdateModal({ isOpen, onClose, onRefreshData }) {
   const filteredSalesData = useMemo(() => {
     let data = salesData.filter(item => item.isPending)
     
-    if (currentUser && currentUser.role !== "super_admin") {
+    if (currentUser && currentUser.role !== "admin") {
       const userLocations = currentUser.location || ["None"]
       const isAllLocations = userLocations.some(l => l.toLowerCase() === "all")
       if (!isAllLocations) {

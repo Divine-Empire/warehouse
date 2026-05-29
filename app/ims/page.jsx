@@ -36,7 +36,7 @@ export default function MisPage() {
 
   const availableTabs = useMemo(() => {
     if (!user) return [];
-    if (user.role === "admin" || user.role === "super_admin") return LOCATION_TABS;
+    if (user.role === "admin") return LOCATION_TABS;
     
     const userLocations = user.location || [];
     const isAll = userLocations.some(l => l.toLowerCase() === "all");

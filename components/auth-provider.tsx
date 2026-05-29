@@ -8,7 +8,7 @@ interface User {
   id: string
   username: string
   fullName: string
-  role: "super_admin" | "admin" | "user"
+  role: "admin" | "user"
   assignedSteps: string[]
   pageAccess: string[]
   location: string[]
@@ -106,10 +106,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               // Parse location from comma-separated string
               const location = rowLocation ? String(rowLocation).split(",").map((loc: string) => loc.trim()).filter(Boolean) : []
 
-              // Determine role - support super_admin, admin, user
-              let userRole: "super_admin" | "admin" | "user" = "user"
-              if (rowRole === "super_admin") userRole = "super_admin"
-              else if (rowRole === "admin") userRole = "admin"
+              // Determine role - support admin, user (map super_admin to admin)
+              let userRole: "admin" | "user" = "user"
+              if (rowRole === "super_admin" || rowRole === "admin") userRole = "admin"
 
               const userData: User = {
                 id: `user_${Date.now()}`,

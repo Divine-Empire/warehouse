@@ -317,7 +317,7 @@ export default function PackagingPage() {
         // Helper to normalize location strings for robust matching
         const normalizeLoc = (loc) => String(loc || "").toLowerCase().replace(/^by\s*/i, "").replace(/[^a-z0-9]/g, "").trim();
 
-        if (user && user.role !== "super_admin") {
+        if (user && user.role !== "admin") {
             const userLocations = user.location || ["None"];
             const isAllLocations = userLocations.some(l => l.toLowerCase() === "all");
             

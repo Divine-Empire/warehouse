@@ -1222,7 +1222,7 @@ export default function ProcessDialog({
 
                     <div className="flex justify-end gap-2 pt-4">
                         <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isUploading}>Cancel</Button>
-                        <Button onClick={handleSubmit} disabled={isUploading || uploading || currentUser?.role === "user"} className={isUploading ? "bg-blue-600 hover:bg-blue-700" : ""}>
+                        <Button onClick={handleSubmit} disabled={isUploading || uploading} className={isUploading ? "bg-blue-600 hover:bg-blue-700" : ""}>
                             {isUploading ? `Uploading... ${uploadProgress}%` : uploading ? "Processing..." : "Submit"}
                         </Button>
                     </div>

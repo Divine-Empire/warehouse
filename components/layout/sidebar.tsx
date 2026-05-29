@@ -37,6 +37,7 @@ const menuItems = [
   { href: "/purchase-location-update", label: "Purchase-Update-Location", icon: PackageCheck, pageAccess: "Purchase-Update-Location" },
   { href: "/ims", label: "IMS", icon: Award, pageAccess: "IMS" },
   { href: "/PR_SR_DR_form", label: "PR-DR-SR-Form", icon: Bell, pageAccess: "PR-DR-SR-Form" },
+  { href: "/settings", label: "Settings", icon: Settings, pageAccess: "Settings" },
 ]
 
 export function Sidebar() {
@@ -46,7 +47,10 @@ export function Sidebar() {
   const [open, setOpen] = useState(false)
 
   const filteredMenuItems = menuItems.filter((item) => {
-    if (user?.role === "admin" || user?.role === "super_admin") return true
+    if (item.href === "/settings") {
+      return user?.role === "admin"
+    }
+    if (user?.role === "admin") return true
     if (!user?.pageAccess) return false
     return user.pageAccess.some(p => 
       p.toLowerCase() === item.pageAccess.toLowerCase() || 

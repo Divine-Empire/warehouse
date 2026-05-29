@@ -40,7 +40,7 @@ export default function LoginPage() {
         const userRole = userData.role
 
         // Super admin and admin can access all pages - redirect to first page
-        if (userRole === "super_admin" || userRole === "admin" || userPageAccess.includes("all")) {
+        if (userRole === "admin" || userPageAccess.includes("all")) {
           router.push("/dispatch")
           return
         }
@@ -89,7 +89,7 @@ export default function LoginPage() {
           ]
 
           // Super admin and admin can access all pages - redirect to first page
-          if (userRole === "super_admin" || userRole === "admin" || userPageAccess.includes("all")) {
+          if (userRole === "admin" || userPageAccess.includes("all")) {
             router.push("/dispatch")
             return
           }
