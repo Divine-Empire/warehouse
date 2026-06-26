@@ -7,8 +7,8 @@ import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Loader2 } from "lucide-react"
+import Image from "next/image"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
@@ -120,10 +120,10 @@ export default function LoginPage() {
   // Show loading while checking authentication
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50/50 to-purple-50/70 text-slate-800">
+        <div className="text-center space-y-4">
+          <Loader2 className="animate-spin h-12 w-12 text-blue-600 mx-auto" />
+          <p className="text-sm font-medium text-slate-500 animate-pulse">Verifying User...</p>
         </div>
       </div>
     )
@@ -132,26 +132,50 @@ export default function LoginPage() {
   // If already authenticated, show loading while redirecting
   if (isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Redirecting to dashboard...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50/50 to-purple-50/70 text-slate-800">
+        <div className="text-center space-y-4">
+          <Loader2 className="animate-spin h-12 w-12 text-emerald-600 mx-auto" />
+          <p className="text-sm font-medium text-slate-500 animate-pulse">Welcome! Redirecting to dashboard...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold text-gray-900">Warehouse System</CardTitle>
-          {/* <CardDescription className="text-gray-600">Order To Payment Management System</CardDescription> */}
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username" className="text-gray-700">
+    <div className="relative min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 via-indigo-50/30 to-purple-50/70 select-none overflow-hidden">
+      {/* Background radial glow details */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-[10%] -left-[10%] h-[600px] w-[600px] rounded-full bg-blue-400/10 blur-[120px] animate-pulse duration-[8000ms]" />
+        <div className="absolute -bottom-[10%] -right-[10%] h-[600px] w-[600px] rounded-full bg-purple-400/10 blur-[120px] animate-pulse duration-[12000ms]" />
+        <div className="absolute top-[35%] left-[25%] h-[400px] w-[400px] rounded-full bg-indigo-400/5 blur-[150px]" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-md">
+        <div className="rounded-3xl border border-white/60 bg-white/70 p-8 shadow-[0_8px_32px_rgba(31,38,135,0.08)] backdrop-blur-lg transition-all duration-300 hover:border-white/90">
+          {/* Logo Section */}
+          <div className="flex justify-center mb-6">
+            <Image
+              src="/divine-logo.svg"
+              alt="Divine Logo"
+              width={140}
+              height={108}
+              className="h-16 w-auto object-contain filter drop-shadow-[0_2px_12px_rgba(33,114,182,0.15)] transition-transform duration-500 hover:scale-105"
+              priority
+            />
+          </div>
+
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-800">
+              Divine Empire
+            </h1>
+            <p className="mt-1.5 text-xs font-bold text-slate-500 uppercase tracking-widest">
+              Warehouse System
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-1.5">
+              <Label htmlFor="username" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                 Username
               </Label>
               <Input
@@ -161,11 +185,13 @@ export default function LoginPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 disabled={isSubmitting}
-                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="h-11 border-slate-200 bg-white/80 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl focus:bg-white transition-all text-sm shadow-sm"
+                placeholder="Enter your username"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-700">
+
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                 Password
               </Label>
               <Input
@@ -175,26 +201,34 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isSubmitting}
-                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="h-11 border-slate-200 bg-white/80 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl focus:bg-white transition-all text-sm shadow-sm"
+                placeholder="Enter your password"
               />
             </div>
+
             {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600 text-center animate-shake">
+                {error}
+              </div>
             )}
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={isSubmitting}>
-              {isSubmitting ? "Signing In..." : "Sign In"}
+
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full h-11 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all duration-300 shadow-md shadow-indigo-600/10 active:scale-[0.98] disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Signing In...
+                </span>
+              ) : (
+                "Sign In"
+              )}
             </Button>
           </form>
-          {/* <div className="mt-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
-            <p className="font-medium mb-2">Demo Credentials:</p>
-            <p>Admin: admin / admin123</p>
-            <p>User1: user1 / user123</p>
-            <p>User2: user2 / user456</p>
-          </div> */}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

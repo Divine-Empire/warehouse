@@ -69,23 +69,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // In the login function, update the user data parsing:
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      setIsLoading(true)
+      let rows: any[] = []
 
-      // Fetch users from Google Sheets
-      const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${LOGIN_SHEET_NAME}`
-      const response = await fetch(sheetUrl)
-      const text = await response.text()
+      // Attempt optimized query first
+      try {
+        const query = `SELECT * WHERE A = '${username}'`
+        const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${LOGIN_SHEET_NAME}&tq=${encodeURIComponent(query)}`
+        const response = await fetch(sheetUrl)
+        const text = await response.text()
+        const jsonStart = text.indexOf("{")
+        const jsonEnd = text.lastIndexOf("}") + 1
+        const jsonData = text.substring(jsonStart, jsonEnd)
+        const data = JSON.parse(jsonData)
+        if (data && data.table && data.table.rows) {
+          rows = data.table.rows
+        }
+      } catch (queryError) {
+        console.warn("Optimized login query failed, falling back to full fetch:", queryError)
+        // Fallback to full fetch
+        const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${LOGIN_SHEET_NAME}`
+        const response = await fetch(sheetUrl)
+        const text = await response.text()
+        const jsonStart = text.indexOf("{")
+        const jsonEnd = text.lastIndexOf("}") + 1
+        const jsonData = text.substring(jsonStart, jsonEnd)
+        const data = JSON.parse(jsonData)
+        if (data && data.table && data.table.rows) {
+          rows = data.table.rows
+        }
+      }
 
-      const jsonStart = text.indexOf("{")
-      const jsonEnd = text.lastIndexOf("}") + 1
-      const jsonData = text.substring(jsonStart, jsonEnd)
-
-      const data = JSON.parse(jsonData)
-
-      if (data && data.table && data.table.rows) {
-        // Skip header row
-        for (let i = 1; i < data.table.rows.length; i++) {
-          const row = data.table.rows[i]
+      if (rows && rows.length > 0) {
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i]
 
           if (row.c) {
             const rowUsername = row.c[0]?.v || ""
@@ -133,8 +149,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Login error:", error)
       return false
-    } finally {
-      setIsLoading(false)
     }
   }
 
