@@ -26,8 +26,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyzW8-RldYx917QpAfO4kY-T8_ntg__T0sbr7Yup2ZTVb1FC5H1g6TYuJgAU6wTquVM/exec"
-const IMS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxkB72Tu0iDEEyQ5cdkYUTdJq7Ifj80hgqbXpwc9WnF3ruWs1Yppe3Z1TJce4yr9Gg/exec"
+const SCRIPT_URL = process.env.NEXT_PUBLIC_DISPATCH_SCRIPT_URL
+const IMS_SCRIPT_URL = process.env.NEXT_PUBLIC_IMS_SCRIPT_URL
 
 export function LocationUpdateModal({ isOpen, onClose, onRefreshData }) {
   const { user: currentUser } = useAuth()

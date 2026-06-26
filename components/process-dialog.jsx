@@ -68,9 +68,9 @@ export default function ProcessDialog({
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadStatus, setUploadStatus] = useState("");
 
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyzW8-RldYx917QpAfO4kY-T8_ntg__T0sbr7Yup2ZTVb1FC5H1g6TYuJgAU6wTquVM/exec";
-    const IMS_URL = "https://script.google.com/macros/s/AKfycbxkB72Tu0iDEEyQ5cdkYUTdJq7Ifj80hgqbXpwc9WnF3ruWs1Yppe3Z1TJce4yr9Gg/exec";
-    const DRIVE_FOLDER_ID = "1ZGfbiQHFnVdMyoLv5s8y3gVTIlnQzW2e";
+    const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_DISPATCH_SCRIPT_URL;
+    const IMS_URL = process.env.NEXT_PUBLIC_IMS_SCRIPT_URL;
+    const DRIVE_FOLDER_ID = process.env.NEXT_PUBLIC_DRIVE_FOLDER_ID;
 
     const [imsLookup, setImsLookup] = useState({});
     const [isFetchingIms, setIsFetchingIms] = useState(false);

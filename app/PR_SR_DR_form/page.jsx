@@ -5,7 +5,8 @@ import { Plus, Trash2, Send, X } from "lucide-react";
 import { MainLayout } from "@/components/layout/main-layout";
 
 const FormDataPage = () => {
-  const SHEET_ID = "1yEsh4yzyvglPXHxo-5PT70VpwVJbxV7wwH8rpU1RFJA";
+  const SHEET_ID = process.env.NEXT_PUBLIC_PRIMARY_SHEET_ID;
+  const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_DISPATCH_SCRIPT_URL;
   const SHEET_NAME = "PR-SR-DN-Data";
 
   const [selectedSection, setSelectedSection] = useState("sales");
@@ -178,7 +179,7 @@ const FormDataPage = () => {
     setLoading(true);
     setMessage("");
 
-    const scriptUrl = `https://script.google.com/macros/s/AKfycbyzW8-RldYx917QpAfO4kY-T8_ntg__T0sbr7Yup2ZTVb1FC5H1g6TYuJgAU6wTquVM/exec`;
+    const scriptUrl = APPS_SCRIPT_URL;
 
     try {
       // Prepare data for each section
@@ -323,7 +324,7 @@ const FormDataPage = () => {
   };
 
   const fetchMasterData = async () => {
-    const MASTER_SHEET_ID = "1DpJWUnXKsS7C4mHva9ZkX4bOC51A9xugDKAX8eUDiR0";
+    const MASTER_SHEET_ID = process.env.NEXT_PUBLIC_MASTER_SHEET_ID;
     try {
       const response = await fetch(
         `https://docs.google.com/spreadsheets/d/${MASTER_SHEET_ID}/gviz/tq?tqx=out:json&sheet=Master`

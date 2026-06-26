@@ -61,9 +61,9 @@ export default function PurchaseLocationUpdatePage() {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scannerTarget, setScannerTarget] = useState(null); // { id, field }
 
-  const SHEET_ID = "1_KAokqi4ZxBGj2xA7TOdUMj6H44szaf4CQMI_OINdAo";
+  const SHEET_ID = process.env.NEXT_PUBLIC_PURCHASE_SHEET_ID;
   // Unified URL used for both READ and WRITE operations
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCik-SO0JHWnTfyeltKDx3i7LI0Ppt3lBw59tQy1ymiiQb8ai3D9FA540Pw65Jzq58Lg/exec";
+  const SCRIPT_URL = process.env.NEXT_PUBLIC_PURCHASE_SCRIPT_URL;
 
   const columns = useMemo(() => {
     const base = [

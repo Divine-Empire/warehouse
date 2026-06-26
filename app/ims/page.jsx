@@ -23,8 +23,8 @@ export default function MisPage() {
   const [itemNameFilter, setItemNameFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxkB72Tu0iDEEyQ5cdkYUTdJq7Ifj80hgqbXpwc9WnF3ruWs1Yppe3Z1TJce4yr9Gg/exec";
-  const SHEET_ID = "1O-fEA6iQvlJhSP6xcn2G-n0XxWE5LUX2kg2z6BVQLJw";
+  const SCRIPT_URL = process.env.NEXT_PUBLIC_IMS_SCRIPT_URL;
+  const SHEET_ID = process.env.NEXT_PUBLIC_IMS_SHEET_ID;
   const SHEET_NAME = "IMS";
 
   const LOCATION_TABS = [

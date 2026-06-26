@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 
-const SHEET_ID = "1yEsh4yzyvglPXHxo-5PT70VpwVJbxV7wwH8rpU1RFJA"
+const SHEET_ID = process.env.NEXT_PUBLIC_PRIMARY_SHEET_ID
 const ORDER_DISPATCH_SHEET = "ORDER-DISPATCH"
 const DISPATCH_DELIVERY_SHEET = "DISPATCH-DELIVERY"
 

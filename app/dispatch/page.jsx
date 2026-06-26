@@ -43,6 +43,8 @@ import { Eye, RefreshCw, Search, Settings, Edit, Save, X, FileText, CloudUpload,
 import { useAuth } from "@/components/auth-provider";
 import ProcessDialog from "@/components/process-dialog";
 import { LocationUpdateModal } from "./location-update-modal";
+import { TicketEnquiryDialog } from "./ticket-enquiry";
+import { ClipboardList } from "lucide-react";
 
 // Column definitions for Pending tab (B to BJ) - Defined before component to avoid temporal dead zone
 const pendingColumns = [
@@ -111,6 +113,7 @@ export default function WarehousePage() {
   const [editedFiles, setEditedFiles] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [isLocationUpdateModalOpen, setIsLocationUpdateModalOpen] = useState(false);
+  const [isTicketEnquiryModalOpen, setIsTicketEnquiryModalOpen] = useState(false);
 
   const [companyNameFilter, setCompanyNameFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -133,9 +136,8 @@ export default function WarehousePage() {
 
   const { user: currentUser } = useAuth();
 
-  const APPS_SCRIPT_URL =
-    "https://script.google.com/macros/s/AKfycbyzW8-RldYx917QpAfO4kY-T8_ntg__T0sbr7Yup2ZTVb1FC5H1g6TYuJgAU6wTquVM/exec";
-  const SHEET_ID = "1yEsh4yzyvglPXHxo-5PT70VpwVJbxV7wwH8rpU1RFJA";
+  const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_DISPATCH_SCRIPT_URL;
+  const SHEET_ID = process.env.NEXT_PUBLIC_PRIMARY_SHEET_ID;
   const SHEET_NAME = "DISPATCH-DELIVERY";
 
   // Robust date parser for sorting that handles various formats including GVIZ Date() and DD/MM/YYYY
@@ -1848,7 +1850,17 @@ export default function WarehousePage() {
               </p>
             )}
           </div>
+
+
+          {/* Location Update and Refresh Buttons */}
           <div className="flex gap-2">
+            <Button 
+              onClick={() => setIsTicketEnquiryModalOpen(true)} 
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transition-all active:scale-95"
+            >
+              <ClipboardList className="h-4 w-4 mr-2" />
+              Ticket Enquiry
+            </Button>
             <Button 
               onClick={() => setIsLocationUpdateModalOpen(true)} 
               className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-md transition-all active:scale-95"
@@ -2589,6 +2601,11 @@ export default function WarehousePage() {
         isOpen={isLocationUpdateModalOpen}
         onClose={() => setIsLocationUpdateModalOpen(false)}
         onRefreshData={handleRefresh}
+      />
+
+      <TicketEnquiryDialog
+        isOpen={isTicketEnquiryModalOpen}
+        onClose={() => setIsTicketEnquiryModalOpen(false)}
       />
     </MainLayout>
   );

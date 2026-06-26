@@ -25,9 +25,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Google Sheets configuration
-const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyzW8-RldYx917QpAfO4kY-T8_ntg__T0sbr7Yup2ZTVb1FC5H1g6TYuJgAU6wTquVM/exec"
-const SHEET_ID = "1yEsh4yzyvglPXHxo-5PT70VpwVJbxV7wwH8rpU1RFJA"
+const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_DISPATCH_SCRIPT_URL
+const SHEET_ID = process.env.NEXT_PUBLIC_PRIMARY_SHEET_ID
 const LOGIN_SHEET_NAME = "Login"
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

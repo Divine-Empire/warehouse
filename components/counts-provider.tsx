@@ -21,8 +21,8 @@ interface CountsContextType {
 const CountsContext = createContext<CountsContextType | undefined>(undefined);
 
 // Using the established Apps Script URLs to bypass CORS issues with private sheets
-const DISPATCH_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyzW8-RldYx917QpAfO4kY-T8_ntg__T0sbr7Yup2ZTVb1FC5H1g6TYuJgAU6wTquVM/exec";
-const PURCHASE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCik-SO0JHWnTfyeltKDx3i7LI0Ppt3lBw59tQy1ymiiQb8ai3D9FA540Pw65Jzq58Lg/exec";
+const DISPATCH_SCRIPT_URL = process.env.NEXT_PUBLIC_DISPATCH_SCRIPT_URL;
+const PURCHASE_SCRIPT_URL = process.env.NEXT_PUBLIC_PURCHASE_SCRIPT_URL;
 
 export function CountsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();

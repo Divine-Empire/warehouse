@@ -33,7 +33,7 @@ export default function TransporterModePage() {
     const [dispatchFilter, setDispatchFilter] = useState("all")
     const [deliveryFilter, setDeliveryFilter] = useState("all")
 
-    const SHEET_ID = "1yEsh4yzyvglPXHxo-5PT70VpwVJbxV7wwH8rpU1RFJA"
+    const SHEET_ID = process.env.NEXT_PUBLIC_PRIMARY_SHEET_ID
     const SHEET_NAME = "ORDER-DISPATCH"
 
     const fetchOrders = async () => {

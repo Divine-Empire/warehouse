@@ -25,7 +25,8 @@ import {
   Menu,
   ReceiptText,
   XOctagon,
-  Truck
+  Truck,
+  Wrench
 } from "lucide-react"
 
 const menuItems = [
@@ -37,6 +38,7 @@ const menuItems = [
   { href: "/purchase-location-update", label: "Purchase-Update-Location", icon: PackageCheck, pageAccess: "Purchase-Update-Location" },
   { href: "/ims", label: "IMS", icon: Award, pageAccess: "IMS" },
   { href: "/PR_SR_DR_form", label: "PR-DR-SR-Form", icon: Bell, pageAccess: "PR-DR-SR-Form" },
+  { href: "/repair-status", label: "Repair Status", icon: Wrench, pageAccess: "Repair-Status" },
   { href: "/settings", label: "Settings", icon: Settings, pageAccess: "Settings" },
 ]
 

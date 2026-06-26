@@ -63,7 +63,9 @@ export default function PurchasePage() {
   });
 
 
-  const SHEET_ID = "1_KAokqi4ZxBGj2xA7TOdUMj6H44szaf4CQMI_OINdAo";
+  const SHEET_ID = process.env.NEXT_PUBLIC_PURCHASE_SHEET_ID;
+  const PURCHASE_MAIN_SCRIPT_URL = process.env.NEXT_PUBLIC_PURCHASE_MAIN_SCRIPT_URL;
+  const DRIVE_FOLDER_ID = process.env.NEXT_PUBLIC_DRIVE_FOLDER_ID;
   const SHEET_NAME = "RECEIVING-ACCOUNTS";
 
   const [commonFormData, setCommonFormData] = useState({
@@ -225,7 +227,7 @@ export default function PurchasePage() {
     setError(null);
 
     try {
-      const scriptUrl = "https://script.google.com/macros/s/AKfycbxJx1_BgbqaUCUouG3EpUdHePfnBU8W699ztF1w9T9YtvBk1U8df-g305i4O1imRrYSIw/exec";
+      const scriptUrl = PURCHASE_MAIN_SCRIPT_URL;
       const fetchUrl = `${scriptUrl}?sheet=${SHEET_NAME}&action=fetch`;
       const [response, indentResponse] = await Promise.all([
         fetch(fetchUrl),
@@ -320,7 +322,7 @@ export default function PurchasePage() {
   const fetchHistoryData = useCallback(async () => {
     setLoading(true);
     try {
-      const scriptUrl = "https://script.google.com/macros/s/AKfycbxJx1_BgbqaUCUouG3EpUdHePfnBU8W699ztF1w9T9YtvBk1U8df-g305i4O1imRrYSIw/exec";
+      const scriptUrl = PURCHASE_MAIN_SCRIPT_URL;
 
       // Fetch all required sheets in parallel
       const [accountsResponse, warehouseResponse, indentResponse] = await Promise.all([
@@ -509,8 +511,7 @@ export default function PurchasePage() {
             break;
         }
 
-        const scriptUrl =
-          "https://script.google.com/macros/s/AKfycbxJx1_BgbqaUCUouG3EpUdHePfnBU8W699ztF1w9T9YtvBk1U8df-g305i4O1imRrYSIw/exec";
+        const scriptUrl = PURCHASE_MAIN_SCRIPT_URL;
 
         try {
           const params = new URLSearchParams();
@@ -518,7 +519,7 @@ export default function PurchasePage() {
           params.append("base64Data", base64Data);
           params.append("fileName", file.name);
           params.append("mimeType", file.type);
-          params.append("folderId", "1ZGfbiQHFnVdMyoLv5s8y3gVTIlnQzW2e");
+          params.append("folderId", DRIVE_FOLDER_ID);
 
           const response = await fetch(scriptUrl, {
             method: "POST",
@@ -560,8 +561,7 @@ export default function PurchasePage() {
   // Handle Edit Save
   const handleEditSave = async (rowId) => {
     try {
-      const scriptUrl =
-        "https://script.google.com/macros/s/AKfycbxJx1_BgbqaUCUouG3EpUdHePfnBU8W699ztF1w9T9YtvBk1U8df-g305i4O1imRrYSIw/exec";
+      const scriptUrl = PURCHASE_MAIN_SCRIPT_URL;
 
       // Find the original item to preserve its timestamp
       const originalItem = historyData.find((item) => item.id === rowId);
@@ -885,8 +885,7 @@ export default function PurchasePage() {
             break;
         }
 
-        const scriptUrl =
-          "https://script.google.com/macros/s/AKfycbxJx1_BgbqaUCUouG3EpUdHePfnBU8W699ztF1w9T9YtvBk1U8df-g305i4O1imRrYSIw/exec";
+        const scriptUrl = PURCHASE_MAIN_SCRIPT_URL;
 
         try {
           const params = new URLSearchParams();
@@ -894,7 +893,7 @@ export default function PurchasePage() {
           params.append("base64Data", base64Data);
           params.append("fileName", file.name);
           params.append("mimeType", file.type);
-          params.append("folderId", "1ZGfbiQHFnVdMyoLv5s8y3gVTIlnQzW2e"); // Using found folder ID as default
+          params.append("folderId", DRIVE_FOLDER_ID); // Using found folder ID as default
 
           const response = await fetch(scriptUrl, {
             method: "POST",
@@ -1031,8 +1030,7 @@ export default function PurchasePage() {
             break;
         }
 
-        const scriptUrl =
-          "https://script.google.com/macros/s/AKfycbxJx1_BgbqaUCUouG3EpUdHePfnBU8W699ztF1w9T9YtvBk1U8df-g305i4O1imRrYSIw/exec";
+        const scriptUrl = PURCHASE_MAIN_SCRIPT_URL;
 
         try {
           const params = new URLSearchParams();
@@ -1040,7 +1038,7 @@ export default function PurchasePage() {
           params.append("base64Data", base64Data);
           params.append("fileName", file.name);
           params.append("mimeType", file.type);
-          params.append("folderId", "1ZGfbiQHFnVdMyoLv5s8y3gVTIlnQzW2e"); // Using found folder ID as default
+          params.append("folderId", DRIVE_FOLDER_ID); // Using found folder ID as default
 
           const response = await fetch(scriptUrl, {
             method: "POST",
@@ -1152,7 +1150,7 @@ export default function PurchasePage() {
     });
 
     try {
-      const scriptUrl = "https://script.google.com/macros/s/AKfycbxJx1_BgbqaUCUouG3EpUdHePfnBU8W699ztF1w9T9YtvBk1U8df-g305i4O1imRrYSIw/exec";
+      const scriptUrl = PURCHASE_MAIN_SCRIPT_URL;
 
       // 1. Submit to RECEIVING-ACCOUNTS (UPDATE by Lift No)
       for (const data of dataToSubmit) {
